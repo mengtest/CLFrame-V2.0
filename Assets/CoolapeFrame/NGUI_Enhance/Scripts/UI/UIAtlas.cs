@@ -12,12 +12,14 @@ using System;
 using System.Collections;
 using System.IO;
 
-[AddComponentMenu("NGUI/UI/Atlas")]
+[AddComponentMenu ("NGUI/UI/Atlas")]
 public class UIAtlas : MonoBehaviour
 {
 	//add by chenbin
-	public static Hashtable retainCounter = new Hashtable ();//引用计数器 
-	public static Hashtable assetBundleMap = new Hashtable ();//引用AssetBundle
+	public static Hashtable retainCounter = new Hashtable ();
+	//引用计数器
+	public static Hashtable assetBundleMap = new Hashtable ();
+	//引用AssetBundle
 	static Hashtable notifySprites = new Hashtable ();
 
 	// Legacy functionality, removed in 3.0. Do not use.
@@ -98,11 +100,13 @@ public class UIAtlas : MonoBehaviour
 
 	
 	#region //add by chenbin=========start
+
 	[HideInInspector]
 	[SerializeField]
 	bool
 		_isBorrowSpriteMode;
-	Hashtable mspritesMap = new Hashtable ();        //add by chenbin
+	Hashtable mspritesMap = new Hashtable ();
+	//add by chenbin
 	
 	public void init ()
 	{
@@ -110,7 +114,7 @@ public class UIAtlas : MonoBehaviour
 			returnSpriteByname (item.Key.ToString ());
 		}
 	}
-	
+
 	public bool isBorrowSpriteMode {
 		get {
 			return (mReplacement != null) ? mReplacement.isBorrowSpriteMode : _isBorrowSpriteMode;
@@ -125,7 +129,7 @@ public class UIAtlas : MonoBehaviour
 			}
 		}
 	}
-	
+
 	public  Hashtable spriteMap {
 		get {
 			if (mReplacement != null) {
@@ -150,7 +154,7 @@ public class UIAtlas : MonoBehaviour
 	}
 
 	public static int releaseSpriteTime = 10;
-	
+
 	/// <summary>
 	/// Returns the sprite byname.根据name释放sprite,add by chenbin
 	/// </summary>
@@ -174,9 +178,9 @@ public class UIAtlas : MonoBehaviour
 			int rc = retainCounter [s.path] == null ? 0 : (int)retainCounter [s.path];
 			rc--;
 			#if UNITY_EDITOR
-			if(Coolape.CLAssetsManager.self != null 
-				&& !string.IsNullOrEmpty( Coolape.CLAssetsManager.self.debugKey)
-				&& s.path.Contains(Coolape.CLAssetsManager.self.debugKey)) {
+			if (Coolape.CLAssetsManager.self != null
+			    && !string.IsNullOrEmpty (Coolape.CLAssetsManager.self.debugKey)
+			    && s.path.Contains (Coolape.CLAssetsManager.self.debugKey)) {
 				Debug.LogError ("returnSpriteByname====" + s.path + "===" + rc);
 			}
 			#endif
@@ -192,9 +196,9 @@ public class UIAtlas : MonoBehaviour
 		}
 		
 	}
-	
+
 	Queue<string> releaseTex = new Queue<string> ();
-	
+
 	void ReleaseTexture ()
 	{
 		if (releaseTex.Count == 0) {
@@ -221,7 +225,7 @@ public class UIAtlas : MonoBehaviour
 			}
 		}
 	}
-	
+
 	public void doReleaseTexture (string name)
 	{
 		doReleaseTexture (name, false);
@@ -263,22 +267,22 @@ public class UIAtlas : MonoBehaviour
 				try {
 					//=================================================
 					#if UNITY_EDITOR
-					if(Coolape.CLAssetsManager.self != null 
-						&& !string.IsNullOrEmpty( Coolape.CLAssetsManager.self.debugKey)
-						&& sp.path.Contains(Coolape.CLAssetsManager.self.debugKey)) {
+					if (Coolape.CLAssetsManager.self != null
+					    && !string.IsNullOrEmpty (Coolape.CLAssetsManager.self.debugKey)
+					    && sp.path.Contains (Coolape.CLAssetsManager.self.debugKey)) {
 						Debug.LogError ("doReleaseTexture====" + sp.path);
 					}
 					#endif
 					assetBundleMap [sp.path] = null;
-					if(!string.IsNullOrEmpty(sp.material.mainTexture.name)) {
+					if (!string.IsNullOrEmpty (sp.material.mainTexture.name)) {
 						UnityEngine.Resources.UnloadAsset (sp.material.mainTexture);
 					}
 					
 					// 其它引用了该图的都要释放
 					for (int j = 0; j < mSprites.Count; j++) {
 						UISpriteData tmpsp = mSprites [j];
-						if(tmpsp.path == sp.path && tmpsp != sp) {
-							if(tmpsp.material != null) {
+						if (tmpsp.path == sp.path && tmpsp != sp) {
+							if (tmpsp.material != null) {
 								tmpsp.material.mainTexture = null;
 								GameObject.DestroyImmediate (tmpsp.material, true);
 								tmpsp.material = null;
@@ -297,7 +301,7 @@ public class UIAtlas : MonoBehaviour
 			} 
 		}
 	}
-	
+
 	void setNotifySprite (string path, UISprite uisp, string spriteName, object callback, object args)
 	{
 		//		if (string.IsNullOrEmpty(path) || uisp == null) {
@@ -314,7 +318,7 @@ public class UIAtlas : MonoBehaviour
 		}
 		if (!list.Contains (uisp)) {
 			if (callback != null) {
-				object[] objs = {uisp, callback, spriteName, args};
+				object[] objs = { uisp, callback, spriteName, args };
 				list.Add (objs);
 			} else {
 				list.Add (uisp);
@@ -323,8 +327,8 @@ public class UIAtlas : MonoBehaviour
 			notifySprites [path] = list;
 		}
 	}
-	
-	void doNotifySprite (string path)
+
+	void doNotifySprite (string path, Texture texture)
 	{
 		if (string.IsNullOrEmpty (path)) {
 			return;
@@ -339,14 +343,14 @@ public class UIAtlas : MonoBehaviour
 		if (temp != null) {
 			list = (ArrayList)temp;
 			if (list != null && list.Count > 0) {
-				for (int i =0; i < list.Count; i++) {
+				for (int i = 0; i < list.Count; i++) {
 					item = list [i];
 					if (item == null) {
 						continue;
 					}
 					if (item is UISprite) {
 						sp = (UISprite)(item); 
-						if (sp != null) {
+						if (texture != null && sp != null) {
 							//                      Debug.LogWarning ("sp.refresh==" + path + "     " + sp.name);
 							sp.refresh ();
 						}
@@ -354,7 +358,7 @@ public class UIAtlas : MonoBehaviour
 						object[] objs = (object[])item;
 						if (objs.Length > 2) {
 							sp = (UISprite)(objs [0]);
-							if (sp != null) {
+							if (texture != null && sp != null) {
 								//                      Debug.LogWarning ("sp.refresh==" + path + "     " + sp.name);
 								sp.refresh ();
 							}
@@ -372,7 +376,8 @@ public class UIAtlas : MonoBehaviour
 		}
 	}
 
-	public bool hadGetSpriteTexture(string spriteName) {
+	public bool hadGetSpriteTexture (string spriteName)
+	{
 		if (mReplacement != null) {
 			return mReplacement.hadGetSpriteTexture (spriteName);
 		}
@@ -383,14 +388,15 @@ public class UIAtlas : MonoBehaviour
 		return false;
 	}
 
-	public UISpriteData getSpriteBorrowMode(string name) {
+	public UISpriteData getSpriteBorrowMode (string name)
+	{
 		if (mReplacement != null) {
 			return mReplacement.getSpriteBorrowMode (name);
 		}
 		int i = spriteMap [name] == null ? -1 : (int)spriteMap [name];
 		if (i < 0) {
 			#if UNITY_EDITOR
-			Debug.LogWarning("can't find sprite ,name=[" + name + "],objname = [" + name + "]");
+			Debug.LogWarning ("can't find sprite ,name=[" + name + "],objname = [" + name + "]");
 			#endif
 			return null;
 		}
@@ -400,6 +406,7 @@ public class UIAtlas : MonoBehaviour
 	}
 
 	bool isBorrowSprite = false;
+
 	/// <summary>
 	/// Gets the sprite byname.根据name 取得sprite ,add by chenbin
 	/// </summary>
@@ -410,7 +417,7 @@ public class UIAtlas : MonoBehaviour
 	{
 		return borrowSpriteByname (name, uisp, null, null);
 	}
-	
+
 	public UISpriteData borrowSpriteByname (string name, UISprite uisp, object callback)
 	{
 		return borrowSpriteByname (name, uisp, callback, null);
@@ -430,8 +437,9 @@ public class UIAtlas : MonoBehaviour
 		int i = spriteMap [name] == null ? -1 : (int)spriteMap [name];
 		if (i < 0) {
 			#if UNITY_EDITOR
-			Debug.LogWarning("can't find sprite ,name=[" + name + "],objname = [" + (uisp != null ?  uisp.name : "") + "]");
+			Debug.LogWarning ("can't find sprite ,name=[" + name + "],objname = [" + (uisp != null ? uisp.name : "") + "]");
 			#endif
+			Coolape.Utl.doCallback (callback, uisp, name, args);
 			return null;
 		}
 		
@@ -439,8 +447,9 @@ public class UIAtlas : MonoBehaviour
 		UISpriteData ret = mSprites.Count > i ? mSprites [i] : null;
 		if (ret == null) {
 			#if UNITY_EDITOR
-			Debug.LogWarning("can't find sprite ,name=[" + name + "]");
+			Debug.LogWarning ("can't find sprite ,name=[" + name + "]");
 			#endif
+			Coolape.Utl.doCallback (callback, uisp, name, args);
 			return ret;
 		}
 		
@@ -453,14 +462,14 @@ public class UIAtlas : MonoBehaviour
 			try {
 				if (assetBundleMap [ret.path] == null) {
 					#if UNITY_EDITOR
-					if(Application.isPlaying) {
-						getTuxture(ret, uisp, callback, args);
+					if (Application.isPlaying) {
+						getTuxture (ret, uisp, callback, args);
 						isBorrowSprite = false;
 						return null;
 					} else {
-                        string path = ret.path;
-                        path = path.Replace("/upgradeRes/", "/upgradeRes4Publish/");
-                        path = path.Replace("/upgradeRes4Publish/", "/upgradeRes4Dev/");
+						string path = ret.path;
+						path = path.Replace ("/upgradeRes/", "/upgradeRes4Publish/");
+						path = path.Replace ("/upgradeRes4Publish/", "/upgradeRes4Dev/");
 						//                            Debug.Log("get Texture==" + path);
 						assetBundleMap [ret.path] = Coolape.CLVerManager.self.getAtalsTexture4Edit (path);
 					}
@@ -482,12 +491,12 @@ public class UIAtlas : MonoBehaviour
 			}
 			
 			#if UNITY_EDITOR
-			if(Application.isPlaying) {
-                tt = (Texture)(assetBundleMap [ret.path]);
+			if (Application.isPlaying) {
+				tt = (Texture)(assetBundleMap [ret.path]);
 			} else {
-				if(assetBundleMap[ret.path].GetType() != typeof(Texture) &&
-				   assetBundleMap[ret.path].GetType() != typeof(Texture2D)) {
-					assetBundleMap[ret.path] = null;
+				if (assetBundleMap [ret.path].GetType () != typeof(Texture) &&
+				    assetBundleMap [ret.path].GetType () != typeof(Texture2D)) {
+					assetBundleMap [ret.path] = null;
 					return null;
 				}
 				tt = (Texture)(assetBundleMap [ret.path]);
@@ -508,7 +517,7 @@ public class UIAtlas : MonoBehaviour
 			} else {
 				assetBundleMap [ret.path] = null;
 				#if UNITY_EDITOR
-				Debug.LogWarning("can't find Texture in Resource path :[" + ret.path + "]");
+				Debug.LogWarning ("can't find Texture in Resource path :[" + ret.path + "]");
 				#endif
 				return null;
 			}
@@ -518,32 +527,32 @@ public class UIAtlas : MonoBehaviour
 		retainCounter [ret.path] = rc;
 		isBorrowSprite = false;
 		#if UNITY_EDITOR
-		if(Coolape.CLAssetsManager.self != null 
-			&& !string.IsNullOrEmpty( Coolape.CLAssetsManager.self.debugKey)
-			&& ret.path.Contains(Coolape.CLAssetsManager.self.debugKey)) {
-			Debug.LogError("borrow Sprite==" + ret.path +"==" + rc);
+		if (Coolape.CLAssetsManager.self != null
+		    && !string.IsNullOrEmpty (Coolape.CLAssetsManager.self.debugKey)
+		    && ret.path.Contains (Coolape.CLAssetsManager.self.debugKey)) {
+			Debug.LogError ("borrow Sprite==" + ret.path + "==" + rc);
 		}
 		#endif
 		Coolape.Utl.doCallback (callback, uisp, ret.name, args);
 		return ret;
 	}
-	
+
 	void getTuxture (UISpriteData ret, UISprite uisp, object callback, object args)
 	{
 		Coolape.Callback cb = onGetTuxture;
 		string path = ret.path;
 		
 		setNotifySprite (ret.path, uisp, ret.name, callback, args);
-		if(Coolape.CLCfgBase.self.isEditMode) {
-			path = path.Replace("/upgradeRes/", "/upgradeRes4Publish/");
-			path = path.Replace("/upgradeRes4Dev/", "/upgradeRes4Publish/");
+		if (Coolape.CLCfgBase.self.isEditMode) {
+			path = path.Replace ("/upgradeRes/", "/upgradeRes4Publish/");
+			path = path.Replace ("/upgradeRes4Dev/", "/upgradeRes4Publish/");
 		} else {
-			path = path.Replace("/upgradeRes4Dev/", "/upgradeRes/");
-			path = path.Replace("/upgradeRes4Publish/", "/upgradeRes/");
+			path = path.Replace ("/upgradeRes4Dev/", "/upgradeRes/");
+			path = path.Replace ("/upgradeRes4Publish/", "/upgradeRes/");
 		}
 		
 		#if UNITY_ANDROID
-		path = Path.GetDirectoryName(path) + "/Android/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
+		path = Path.GetDirectoryName (path) + "/Android/" + Path.GetFileNameWithoutExtension (path) + ".unity3d";
 		#elif UNITY_IOS
 		path = Path.GetDirectoryName(path) + "/IOS/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
 		#else
@@ -551,7 +560,7 @@ public class UIAtlas : MonoBehaviour
 		#endif
 		Coolape.CLVerManager.self.getNewestRes (path, Coolape.CLAssetType.assetBundle, cb, ret.path, callback, uisp, ret.name);
 	}
-	
+
 	void onGetTuxture (params object[] paras)
 	{
 		AssetBundle tt = null;
@@ -564,8 +573,8 @@ public class UIAtlas : MonoBehaviour
 			if (tt != null) {
 				assetBundleMap [spritePth] = tt.mainAsset as Texture;
 				tt.Unload (false);
+				doNotifySprite (spritePth, assetBundleMap [spritePth] as Texture);
 				tt = null;
-				doNotifySprite (spritePth);
 				
 				//				if (org .Length > 3) {
 				//					object finishCallback = org [1];
@@ -580,14 +589,14 @@ public class UIAtlas : MonoBehaviour
 				//					}
 				//				}
 			} else {
+				doNotifySprite (spritePth, null);
 				Debug.LogWarning ("can't find Texture in Resource path :[" + tPath + "]");
 			}
-			
 		} else {
 			Debug.LogWarning ("can't find Texture in Resource path :[" + (paras.Length > 0 ? paras [0] : "") + "]");
 		}
 	}
-	
+
 	#endregion //add by chenbin=========end
 
 	/// <summary>
@@ -755,7 +764,8 @@ public class UIAtlas : MonoBehaviour
 				// string.Equals doesn't seem to work with Flash export
 				if (!string.IsNullOrEmpty (s.name) && name == s.name) {
 #if UNITY_EDITOR
-					if (!Application.isPlaying) return s;
+					if (!Application.isPlaying)
+						return s;
 #endif
 					// If this point was reached then the sprite is present in the non-indexed list,
 					// so the sprite indices should be updated.
@@ -812,7 +822,7 @@ public class UIAtlas : MonoBehaviour
 			return s1.name.CompareTo (s2.name);
 		});
 #if UNITY_EDITOR
-		NGUITools.SetDirty(this);
+		NGUITools.SetDirty (this);
 #endif
 	}
 
@@ -917,7 +927,7 @@ public class UIAtlas : MonoBehaviour
 	public void MarkAsChanged ()
 	{
 #if UNITY_EDITOR
-		NGUITools.SetDirty(gameObject);
+		NGUITools.SetDirty (gameObject);
 #endif
 		if (mReplacement != null)
 			mReplacement.MarkAsChanged ();
@@ -932,7 +942,7 @@ public class UIAtlas : MonoBehaviour
 				sp.atlas = null;
 				sp.atlas = atl;
 #if UNITY_EDITOR
-				NGUITools.SetDirty(sp);
+				NGUITools.SetDirty (sp);
 #endif
 			}
 		}
@@ -947,7 +957,7 @@ public class UIAtlas : MonoBehaviour
 				font.atlas = null;
 				font.atlas = atl;
 #if UNITY_EDITOR
-				NGUITools.SetDirty(font);
+				NGUITools.SetDirty (font);
 #endif
 			}
 		}
@@ -962,7 +972,7 @@ public class UIAtlas : MonoBehaviour
 				lbl.bitmapFont = null;
 				lbl.bitmapFont = font;
 #if UNITY_EDITOR
-				NGUITools.SetDirty(lbl);
+				NGUITools.SetDirty (lbl);
 #endif
 			}
 		}
@@ -1014,8 +1024,8 @@ public class UIAtlas : MonoBehaviour
 			}
 			sprites.Clear ();
 #if UNITY_EDITOR
-			NGUITools.SetDirty(this);
-			UnityEditor.AssetDatabase.SaveAssets();
+			NGUITools.SetDirty (this);
+			UnityEditor.AssetDatabase.SaveAssets ();
 #endif
 			return true;
 		}

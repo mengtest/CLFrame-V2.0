@@ -37,6 +37,7 @@ namespace Coolape
 		private Vector4 posParam;
 		private Transform cachedTransform;
 		UIGrid grid = null;
+		UIPanel panel;
 		//	void Awake ()
 		//	{
 		//		cachedTransform = this.transform;
@@ -63,8 +64,14 @@ namespace Coolape
 					_scrollView = NGUITools.FindInParents<UIScrollView> (transform);
 					if (_scrollView != null) {
 						oldScrollViewPos = _scrollView.transform.localPosition;
-						oldClipOffset = _scrollView.panel.clipOffset;
-						_scrollView.panel.cullWhileDragging = true;
+						panel = _scrollView.panel;
+						if(panel == null) {
+							panel = _scrollView.GetComponent<UIPanel>();
+						}
+						if (panel != null) {
+							oldClipOffset = panel.clipOffset;
+						}
+						panel.cullWhileDragging = true;
 					}
 				}
 				return _scrollView;
@@ -128,7 +135,9 @@ namespace Coolape
 		{
 			if (scrollView != null) {
 				scrollView.ResetPosition ();	
-				scrollView.panel.clipOffset = oldClipOffset;
+				if (panel != null) {
+					panel.clipOffset = oldClipOffset;
+				}
 				scrollView.transform.localPosition = oldScrollViewPos;
 			}
 			grid.transform.localPosition = oldGridPosition;

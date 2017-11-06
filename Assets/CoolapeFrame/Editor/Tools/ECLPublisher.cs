@@ -18,6 +18,8 @@ using System.IO.Compression;
 using Coolape;
 using System.Collections.Generic;
 using CSObjectWrapEditor;
+using UnityEditor.Callbacks;
+using UnityEditor.Purchasing;
 
 /// <summary>
 /// Coolape Publisher .
@@ -81,6 +83,8 @@ public class ECLPublisher : EditorWindow
 	bool isShowIcons = false;
 	bool isCanEdite = false;
 	bool haveModifyChlCfg = false;
+	static UnityEngine.Object tmpCopyFolder2PluginObj;
+	static bool tmpCopyFolder2PluginUnZip = false;
 
 	string[] tabs = new string[]{ "Channel List", "Channel Config" };
 	int tabIndex = 0;
@@ -533,8 +537,20 @@ public class ECLPublisher : EditorWindow
 			}
 		}
 		GUILayout.EndHorizontal ();
-		//Default Icon
 
+		// app store
+		if (currChlData.mPlatform == ChlPlatform.android) {
+			GUILayout.BeginHorizontal ();
+			{
+				GUILayout.Label ("Target Android Store", GUILayout.Width (width));
+				#if USE_UNITYIAP
+				currChlData.mTargetAndroidStore = (UnityEngine.Purchasing.AndroidStore)EditorGUILayout.EnumPopup ("", currChlData.mTargetAndroidStore);
+				#endif
+			}
+			GUILayout.EndHorizontal ();
+		}
+
+		//Default Icon
 		GUILayout.BeginHorizontal ();
 		{
 			GUI.enabled = true;
@@ -674,18 +690,62 @@ public class ECLPublisher : EditorWindow
 		GUILayout.BeginHorizontal ();
 		{
 			GUILayout.Label ("Folder Copy to Plugin", GUILayout.Width (width));
-			currChlData.mCopyDir = EditorGUILayout.ObjectField (currChlData.mCopyDir, typeof(UnityEngine.Object));
-			currChlData.mUnZip = GUILayout.Toggle (currChlData.mUnZip, "And UnZip the Zip files");
+			GUI.color = Color.yellow;
+			GUILayout.Label ("Note: copy to [Assets/Plugins/Android/] or [Assets/Plugins/iOS/]");
+			GUI.color = Color.white;
+		}
+		GUILayout.EndHorizontal ();
+		for (int i = 0; i < currChlData.mCopyDirPaths.Count; i++) {
+			Hashtable m = currChlData.mCopyDirPaths [i] as Hashtable;
+			GUILayout.BeginHorizontal ();
+			{
+				GUILayout.Label ("", GUILayout.Width (width));
+				//dir:copy路径, unZip:true
+				UnityEngine.Object obj = EditorGUILayout.ObjectField (getObjByPath(MapEx.getString(m, "dir")), typeof(UnityEngine.Object));
+				if(obj != getObjByPath(MapEx.getString(m, "dir"))) {
+					if (obj == null) {
+						m ["dir"] = "";
+					} else {
+						m ["dir"] = AssetDatabase.GetAssetPath (obj.GetInstanceID ());
+					}
+				}
+				m ["unZip"] = GUILayout.Toggle (MapEx.getBool(m, "unZip"), "And UnZip the Zip files");
+				currChlData.mCopyDirPaths [i] = m;
+				if (GUILayout.Button ("-", GUILayout.Width (50))) {
+					if(EditorUtility.DisplayDialog ("Alert", "Really want to remove it?", "Okay", "Cancel")) {
+						currChlData.mCopyDirPaths.RemoveAt (i);
+						break;
+					}
+				}
+			}
+			GUILayout.EndHorizontal ();
+		}
+		GUILayout.BeginHorizontal ();
+		{
+			GUILayout.Label ("", GUILayout.Width (width));
+			//dir:copy路径, unZip:true
+			tmpCopyFolder2PluginObj = EditorGUILayout.ObjectField (tmpCopyFolder2PluginObj, typeof(UnityEngine.Object));
+			tmpCopyFolder2PluginUnZip = GUILayout.Toggle (tmpCopyFolder2PluginUnZip, "And UnZip the Zip files");
+			if (GUILayout.Button ("+", GUILayout.Width (50))) {
+				if (tmpCopyFolder2PluginObj != null) {
+					Hashtable m = new Hashtable ();
+					m ["dir"] = AssetDatabase.GetAssetPath (tmpCopyFolder2PluginObj.GetInstanceID ());
+					m ["unZip"] = tmpCopyFolder2PluginUnZip;
+					currChlData.mCopyDirPaths.Add (m);
+					tmpCopyFolder2PluginObj = null;
+					tmpCopyFolder2PluginUnZip = false;
+				}
+			}
 		}
 		GUILayout.EndHorizontal ();
 
 		
-		GUILayout.BeginHorizontal ();
-		{
-			GUILayout.Label ("Special Folder Copy to Plugin", GUILayout.Width (width));
-			currChlData.mSpecialCopyDir = EditorGUILayout.ObjectField (currChlData.mSpecialCopyDir, typeof(UnityEngine.Object));
-		}
-		GUILayout.EndHorizontal ();
+//		GUILayout.BeginHorizontal ();
+//		{
+//			GUILayout.Label ("Special Folder Copy to Plugin", GUILayout.Width (width));
+//			currChlData.mSpecialCopyDir = EditorGUILayout.ObjectField (currChlData.mSpecialCopyDir, typeof(UnityEngine.Object));
+//		}
+//		GUILayout.EndHorizontal ();
 
 		GUI.color = Color.white;
 		//publishing settings
@@ -791,14 +851,35 @@ public class ECLPublisher : EditorWindow
 
 	void chgChl4Edit ()
 	{
-		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Android, currChlData.mScriptingDefineSymbols);
+
+		string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup);
+		if (!string.IsNullOrEmpty (symbols)) {
+			string[] symbolsList = symbols.Split (';');
+			for (int i = 0; i < symbolsList.Length; i++) {
+				if (symbolsList [i].StartsWith ("CHL_")) {
+					symbolsList [i] = "";
+				} else if (symbolsList [i].StartsWith ("USE_UNITYIAP")) {
+					symbolsList [i] = "";
+				}
+			}
+			symbols = "";
+			for (int i = 0; i < symbolsList.Length; i++) {
+				if (!string.IsNullOrEmpty (symbolsList [i])) {
+					symbols += symbolsList [i] + ";";
+				}
+			}
+		}
+		symbols += (";" + currChlData.mScriptingDefineSymbols);
+		symbols += (";USE_UNITYIAP");
+
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Android, symbols);
 #if UNITY_5
-		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iOS, currChlData.mScriptingDefineSymbols);
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iOS, symbols);
 #else
-		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iPhone, currChlData.mScriptingDefineSymbols);
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iPhone, symbols);
 #endif
 		
-		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Standalone, currChlData.mScriptingDefineSymbols);
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Standalone, symbols);
 	}
 
 	/// <summary>
@@ -826,6 +907,9 @@ public class ECLPublisher : EditorWindow
 		string[] iconNames = null;
 		if (currChlData.buildTarget == BuildTarget.Android) {
 			iconNames = AndroidIconsName;
+			#if USE_UNITYIAP
+			UnityPurchasingEditor.TargetAndroidStore (currChlData.mTargetAndroidStore);
+			#endif
 #if UNITY_5
 		} else if (currChlData.buildTarget == BuildTarget.iOS) {
 #else
@@ -841,7 +925,12 @@ public class ECLPublisher : EditorWindow
 		//Splash imgae
 		PlayerSettings.resolutionDialogBanner = currChlData.mSplashImage;
 		//indentifier & version
+
+		#if UNITY_5_6_OR_NEWER
 		PlayerSettings.applicationIdentifier = currChlData.mBundleIndentifier;
+		#else
+		PlayerSettings.bundleIdentifier = currChlData.mBundleIndentifier;
+		#endif
 		PlayerSettings.bundleVersion = currChlData.mBundleVersion;
 //		modifyCfgFile();
 		if (currChlData.buildTargetGroup == BuildTargetGroup.Android) {
@@ -853,6 +942,8 @@ public class ECLPublisher : EditorWindow
 			for (int i = 0; i < symbolsList.Length; i++) {
 				if (symbolsList [i].StartsWith ("CHL_")) {
 					symbolsList [i] = "";
+				} else if (symbolsList [i].StartsWith ("USE_UNITYIAP")) {
+					symbolsList [i] = "";
 				}
 			}
 			symbols = "";
@@ -863,6 +954,7 @@ public class ECLPublisher : EditorWindow
 			}
 		}
 		symbols += (";" + currChlData.mScriptingDefineSymbols);
+		symbols += (";USE_UNITYIAP");
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup, symbols);
 		
 		// subchannel
@@ -881,13 +973,17 @@ public class ECLPublisher : EditorWindow
 		File.WriteAllText (chlCfgPath, JSON.JsonEncode (chlMap));
 
 		// copy files
-		if (currChlData.mCopyDir != null) {
-			copyFilesToPlugin (currChlData.mCopyDirPath);
+		if (currChlData.mCopyDirPaths != null) {
+			Hashtable m = null;
+			for(int i=0; i < currChlData.mCopyDirPaths.Count; i++) {
+				m = currChlData.mCopyDirPaths [i] as Hashtable;
+				copyFilesToPlugin (MapEx.getString(m, "dir"), MapEx.getBool(m, "unZip"));
+			}
 		}
 		// special copy
-		if (currChlData.mSpecialCopyDir != null) {
-			copyFilesToPlugin (currChlData.mSpecialCopyDirPath);
-		}
+//		if (currChlData.mSpecialCopyDir != null) {
+//			copyFilesToPlugin (currChlData.mSpecialCopyDirPath);
+//		}
 
 		//
 		if (currChlData.mPlatform == ChlPlatform.android) {
@@ -912,27 +1008,55 @@ public class ECLPublisher : EditorWindow
 		}
 	}
 
+	[ PostProcessBuildAttribute (1)]
+	public static void OnPostprocessBuild (BuildTarget buildTarget, string path)
+	{
+		if (buildTarget == BuildTarget.iOS) {
+//			string projPath = PBXProject.GetPBXProjectPath(path);
+//			PBXProject proj = new PBXProject();
+//
+//			proj.ReadFromString(File.ReadAllText(projPath));
+//			string target = proj.TargetGuidByName("Unity-iPhone");
+//
+//			// システムのフレームワークを追加
+//			proj.AddFrameworkToProject(target, "AssetsLibrary.framework", false);
+//
+//			// 自前のフレームワークを追加
+//			CopyAndReplaceDirectory("Assets/Lib/mylib.framework", Path.Combine(path, "Frameworks/mylib.framework"));
+//			proj.AddFileToBuild(target, proj.AddFile("Frameworks/mylib.framework", "Frameworks/mylib.framework", PBXSourceTree.Source));
+//
+//			// ファイルを追加
+//			var fileName = "my_file.xml";
+//			var filePath = Path.Combine("Assets/Lib", fileName);
+//			File.Copy(filePath, Path.Combine(path, fileName));
+//			proj.AddFileToBuild(target, proj.AddFile(fileName, fileName, PBXSourceTree.Source));
+//
+//			// Yosemiteでipaが書き出せないエラーに対応するための設定
+//			proj.SetBuildProperty(target, "CODE_SIGN_RESOURCE_RULES_PATH", "$(SDKROOT)/ResourceRules.plist");
+//
+//			// フレームワークの検索パスを設定・追加
+//			proj.SetBuildProperty(target, "FRAMEWORK_SEARCH_PATHS", "$(inherited)");
+//			proj.AddBuildProperty(target, "FRAMEWORK_SEARCH_PATHS", "$(PROJECT_DIR)/Frameworks");
+//
+//			// 書き出し
+//			File.WriteAllText(projPath, proj.WriteToString());
+		}
+	}
+
 	/// <summary>
 	/// Applies the and build.
 	/// 设置并编译
 	/// </summary>
 	void applyAndBuild ()
 	{
-		if (!File.Exists (GeneratorConfig.common_path + "XLuaGenAutoRegister.cs")) {
-			if (!EditorUtility.DisplayDialog ("Alert", "Code has not been genrated for Xlua!", "Generate Now", "Cancel")) {
-				return;
-			} else {
-				Generator.GenAll ();
-			}
-		}
 		if (currChlData == null) {
 			return;
 		}
 		#if UNITY_5
 		if (currChlData.buildTarget == BuildTarget.iOS) {
-		#else
+			#else
 		if (currChlData.buildTarget == BuildTarget.iPhone) {
-		#endif
+			#endif
 			if (string.IsNullOrEmpty (currChlData.mBuildLocation)) {
 				EditorUtility.DisplayDialog ("Alert", "The BuildLocation is empty!", null);
 				return;
@@ -940,6 +1064,14 @@ public class ECLPublisher : EditorWindow
 		}
 
 		applySetting ();
+
+		if (!File.Exists (GeneratorConfig.common_path + "XLuaGenAutoRegister.cs")) {
+			if (!EditorUtility.DisplayDialog ("Alert", "Code has not been genrated for Xlua!", "Generate Now", "Cancel")) {
+				return;
+			} else {
+				Generator.GenAll ();
+			}
+		}
 		
 		//如果平台不一样，先切到
 		if (EditorUserBuildSettings.activeBuildTarget != currChlData.buildTarget) {
@@ -953,7 +1085,9 @@ public class ECLPublisher : EditorWindow
 			showMsgBox ("The channel need Create Eclipse Project!!", MessageType.Warning);
 			return;
 		}
-		
+
+		AssetDatabase.Refresh ();
+
 		string[] levels = null;
 		if (EditorBuildSettings.scenes.Length > 0) {
 			levels = new string[EditorBuildSettings.scenes.Length];
@@ -991,7 +1125,7 @@ public class ECLPublisher : EditorWindow
 		Debug.Log ("Publish path:" + locationName);
 
 		if (Reporter.self != null) {
-			Reporter.self.gameObject.SetActive(false);
+			Reporter.self.gameObject.SetActive (false);
 		}
 #if UNITY_5
 		if (currChlData.buildTarget == BuildTarget.iOS && needApend) {
@@ -1007,6 +1141,10 @@ public class ECLPublisher : EditorWindow
 			SceneAsset.DestroyImmediate (Reporter.self.gameObject);
 			ReporterModificationProcessor.BuildInfo.rmUpdateDelegate ();
 		}
+
+		string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup);
+		symbols.Replace (";USE_UNITYIAP", "");
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup, symbols);
 	}
 
 	//	void modifyCfgFile()
@@ -1038,16 +1176,16 @@ public class ECLPublisher : EditorWindow
 	/// Copies the files to plugin.
 	/// 把文件拷贝到Plugin目录
 	/// </summary>
-	void copyFilesToPlugin (string fromPath)
+	void copyFilesToPlugin (string fromPath, bool unZip)
 	{
 		string toPath = "";
 		if (currChlData.mPlatform == ChlPlatform.android) {
 			toPath = "Assets/Plugins/Android/";
 		} else if (currChlData.mPlatform == ChlPlatform.ios) {
-			toPath = "Assets/Plugins/IOS/";
+			toPath = "Assets/Plugins/iOS/";
 		}
 		Debug.Log (dataPath ());
-		doCopyFiles (dataPath () + fromPath, dataPath () + toPath);
+		doCopyFiles (dataPath () + fromPath, dataPath () + toPath, unZip);
 	}
 
 	/// <summary>
@@ -1063,7 +1201,7 @@ public class ECLPublisher : EditorWindow
 		return tmpPath.Replace ("/Assets/", "/");
 	}
 
-	void doCopyFiles (string fromPath, string toPath)
+	void doCopyFiles (string fromPath, string toPath, bool unZip)
 	{
 		string[] fileEntries = Directory.GetFiles (fromPath);
 		string extension = "";
@@ -1074,7 +1212,7 @@ public class ECLPublisher : EditorWindow
 				continue;
 			}
 			fileName = Path.GetFileName (filePath);
-			if (currChlData.mUnZip && extension.ToLower () == ".zip") {
+			if (unZip && extension.ToLower () == ".zip") {
 				ZipEx.UnZip (filePath, toPath, 4096);
 			} else {
 				if (File.Exists (toPath + fileName)) {
@@ -1092,9 +1230,26 @@ public class ECLPublisher : EditorWindow
 			if (!Directory.Exists (newToPath)) {
 				Directory.CreateDirectory (newToPath);
 			}
-			doCopyFiles (dir, newToPath);
+			doCopyFiles (dir, newToPath, unZip);
 		}
 	}
+
+	static Hashtable __objsMap = new Hashtable ();
+
+	public static UnityEngine.Object getObjByPath (string path)
+	{
+		UnityEngine.Object obj = __objsMap [path] as UnityEngine.Object;
+		if (obj == null) {
+			if (!string.IsNullOrEmpty (path)) {
+				obj = AssetDatabase.LoadAssetAtPath (
+					path, 
+					typeof(UnityEngine.Object));
+			}
+		}
+		__objsMap [path] = obj;
+		return obj;
+	}
+
 }
 
 /// <summary>
@@ -1116,6 +1271,9 @@ public class ChlData
 	public string mChlName = "";
 	public string mProductName = "";
 	public ChlPlatform mPlatform = ChlPlatform.android;
+	#if USE_UNITYIAP
+	public UnityEngine.Purchasing.AndroidStore mTargetAndroidStore = UnityEngine.Purchasing.AndroidStore.GooglePlay;
+	#endif
 
 	public BuildTargetGroup buildTargetGroup {
 		get {
@@ -1208,54 +1366,56 @@ public class ChlData
 	public bool isMoreGame = false;
 	public bool isSwitchAccount = false;
 	public string mAlertDesc = "";
-	public string mCopyDirPath = "";
-	UnityEngine.Object _CopyDir;
+	public ArrayList mCopyDirPaths = new ArrayList ();
+	//dir:copy路径, unZip:true
 
-	public UnityEngine.Object mCopyDir {
-		get {
-			if (_CopyDir == null) {
-				if (!string.IsNullOrEmpty (mCopyDirPath)) {
-					_CopyDir = AssetDatabase.LoadAssetAtPath (
-						mCopyDirPath, 
-						typeof(UnityEngine.Object));
-				}
-			}
-			return _CopyDir;
-		}
-		set {
-			_CopyDir = value;
-			if (value == null) {
-				mCopyDirPath = ""; 
-			} else {
-				mCopyDirPath = AssetDatabase.GetAssetPath (_CopyDir.GetInstanceID ());
-			}
-		}
-	}
-
-	public bool mUnZip;
-	public string mSpecialCopyDirPath = "";
-	UnityEngine.Object _SpecialCopyDir;
-
-	public UnityEngine.Object mSpecialCopyDir {
-		get {
-			if (_SpecialCopyDir == null) {
-				if (!string.IsNullOrEmpty (mSpecialCopyDirPath)) {
-					_SpecialCopyDir = AssetDatabase.LoadAssetAtPath (
-						mSpecialCopyDirPath, 
-						typeof(UnityEngine.Object));
-				}
-			}
-			return _SpecialCopyDir;
-		}
-		set {
-			_SpecialCopyDir = value;
-			if (value == null) {
-				mSpecialCopyDirPath = ""; 
-			} else {
-				mSpecialCopyDirPath = AssetDatabase.GetAssetPath (_SpecialCopyDir.GetInstanceID ());
-			}
-		}
-	}
+	//	UnityEngine.Object _CopyDir;
+	//
+	//	public UnityEngine.Object mCopyDir {
+	//		get {
+	//			if (_CopyDir == null) {
+	//				if (!string.IsNullOrEmpty (mCopyDirPath)) {
+	//					_CopyDir = AssetDatabase.LoadAssetAtPath (
+	//						mCopyDirPath,
+	//						typeof(UnityEngine.Object));
+	//				}
+	//			}
+	//			return _CopyDir;
+	//		}
+	//		set {
+	//			_CopyDir = value;
+	//			if (value == null) {
+	//				mCopyDirPath = "";
+	//			} else {
+	//				mCopyDirPath = AssetDatabase.GetAssetPath (_CopyDir.GetInstanceID ());
+	//			}
+	//		}
+	//	}
+	//
+	//	public bool mUnZip;
+	//	public string mSpecialCopyDirPath = "";
+	//	UnityEngine.Object _SpecialCopyDir;
+	//
+	//	public UnityEngine.Object mSpecialCopyDir {
+	//		get {
+	//			if (_SpecialCopyDir == null) {
+	//				if (!string.IsNullOrEmpty (mSpecialCopyDirPath)) {
+	//					_SpecialCopyDir = AssetDatabase.LoadAssetAtPath (
+	//						mSpecialCopyDirPath,
+	//						typeof(UnityEngine.Object));
+	//				}
+	//			}
+	//			return _SpecialCopyDir;
+	//		}
+	//		set {
+	//			_SpecialCopyDir = value;
+	//			if (value == null) {
+	//				mSpecialCopyDirPath = "";
+	//			} else {
+	//				mSpecialCopyDirPath = AssetDatabase.GetAssetPath (_SpecialCopyDir.GetInstanceID ());
+	//			}
+	//		}
+	//	}
 
 	public bool mLicenseVerification;
 	public string mKeystoreNamePath = "";
@@ -1292,6 +1452,9 @@ public class ChlData
 		r ["mChlNmae"] = mChlName;
 		r ["mProductName"] = mProductName;
 		r ["mPlatform"] = mPlatform.ToString ();
+		#if USE_UNITYIAP
+		r ["mTargetAndroidStore"] = (int)mTargetAndroidStore; //UnityEngine.Purchasing.AndroidStore
+		#endif
 		r ["mDefaultIconPath"] = mDefaultIconPath;
 		r ["mSplashImagePath"] = mSplashImagePath;
 		r ["mBundleIndentifier"] = mBundleIndentifier;
@@ -1300,10 +1463,9 @@ public class ChlData
 		r ["mCreateEclipseProject"] = mCreateEclipseProject;
 		r ["mBuildLocation"] = mBuildLocation;
 		r ["mAlertDesc"] = mAlertDesc;
-		r ["mCopyDir"] = mCopyDirPath;
-		r ["mSpecialCopyDir"] = mSpecialCopyDirPath;
-
-		r ["mUnZip"] = mUnZip;
+		r ["mCopyDirPaths"] = mCopyDirPaths;
+//		r ["mSpecialCopyDir"] = mSpecialCopyDirPath;
+//		r ["mUnZip"] = mUnZip;
 		r ["mSubChannel"] = mSubChannel;
 		r ["mCtccChannel"] = mCtccChannel;
 		
@@ -1370,13 +1532,17 @@ public class ChlData
 			r.mPlatform = ChlPlatform.ios;
 			break;
 		}
+
+		#if USE_UNITYIAP
+		r.mTargetAndroidStore = (UnityEngine.Purchasing.AndroidStore)(Enum.ToObject (typeof(UnityEngine.Purchasing.AndroidStore), MapEx.getInt (map, "mTargetAndroidStore")));
+		#endif
 		r.mCreateEclipseProject = MapEx.getBool (map, "mCreateEclipseProject");
 		r.mBuildLocation = MapEx.getString (map, "mBuildLocation");
 		r.mAlertDesc = MapEx.getString (map, "mAlertDesc");
 		r.mAlertDesc = r.mAlertDesc == null ? "" : r.mAlertDesc;
-		r.mCopyDirPath = MapEx.getString (map, "mCopyDir");
-		r.mSpecialCopyDirPath = MapEx.getString (map, "mSpecialCopyDir");
-		r.mUnZip = MapEx.getBool (map, "mUnZip");
+		r.mCopyDirPaths = MapEx.getList (map, "mCopyDirPaths");
+//		r.mSpecialCopyDirPath = MapEx.getString (map, "mSpecialCopyDir");
+//		r.mUnZip = MapEx.getBool (map, "mUnZip");
 		r.mLicenseVerification = MapEx.getBool (map, "mLicenseVerification");
 		r.mKeystoreNamePath = MapEx.getString (map, "mKeystoreNamePath");
 		r.mKeystorePass = MapEx.getString (map, "mKeystorePass");

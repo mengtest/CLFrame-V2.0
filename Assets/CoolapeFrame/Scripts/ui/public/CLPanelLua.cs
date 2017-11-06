@@ -37,6 +37,7 @@ namespace Coolape
 		LuaFunction lfUIEventDelegate;
 		LuaFunction lfonTopPanelChange;
 		LuaFunction lfOnDestroy;
+		LuaFunction lfPrepare;
 
 		public override void setLua ()
 		{
@@ -51,6 +52,7 @@ namespace Coolape
 			lfUIEventDelegate = getLuaFunction ("uiEventDelegate");
 			lfonTopPanelChange = getLuaFunction ("onTopPanelChange");
 			lfOnDestroy = getLuaFunction ("OnDestroy");
+			lfPrepare = getLuaFunction ("prepare");
 		}
 
 		public override void OnDestroy ()
@@ -63,64 +65,88 @@ namespace Coolape
 
 		public override void onTopPanelChange (CLPanelBase p)
 		{
-			if (lfonTopPanelChange != null) {
-				lfonTopPanelChange.Call (p);
+			try {
+				if (lfonTopPanelChange != null) {
+					lfonTopPanelChange.Call (p);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public override bool hideSelfOnKeyBack ()
 		{
-			bool isHide = false;
-			object[] rets = null;
-			if (lfhideSelfOnKeyBack != null) {
-				rets = lfhideSelfOnKeyBack.Call ("");
-			}
-			if (rets != null && rets.Length > 0) {
-				isHide = (bool)(rets [0]);
-			}
-			if (isHide) {
-				CLPanelManager.hideTopPanel ();
-				return true;
+			try {
+				bool isHide = false;
+				object[] rets = null;
+				if (lfhideSelfOnKeyBack != null) {
+					rets = lfhideSelfOnKeyBack.Call ("");
+				}
+				if (rets != null && rets.Length > 0) {
+					isHide = (bool)(rets [0]);
+				}
+				if (isHide) {
+					CLPanelManager.hideTopPanel ();
+					return true;
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 			return false;
 		}
 
 		public override void hide ()
 		{
-			if (lfhide != null)
-				lfhide.Call ("");
-			base.hide ();
+			try {
+				if (lfhide != null)
+					lfhide.Call ("");
+				base.hide ();
+			} catch (System.Exception e) {
+				Debug.LogError (e);
+			}
 		}
 
 		public override void init ()
 		{
-			if (isFinishInit)
-				return;
-			getSubPanelsDepth ();
-			setLua ();
+			try {
+				if (isFinishInit)
+					return;
+				getSubPanelsDepth ();
+				setLua ();
 //      base.init ();
-			if (lfinit != null) {
-				lfinit.Call (this);
-			}
-			if (Application.isPlaying) {
-				isFinishInit = true;
+				if (lfinit != null) {
+					lfinit.Call (this);
+				}
+				if (Application.isPlaying) {
+					isFinishInit = true;
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public override void setData (object pars)
 		{
-			init ();
-			if (lfsetData != null) {
-				lfsetData.Call (pars);
+			try {
+				init ();
+				if (lfsetData != null) {
+					lfsetData.Call (pars);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public override void procNetwork (string cmd, int succ, string msg, object pars)
 		{
-			init ();
-			base.procNetwork (cmd, succ, msg, pars);
-			if (lfprocNetwork != null) {
-				lfprocNetwork.Call (cmd, succ, msg, pars);
+			try {
+				init ();
+				base.procNetwork (cmd, succ, msg, pars);
+				if (lfprocNetwork != null) {
+					lfprocNetwork.Call (cmd, succ, msg, pars);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
@@ -133,27 +159,56 @@ namespace Coolape
 
 		public override void show ()
 		{
-			if (isNeedMask4Init) {
-				if (isNeedMask4InitOnlyOnce) {
-					if (isFinishedMaskPanel) {
-						_show ();
+			isActive = true;
+			try {
+				if (isNeedMask4Init) {
+					if (isNeedMask4InitOnlyOnce) {
+						if (isFinishedMaskPanel) {
+							_show ();
+						} else {
+							Callback cb = onfinishShowMask;
+							CLPanelMask4Panel.show (cb, null);
+							isFinishedMaskPanel = true;
+						}
 					} else {
 						Callback cb = onfinishShowMask;
 						CLPanelMask4Panel.show (cb, null);
-						isFinishedMaskPanel = true;
 					}
 				} else {
-					Callback cb = onfinishShowMask;
-					CLPanelMask4Panel.show (cb, null);
+					_show ();
 				}
-			} else {
-				_show ();
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public void onfinishShowMask (params object[] para)
 		{
 			_show ();
+			doPrepare ((Callback)hideMask);
+			Invoke ("doHideMask", 10);
+		}
+
+		public  void doPrepare (object callback)
+		{
+			if (lfPrepare != null) {
+				base.prepare (lfPrepare, callback);
+			} else {
+				base.prepare (callback, null);
+			}
+		}
+
+		void hideMask (params object[] paras)
+		{
+			CancelInvoke ("doHideMask");
+			doHideMask ();
+		}
+
+		public void doHideMask ()
+		{
+//			if (isNeedMask4Init) {
+			CLPanelMask4Panel.hide (null);
+//			}
 		}
 
 		public void _show ()
@@ -173,80 +228,114 @@ namespace Coolape
 			}
 			getSubPanelsDepth ();
 			refresh ();
-			if (isNeedMask4Init) {
-				CLPanelMask4Panel.hide (null);
-			}
+			isFinishLoad = true;
 		}
 
 		public override void refresh ()
 		{
-			setSubPanelsDepth ();
-			if (lfrefresh != null) {
-				lfrefresh.Call ("");
+			try {
+				setSubPanelsDepth ();
+				if (lfrefresh != null) {
+					lfrefresh.Call ("");
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public void uiEventDelegate (GameObject go)
 		{
-			if (lfUIEventDelegate != null) {
-				lfUIEventDelegate.Call (go);
+			try {
+				if (lfUIEventDelegate != null) {
+					lfUIEventDelegate.Call (go);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		//== proc event ==============
 		public void onClick4Lua (GameObject button, string functionName)
 		{
-			LuaFunction f = getLuaFunction (functionName);
-			if (f != null) {
-				f.Call (button);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public void onDoubleClick4Lua (GameObject button, string functionName)
 		{
-			LuaFunction f = getLuaFunction (functionName);
-			if (f != null) {
-				f.Call (button);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public void onHover4Lua (GameObject button, string functionName, bool isOver)
 		{
-			LuaFunction f = getLuaFunction (functionName);
-			if (f != null) {
-				f.Call (button, isOver);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, isOver);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public void onPress4Lua (GameObject button, string functionName, bool isPressed)
 		{
-			LuaFunction f = getLuaFunction (functionName);
-			if (f != null) {
-				f.Call (button, isPressed);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, isPressed);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public void onDrag4Lua (GameObject button, string functionName, Vector2 delta)
 		{
-			LuaFunction f = getLuaFunction (functionName);
-			if (f != null) {
-				f.Call (button, delta);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, delta);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public void onDrop4Lua (GameObject button, string functionName, GameObject go)
 		{
-			LuaFunction f = getLuaFunction (functionName);
-			if (f != null) {
-				f.Call (button, go);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, go);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
 		public void onKey4Lua (GameObject button, string functionName, KeyCode key)
 		{
-			LuaFunction f = getLuaFunction (functionName);
-			if (f != null) {
-				f.Call (button, key);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, key);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 	}

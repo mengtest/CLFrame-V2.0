@@ -81,9 +81,12 @@ public class CLSharedAssetsInspector : Editor
 						{
 							if (instance.meshs [i].meshFilter != null) {
 								EditorGUILayout.ObjectField ("Mesh Fiter", (Object)(instance.meshs [i].meshFilter), typeof(MeshFilter), true);
-							} else {
+							} else  if(instance.meshs[i].skinnedMesh != null) {
 								EditorGUILayout.ObjectField ("Skinned Mesh", (Object)(instance.meshs [i].skinnedMesh), typeof(SkinnedMeshRenderer), true);
+							} else if(instance.meshs[i].animator != null) {
+								EditorGUILayout.ObjectField ("Animator", (Object)(instance.meshs[i].animator), typeof(Animator), true);
 							}
+
 							GUI.color = Color.red;
 							if (GUILayout.Button ("Delete", GUILayout.Width (60))) {
 								if (EditorUtility.DisplayDialog ("Alert", "Really want to delete?", "Okay", "Cancel")) {
@@ -94,6 +97,10 @@ public class CLSharedAssetsInspector : Editor
 							GUI.color = Color.white;
 						}
 						GUILayout.EndHorizontal ();
+
+						if (instance.meshs [i].animator != null) {
+							EditorGUILayout.ObjectField ("Avatar", (Object)(getAvatar (instance.meshs [i].modelName)), typeof(Avatar), true);
+						}
 						EditorGUILayout.TextField ("Model Name", instance.meshs [i].modelName);
 						EditorGUILayout.ObjectField ("Mesh", (Object)(getMesh (instance.meshs [i].modelName)), typeof(Mesh), true);
 					}
@@ -138,6 +145,27 @@ public class CLSharedAssetsInspector : Editor
 		NGUIEditorTools.BeginContents();
 		EventDelegateEditor.Field(instance, list, null, null, minimalistic);
 		NGUIEditorTools.EndContents();
+	}
+
+
+	public Avatar getAvatar (string path)
+	{
+		if (MeshMap [path] == null) {
+			string matPath = PStr.b ().a (CLPathCfg.self.basePath).a ("/")
+				.a ("upgradeRes4Dev").a ("/other/model/").a (path.Replace (".", "/")).a (".FBX").e ();
+			Debug.Log (matPath);
+			MeshMap [path] = ECLEditorUtl.getObjectByPath (matPath);
+		}
+		GameObject mi = MeshMap [path] as GameObject;
+
+		Animator animator = mi.GetComponent<Animator>();
+		if (animator == null) {
+			animator = mi.GetComponentInChildren<Animator>();
+		}
+		if(animator != null) {
+			return animator.avatar;
+		}
+		return null;
 	}
 
 	public Mesh getMesh (string path)
@@ -305,6 +333,18 @@ public class CLSharedAssetsInspector : Editor
 			}
 		}
 
+		Animator[] anis = tr.GetComponents<Animator> ();
+		for (int i = 0; i < anis.Length; i++) {
+			if (anis [i].avatar == null)
+				continue;
+			Coolape.CLSharedAssets.CLMeshInfor clMesh = new Coolape.CLSharedAssets.CLMeshInfor ();
+			ret2 = ECLEditorUtl.moveAsset4Upgrade (anis [i].avatar) || ret2 ? true : false;
+			string modelName = ECLEditorUtl.getAssetName4Upgrade (anis [i].avatar);
+			clMesh.modelName = modelName;
+			clMesh.animator = anis [i];
+			sharedAsset.meshs.Add (clMesh);
+		}
+
 		for (int i = 0; i < tr.childCount; i++) {
 			ret3 = getMeshRef (sharedAsset, tr.GetChild (i)) || ret3 ? true : false;
 		}
@@ -312,27 +352,49 @@ public class CLSharedAssetsInspector : Editor
 		return ret1 || ret2 || ret3;
 	}
 
-	public static void setModelProp(string modelName) {
-		string matPath = PStr.b ().a (CLPathCfg.self.basePath).a ("/")
-			.a ("upgradeRes4Dev").a ("/other/model/").a (modelName.Replace (".", "/")).a (".FBX").e ();
-		ModelImporter mi = ModelImporter.GetAtPath("Assets/"+matPath) as ModelImporter;
+	public static void setModelProp(ModelImporter mi) {
 		if (mi != null) {
 			mi.importMaterials = false;
 			mi.isReadable = false;
-			AssetDatabase.ImportAsset(matPath);
+			mi.importTangents = ModelImporterTangents.None;
+			mi.importNormals = ModelImporterNormals.None;
 			AssetDatabase.Refresh();
 		}
+	}
+	public static void setModelProp(string modelName) {
+		string matPath = PStr.b ().a ("Assets/").a (CLPathCfg.self.basePath).a ("/")
+			.a ("upgradeRes4Dev").a ("/other/model/").a (modelName.Replace (".", "/")).a (".FBX").e ();
+		doSetModelProp (matPath);
+	}
+	public static void doSetModelProp(string matPath) {
+		ModelImporter mi = ModelImporter.GetAtPath(matPath) as ModelImporter;
+		if (mi != null) {
+			setModelProp (mi);
+			AssetDatabase.ImportAsset (matPath);
+		}
+
 		GameObject go = ECLEditorUtl.getObjectByPath (matPath) as GameObject;
 		if(go != null) {
 			MeshRenderer mf = go.GetComponentInChildren<MeshRenderer> ();
 			if (mf != null) {
 				mf.sharedMaterial = null;
+				Material[] mats = mf.sharedMaterials;
+				for(int i=0; i < mats.Length; i++) {
+					mats [i] = null;
+				}
+				mf.sharedMaterials = mats;
 			}
 			SkinnedMeshRenderer smr = go.GetComponentInChildren<SkinnedMeshRenderer> ();
 			if (smr != null) {
 				smr.sharedMaterial = null;
+				Material[] mats = smr.sharedMaterials;
+				for(int i=0; i < mats.Length; i++) {
+					mats [i] = null;
+				}
+				smr.sharedMaterials = mats;
 			}
-			AssetDatabase.ImportAsset(matPath);
+			EditorUtility.SetDirty (go);
+			AssetDatabase.WriteImportSettingsIfDirty(matPath);
 			AssetDatabase.Refresh();
 		}
 	}

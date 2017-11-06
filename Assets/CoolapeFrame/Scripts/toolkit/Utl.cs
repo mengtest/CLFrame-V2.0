@@ -32,10 +32,10 @@ namespace Coolape
 
 		public static string uuid {
 			get {
-				if (string.IsNullOrEmpty(cacheUuid)) {
+				if (string.IsNullOrEmpty (cacheUuid)) {
 					if (Application.platform == RuntimePlatform.Android) {
 						cacheUuid = SystemInfo.deviceUniqueIdentifier;
-					} else if(Application.platform == RuntimePlatform.IPhonePlayer) {
+					} else if (Application.platform == RuntimePlatform.IPhonePlayer) {
 						#if UNITY_IOS || UNITY_IPHONE || UNITY_STANDALONE_OSX
 						string jsonStr = KeyChain.BindGetKeyChainUser ();
 						Debug.Log("jsonStr===========" + jsonStr);
@@ -568,7 +568,7 @@ namespace Coolape
 			line.SetColors (color, color);
 			line.SetPosition (0, startPos);
 			line.SetPosition (1, endPos);
-			line.gameObject.SetActive(true);
+			line.gameObject.SetActive (true);
 			return line;
 		}
 
@@ -830,81 +830,111 @@ namespace Coolape
 
 		public static object[] doCallback (object callback)
 		{
-			if (callback == null)
+			try {
+				if (callback == null)
+					return null;
+				object[] ret = null;
+				if (callback is LuaFunction) {
+					ret = ((LuaFunction)callback).Call ();
+				} else if (callback is Callback) {
+					((Callback)callback) ();
+				}
+				return ret;
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 				return null;
-			object[] ret = null;
-			if (callback is LuaFunction) {
-				ret = ((LuaFunction)callback).Call ();
-			} else if (callback is Callback) {
-				((Callback)callback) ();
 			}
-			return ret;
 		}
 
 		public static object[] doCallback (object callback, object paras)
 		{
-			if (callback == null)
+			try {
+				if (callback == null)
+					return null;
+				object[] ret = null;
+				if (callback is LuaFunction) {
+					ret = ((LuaFunction)callback).Call (paras);
+				} else if (callback is Callback) {
+					((Callback)callback) (paras);
+				}
+				return ret;
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 				return null;
-			object[] ret = null;
-			if (callback is LuaFunction) {
-				ret = ((LuaFunction)callback).Call (paras);
-			} else if (callback is Callback) {
-				((Callback)callback) (paras);
 			}
-			return ret;
 		}
 
 		public static object[] doCallback (object callback, object paras1, object paras2)
 		{
-			if (callback == null)
+			try {
+				if (callback == null)
+					return null;
+				object[] ret = null;
+				if (callback is LuaFunction) {
+					ret = ((LuaFunction)callback).Call (paras1, paras2);
+				} else if (callback is Callback) {
+					((Callback)callback) (paras1, paras2);
+				}
+				return ret;
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 				return null;
-			object[] ret = null;
-			if (callback is LuaFunction) {
-				ret = ((LuaFunction)callback).Call (paras1, paras2);
-			} else if (callback is Callback) {
-				((Callback)callback) (paras1, paras2);
 			}
-			return ret;
 		}
 
 		public static object[] doCallback (object callback, object paras1, object paras2, object paras3)
 		{
-			if (callback == null)
+			try {
+				if (callback == null)
+					return null;
+				object[] ret = null;
+				if (callback is LuaFunction) {
+					ret = ((LuaFunction)callback).Call (paras1, paras2, paras3);
+				} else if (callback is Callback) {
+					((Callback)callback) (paras1, paras2, paras3);
+				}
+				return ret;
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 				return null;
-			object[] ret = null;
-			if (callback is LuaFunction) {
-				ret = ((LuaFunction)callback).Call (paras1, paras2, paras3);
-			} else if (callback is Callback) {
-				((Callback)callback) (paras1, paras2, paras3);
 			}
-			return ret;
 		}
 
 		public static object[] doCallback (object callback, object paras1, object paras2, object paras3, object paras4)
 		{
-			if (callback == null)
-				return null;
+			try {
+				if (callback == null)
+					return null;
 
-			object[] ret = null;
-			if (callback is LuaFunction) {
-				ret = ((LuaFunction)callback).Call (paras1, paras2, paras3, paras4);
-			} else if (callback is Callback) {
-				((Callback)callback) (paras1, paras2, paras3, paras4);
+				object[] ret = null;
+				if (callback is LuaFunction) {
+					ret = ((LuaFunction)callback).Call (paras1, paras2, paras3, paras4);
+				} else if (callback is Callback) {
+					((Callback)callback) (paras1, paras2, paras3, paras4);
+				}
+				return ret;
+			} catch (System.Exception e) {
+				Debug.LogError (e);
+				return null;
 			}
-			return ret;
 		}
 
 		public static object[] doCallback (object callback, object paras1, object paras2, object paras3, object paras4, object paras5)
 		{
-			if (callback == null)
+			try {
+				if (callback == null)
+					return null;
+				object[] ret = null;
+				if (callback is LuaFunction) {
+					ret = ((LuaFunction)callback).Call (paras1, paras2, paras3, paras4, paras5);
+				} else if (callback is Callback) {
+					((Callback)callback) (paras1, paras2, paras3, paras4, paras5);
+				}
+				return ret;
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 				return null;
-			object[] ret = null;
-			if (callback is LuaFunction) {
-				ret = ((LuaFunction)callback).Call (paras1, paras2, paras3, paras4, paras5);
-			} else if (callback is Callback) {
-				((Callback)callback) (paras1, paras2, paras3, paras4, paras5);
 			}
-			return ret;
 		}
 
 		/// <summary>
@@ -918,7 +948,7 @@ namespace Coolape
 		/// </param>
 		public static Hashtable fileToMap (string path)
 		{
-			if (!File.Exists(path)) {
+			if (!File.Exists (path)) {
 				return null;
 			}
 			byte[] buffer = File.ReadAllBytes (path);
@@ -964,13 +994,15 @@ namespace Coolape
 
 		public static bool IntersectRay (Bounds bounds, Ray ray)
 		{
-			if( bounds.Contains(ray.origin)) return true;
+			if (bounds.Contains (ray.origin))
+				return true;
 			return bounds.IntersectRay (ray);
 		}
 
 		public static bool IntersectRay (Bounds bounds, Ray ray, float minDis, float maxDis)
 		{
-			if( bounds.Contains(ray.origin)) return true;
+			if (bounds.Contains (ray.origin))
+				return true;
 			float dis = 0;
 			bool ret = bounds.IntersectRay (ray, out dis);
 			if (ret && dis >= minDis && dis <= maxDis) {

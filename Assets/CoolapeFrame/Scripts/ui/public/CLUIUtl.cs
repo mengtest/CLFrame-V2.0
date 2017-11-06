@@ -79,7 +79,12 @@ namespace Coolape
 			string childName = "";
 			for (int i = 0; i < list.Count; i++) {
 				childName = NumEx.nStrForLen (beforCount + i, 5);
+#if UNITY_5_6_OR_NEWER
 				go = parent.transform.Find (childName);
+#else
+				go = parent.transform.FindChild (childName);
+#endif
+
 				if (go == null) {
 					go = NGUITools.AddChild (parent.gameObject, prefabChild).transform;
 					go.name = childName;
@@ -177,7 +182,11 @@ namespace Coolape
 			string childName = "";
 			for (i = 0; i < parentTf.childCount && list != null && j < list.Length; i++) {
 				childName = NumEx.nStrForLen (i, 5);
+#if UNITY_5_6_OR_NEWER
 				go = parentTf.Find (childName);
+#else
+				go = parentTf.FindChild (childName);
+#endif
 				if (go != null) {
 					if (go.GetComponent (itype) != null) {
 						NGUITools.SetActive (go.gameObject, true);
@@ -202,7 +211,11 @@ namespace Coolape
 		
 			while (i < parentTf.childCount) {
 				childName = NumEx.nStrForLen (i, 5);
+#if UNITY_5_6_OR_NEWER
 				go = parentTf.Find (childName);
+#else
+				go = parentTf.FindChild (childName);
+#endif
 				if (go != null && go.gameObject.activeSelf) {
 					if (go.GetComponent (itype) != null) {
 						NGUITools.SetActive (go.gameObject, false);
@@ -407,7 +420,11 @@ namespace Coolape
 			int i = 0;
 			for (i = list.Count - 1; i >= 0; i--) {
 				if (i < cellObjCount) {
+#if UNITY_5_6_OR_NEWER
 					go = grid.transform.Find (i.ToString ()).gameObject;
+#else
+					go = grid.transform.FindChild (i.ToString ()).gameObject;
+#endif
 					NGUITools.SetActive (go, true);
 				} else {
 					go = NGUITools.AddChild (grid.gameObject, prefabChild);
@@ -423,7 +440,11 @@ namespace Coolape
 				go.transform.localPosition = pos;
 			}
 			for (i = list.Count; i < cellObjCount; i++) {
+#if UNITY_5_6_OR_NEWER
 				go = grid.transform.Find (i.ToString ()).gameObject;
+#else
+				go = grid.transform.FindChild (i.ToString ()).gameObject;
+#endif
 				NGUITools.SetActive (go, false);
 			}
 		}

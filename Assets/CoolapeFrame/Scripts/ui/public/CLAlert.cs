@@ -10,6 +10,11 @@ namespace Coolape
 		UIPanel panel;
 		HUDText hudText;
 		public string hudBackgroundSpriteName = "public_empty";
+		public UIBasicSprite.Type hudBackgroundSpriteType = UIBasicSprite.Type.Simple;
+		public int bgAnchorLeft = -5;
+		public int bgAnchorBottom = -5;
+		public int bgAnchorTop = 5;
+		public int bgAnchorRight = 5;
 		public Color hudBackgroundColor = Color.white;
 		public static SpriteHudPool pool = new SpriteHudPool ();
 
@@ -86,8 +91,9 @@ namespace Coolape
 						sp.transform.localScale = Vector3.one;
 						sp.transform.localPosition = Vector3.zero;
 						sp.color = self.hudBackgroundColor;
+						sp.type = self.hudBackgroundSpriteType;
 						sp.depth = label.depth - 1;
-						sp.SetAnchor (label.gameObject, -5, -5, 5, 5);
+						sp.SetAnchor (label.gameObject, self.bgAnchorLeft, self.bgAnchorBottom, self.bgAnchorRight, self.bgAnchorTop);
 						NGUITools.SetActive (sp.gameObject, true);
 						sp.ResetAndUpdateAnchors ();
 					}

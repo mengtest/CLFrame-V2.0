@@ -58,8 +58,11 @@ namespace Coolape
 			socket.connectAsync (connectCallback, outofLine);
 		}
 
-		public void connectCallback (object result)
+		public void connectCallback (USocket s, object result)
 		{
+			if (this.socket == null || (this.socket != null && !this.socket.Equals (s))) {
+				return;
+			}
 			if ((bool)result) {//connectCallback
 				#if UNITY_EDITOR
 				Debug.Log ("connectCallback    success");
@@ -86,8 +89,11 @@ namespace Coolape
 			}
 		}
 
-		void onReceive (object obj)
+		void onReceive (USocket s, object obj)
 		{
+			if (this.socket == null || (this.socket != null && !this.socket.Equals (s))) {
+				return;
+			}
 			try {
 				//			dispach.Call ((Hashtable)obj);
 				if (mDispatcher != null)
@@ -109,6 +115,10 @@ namespace Coolape
 
 		public void send (object obj)
 		{
+			if (socket == null) {
+				Debug.LogWarning ("Socket is null");
+				return;
+			}
 			socket.SendAsync (obj);
 		}
 
@@ -127,7 +137,7 @@ namespace Coolape
 					timer.Dispose ();
 				}
 				timer = null;
-				outofLine (socket);
+				outofLine (socket, null);
 			}
 		}
 
@@ -138,15 +148,23 @@ namespace Coolape
 			if (socket != null) {
 				socket.close ();
 			}
+			socket = null;
 		}
 
 		public void send (System.Collections.Hashtable map)
 		{
+			if (socket == null) {
+				Debug.LogWarning ("Socket is null");
+				return;
+			}
 			socket.SendAsync (map);
 		}
 
-		void outofLine (object obj)
+		void outofLine (USocket s, object obj)
 		{
+			if (this.socket == null || (this.socket != null && !this.socket.Equals (s))) {
+				return;
+			}
 			if (!isStopping) {
 //				CLPanelManager.topPanel.onNetwork (CONST_OutofNetConnect, -9999, "server connect failed!", null);
 				CLMainBase.self.onOffline ();

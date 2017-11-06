@@ -57,6 +57,7 @@ public class HUDText : MonoBehaviour
 	public bool needQueue = true;
 	public float scaleOffset = 1;
 	public float speed = 1;
+	public float hightOffset = 0;
 	
 	public AnimationCurve scaleCurve = new AnimationCurve(new Keyframe[] { new Keyframe(0f, 0f), new Keyframe(1f, 1f) });
 	
@@ -320,7 +321,7 @@ public class HUDText : MonoBehaviour
 			cellEnt.label.cachedTransform.localPosition = new Vector3(0f, offset, 0f);
 
 			if(needQueue) {
-				offset += Mathf.Round(cellEnt.label.cachedTransform.localScale.y * cellEnt.label.height); //modify by chenbin
+				offset += Mathf.Round(cellEnt.label.cachedTransform.localScale.y * cellEnt.label.height + hightOffset); //modify by chenbin
 			}
 		}
 	}

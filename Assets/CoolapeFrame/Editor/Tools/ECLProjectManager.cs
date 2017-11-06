@@ -32,6 +32,7 @@ public class ECLProjectManager : EditorWindow
 	public const string configFile = FrameData + "/cfg/projcet.cfg";
 	public const string resModifyDateCfg = FrameData + "/verControl/.resModifyDate.v";
 
+	public const string preUpgradeListName = "preUpgradeList";
 	#if UNITY_ANDROID
 	// 开发中的版本文件
 	public const string ver4DevelopeMd5 = FrameData + "/verControl/android/ver4DevelopeMd5.v";
@@ -97,6 +98,7 @@ public class ECLProjectManager : EditorWindow
 	bool state2 = true;
 	bool state3 = false;
 	bool state4 = false;
+	bool state5 = false;
 	static ProjectData _data;
 
 	public static ProjectData data {
@@ -228,6 +230,17 @@ public class ECLProjectManager : EditorWindow
 									using (new SwitchColor (Color.cyan)) {
 										if (GUILayout.Button ("Server Binding Upgrade Res Package Md5\n(需要手工处理)", GUILayout.Width (300))) {
 											ECLUpgradeBindingServer.show ();
+										}
+									}
+								}
+
+								state5 = NGUIEditorTools.DrawHeader ("Preupgrade");
+								if (state5) {
+									GUILayout.Space (10);
+									using (new SwitchColor (Color.yellow)) {
+										if (GUILayout.Button ("热更新前需要更新的列表\n(需要手工处理)", GUILayout.Width (300))) {
+											string path = PStr.b ().a (Application.dataPath).a ("/").a (data.name).a ("/upgradeRes4Publish").e ();
+											ECLGUIResList.show (path, (Callback)onGetFiles4Preupgrade, null);
 										}
 									}
 								}
@@ -1142,6 +1155,50 @@ public class ECLProjectManager : EditorWindow
 		ECLCreateVerCfg.saveMap (verVerMap, tmpPath);
 
 		EditorUtility.DisplayDialog ("success", "Publish Version File Created!", "Okay");
+	}
+
+	void onGetFiles4Preupgrade (params object[] args)
+	{
+		ArrayList list = (ArrayList)(args [0]);
+		if (list.Count == 0)
+			return;
+
+		int count = list.Count;
+		string verVal = "";
+		ECLResInfor ri = null;
+		ArrayList preupgradeList = new ArrayList ();
+		for (int i = 0; i < count; i++) {
+			ri = (ECLResInfor)(list [i]);
+			ArrayList cell = new ArrayList ();
+			verVal = Utl.MD5Encrypt (File.ReadAllBytes (ri.path));
+			cell.Add (ri.publishPath);
+			cell.Add (verVal);
+			preupgradeList.Add (cell);
+		}
+		// 热更新的资源包目录
+		string newUpgradeDir = DateEx.format (DateEx.fmt_yyyy_MM_dd_HH_mm_ss);
+		string toPathBase = (Application.dataPath + "/").Replace ("/Assets/", "/Assets4PreUpgrade/" + newUpgradeDir + "/");
+		Debug.Log (toPathBase);
+		string toPath = toPathBase;
+		if (Directory.Exists (toPath)) {
+			Directory.Delete (toPath, true);
+		}
+		Directory.CreateDirectory (Path.GetDirectoryName (toPath));
+
+		string path = "";
+		path = Application.streamingAssetsPath + "/upgraderVer.json";
+		string strs = File.ReadAllText (path);
+		Hashtable m = JSON.DecodeMap (strs);
+		int verPre = MapEx.getInt (m, "upgraderVer") + 1;
+		m ["upgraderVer"] = verPre;
+		File.WriteAllText (path, JSON.JsonEncode (m));
+		File.Copy (path, toPath + "upgraderVer.json");
+
+		string jsonStr = JSON.JsonEncode (preupgradeList);
+		Debug.Log (jsonStr);
+		path = toPath + preUpgradeListName + "." + verPre;
+		File.WriteAllText (path, jsonStr);
+		EditorUtility.DisplayDialog ("success", "success!", "Okay");
 	}
 
 	/// <summary>

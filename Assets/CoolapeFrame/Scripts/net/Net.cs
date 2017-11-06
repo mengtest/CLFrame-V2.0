@@ -156,7 +156,7 @@ namespace Coolape
 				gateTcp.init (gateHost, gatePort);
 				gateTcp.connect ();
 			} else {
-				gateTcp.connectCallback (true);
+				gateTcp.connectCallback (gateTcp.socket, true);
 			}
 		}
 
@@ -178,7 +178,7 @@ namespace Coolape
 				gameTcp.init (host, port);
 				gameTcp.connect ();
 			} else {
-				gameTcp.connectCallback (true);
+				gameTcp.connectCallback (gameTcp.socket, true);
 			}
 		}
 

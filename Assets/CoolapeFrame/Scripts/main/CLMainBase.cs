@@ -119,6 +119,8 @@ namespace Coolape
 			FileEx.cleanCache ();
 			CLUtlLua.cleanFileBytesCacheMap ();
 			CLUtlLua.isFinishAddLoader = false;
+			//重新把配置清空
+			CLMaterialPool.materialTexRefCfg = null;
 			if (mainLua != null) {
 				destoryLua ();
 //				mainLua.Dispose ();

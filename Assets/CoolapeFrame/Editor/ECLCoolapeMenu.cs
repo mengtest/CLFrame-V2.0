@@ -198,6 +198,21 @@ static public class ECLCoolapeMenu
 		ECLLocalizeSelection.open (null);
 	}
 
+	[MenuItem (toolesName + "/setModeProp", false, 17)]
+	static public void setModeProp ()
+	{
+		Object[] objs = Selection.objects;
+		if (objs == null || objs.Length == 0)
+			return;
+		ModelImporter mi = null;
+		string path = "";
+		for (int j = 0; j < objs.Length; j++) {
+			path = AssetDatabase.GetAssetPath (objs [j]);
+//			mi = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath (objs[j])) as ModelImporter;
+			CLSharedAssetsInspector.doSetModelProp (path);
+		}
+	}
+
 	[MenuItem (toolesName + "/Close Render shadow", false, 18)]
 	static public void closeRenderShadow ()
 	{
@@ -219,6 +234,7 @@ static public class ECLCoolapeMenu
 
 			EditorUtility.SetDirty (go);
 		}
+		AssetDatabase.SaveAssets();
 	}
 
 	[MenuItem (toolesName + "/CleanMainCityText", false, 18)]

@@ -80,7 +80,7 @@ public static class ECLEditorUtl
 		string extension = Path.GetExtension (filePath).ToLower ();
 		string extensionList = ECLProjectManager.data.ingoreResWithExtensionNames.ToLower ();
 
-		if (extensionList.Contains (extension)) {
+		if (!string.IsNullOrEmpty(extension) && extensionList.Contains (extension)) {
 			return true;
 		}
 		return false;
@@ -110,7 +110,7 @@ public static class ECLEditorUtl
 			toPathBase = toPathBase + "effect/";
 		} else if (obj is AudioClip) {
 			toPathBase = toPathBase + "sound/";
-		} else if (obj is Mesh) {
+		} else if (obj is Mesh || obj is Avatar) {
 			toPathBase = toPathBase + "model/";
 		} else {
 			toPathBase = toPathBase + "things/";
@@ -165,7 +165,7 @@ public static class ECLEditorUtl
 			replacePath = replacePath + "effect/";
 		} else if (obj is AudioClip) {
 			replacePath = replacePath + "sound/";
-		} else if (obj is Mesh) {
+		} else if (obj is Mesh || obj is Avatar) {
 			replacePath = replacePath + "model/";
 		} else {
 			replacePath = replacePath + "things/";

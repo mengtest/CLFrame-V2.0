@@ -1,4 +1,4 @@
-//----------------------------------------------
+ //----------------------------------------------
 //            NGUI: Next-Gen UI kit
 // Copyright © 2011-2015 Tasharen Entertainment
 //----------------------------------------------
@@ -1162,7 +1162,11 @@ public class UIAtlasMaker : EditorWindow
 			//chang textures type
 			string path = AssetDatabase.GetAssetPath(tex); 
 			TextureImporter textureImporter = AssetImporter.GetAtPath(path) as TextureImporter; 
-			textureImporter.textureType = TextureImporterType.GUI;    
+			textureImporter.textureType = TextureImporterType.GUI;
+			textureImporter.mipmapEnabled = false;
+			textureImporter.wrapMode = TextureWrapMode.Clamp;
+			textureImporter.alphaIsTransparency = true;
+			textureImporter.npotScale = TextureImporterNPOTScale.None;
 			textureImporter.filterMode = FilterMode.Trilinear;		//改成这种模式好像更省内存
 			AssetDatabase.ImportAsset(path); 
 			

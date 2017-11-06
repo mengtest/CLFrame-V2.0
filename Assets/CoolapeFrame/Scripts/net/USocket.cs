@@ -20,7 +20,7 @@ using System.Threading;
 
 namespace Coolape
 {
-	public delegate void NetCallback (object obj);
+	public delegate void NetCallback (USocket socket, object obj);
 	//	public delegate void NetCallbackRobot (object obj, int code);
 
 	public class USocket
@@ -37,6 +37,7 @@ namespace Coolape
 		private int failTimes = 0;
 		public bool isActive = false;
 		public Timer timeoutCheckTimer;
+		public static int __maxLen = 1024 * 1024;
 
 		public USocket (string ihost, int iport)
 		{
@@ -81,10 +82,10 @@ namespace Coolape
 					//callback (true);
 				} else {
 					//mSocket.Close ();
-					callback (false);
+					callback (this, false);
 				}
 			} else {
-				callback (false);
+				callback (this, false);
 			}
 		}
 
@@ -110,17 +111,17 @@ namespace Coolape
 					// isOpen始接Number据
 					// client.ReceiveAsync ();
 				
-					client.connectCallbackFunc (true);
+					client.connectCallbackFunc (client, true);
 					client.failTimes = 0;
 				} else {
-					client.connectCallbackFunc (false);
+					client.connectCallbackFunc (client, false);
 					client.close ();
 				}
 			} catch (Exception e) {
 				client.IsConnectionSuccessful = false;
 				Debug.Log ("connect faile:" + e);
 				client.failTimes++;
-				client.connectCallbackFunc (false);
+				client.connectCallbackFunc (client, false);
 				client.close ();
 			} finally {
 				client.TimeoutObject.Set ();
@@ -153,17 +154,17 @@ namespace Coolape
 						client.parseMsg ();
 					} else if (bytesRead < 0) {
 						if (client.offLineCallback != null) {
-							client.offLineCallback (client);
+							client.offLineCallback (client, null);
 						}
-						client.connectCallbackFunc (false);
+						client.connectCallbackFunc (client, false);
 						client.close ();
 					} else {
 						// 所有Number据读取完毕.
 						Debug.Log ("receive zero=====" + bytesRead);
 						if (client.offLineCallback != null) {
-							client.offLineCallback (client);
+							client.offLineCallback (client, null);
 						}
-						client.connectCallbackFunc (false);
+						client.connectCallbackFunc (client, false);
 						client.close ();
 						return;
 					}
@@ -175,16 +176,16 @@ namespace Coolape
 					}
 				} else {
 					if (client.offLineCallback != null) {
-						client.offLineCallback (client);
+						client.offLineCallback (client, null);
 					}
-					client.connectCallbackFunc (false);
+					client.connectCallbackFunc (client, false);
 					client.close ();
 				}
 			} catch (Exception e) {
 				if (client.offLineCallback != null) {
-					client.offLineCallback (client);
+					client.offLineCallback (client, null);
 				}
-				client.connectCallbackFunc (false);
+				client.connectCallbackFunc (client, false);
 				client.close ();
 				Debug.Log (e);
 			}
@@ -226,7 +227,7 @@ namespace Coolape
 			} catch (System.Exception e) {
 				Debug.LogError (e);
 				if (offLineCallback != null) {
-					offLineCallback (this);
+					offLineCallback (this, null);
 				}
 				close ();
 			}
@@ -235,7 +236,7 @@ namespace Coolape
 		public void sendTimeOut (object orgs)
 		{
 			if (offLineCallback != null) {
-				offLineCallback (this);
+				offLineCallback (this, null);
 			}
 			close ();
 		}
@@ -247,7 +248,7 @@ namespace Coolape
 			int bytesSent = client.mSocket.EndSend (ar);
 			if (bytesSent <= 0) { //发送失败
 				if (client.offLineCallback != null) {
-					client.offLineCallback (client);
+					client.offLineCallback (client, null);
 				}
 				client.close ();
 			}
@@ -262,10 +263,10 @@ namespace Coolape
 				if (currentPostion > 4) {
 					mBuffer.Position = 0;
 					long len = B2InputStream.readInt (mBuffer);
-					if (len <= 0 || len > 1024 * 1024) {
+					if (len <= 0 || len > __maxLen) {
 						// 网络Number据错误。断isOpen网络
 //					Main.self.onOffline ();
-						connectCallbackFunc (false);
+						connectCallbackFunc (this, false);
 						close ();
 						isLoop = false;
 					} else {
@@ -273,7 +274,7 @@ namespace Coolape
 						if (cp2 + len <= currentPostion) {
 							object o = B2InputStream.readObject (mBuffer);
 							//Dispatch.dispatcher ((Hashtable)o);  //回调主处理
-							OnReceiveCallback (o);
+							OnReceiveCallback (this, o);
 							long cp3 = mBuffer.Position;
 							long less = currentPostion - cp3;
 							if (less > 0) {

@@ -99,7 +99,7 @@ public class CBPushServer extends Service {
 	}
 
 	public static void setMsg(String msg, long fireSeconds) {
-		long now = new Date().getTime();
+		long now = System.currentTimeMillis();// new Date().getTime();
 		now += fireSeconds * 1000;
 		String str = msg + "@@" + now;
 		if (data == null) {

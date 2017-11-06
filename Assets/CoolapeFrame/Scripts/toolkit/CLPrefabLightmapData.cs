@@ -66,7 +66,12 @@ namespace Coolape
 					//=====================================
 //					Debug.Log (r.lightmapIndex);
 					lightMapData = LightmapSettings.lightmaps [r.lightmapIndex];
+
+#if UNITY_5_6_OR_NEWER
 					lightmapTexture = lightMapData.lightmapColor;
+#else
+					lightmapTexture = lightMapData.lightmapLight;
+#endif
 //				info.lightmapIndex = m_Lightmaps.IndexOf (lightmapTexture);
 					if (m_Lightmaps [r.lightmapIndex] == null) {
 						info.lightmapIndex = r.lightmapIndex;
@@ -92,7 +97,11 @@ namespace Coolape
 			LightmapData lightMapData;
 			for (int i = 0; i < m_Lightmaps.Length; i++) {
 				lightMapData = new LightmapData ();
+#if UNITY_5_6_OR_NEWER
 				lightMapData.lightmapColor = m_Lightmaps [i];
+#else
+				lightMapData.lightmapLight = m_Lightmaps [i];
+#endif
 				lightMapData.lightmapDir = m_Lightmaps [i];
 				combinedLightmaps [preIndex + i] = lightMapData;
 			}

@@ -5,6 +5,7 @@
 
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 /// <summary>
 /// Sprite is a textured element in the UI hierarchy.
@@ -68,7 +69,7 @@ public class UISprite : UIBasicSprite
 		
 		if (_grayMaterial != null) {
 			_grayMaterial.mainTexture = null;
-			GameObject.DestroyImmediate (_grayMaterial);
+//			GameObject.DestroyImmediate (_grayMaterial);
 			_grayMaterial = null;
 		}
 		
@@ -97,15 +98,21 @@ public class UISprite : UIBasicSprite
 			}
 		}
 	}
-	
+
+	public static Hashtable grayMatMap = new Hashtable();
 	Material _grayMaterial;
 	
 	public Material grayMaterial {
 		get {
 			if (_grayMaterial == null) {
-				if (mSprite != null) {
-					Shader shader = Shader.Find ("Unlit/Transparent Colore Gray");
-					_grayMaterial = new Material (shader);
+				if (mSprite != null  && mSprite.material != null) {
+					if (grayMatMap [mSprite.path] == null) {
+						Shader shader = Shader.Find ("Unlit/Transparent Colore Gray");
+						_grayMaterial = new Material (shader);
+						grayMatMap [mSprite.path] = _grayMaterial;
+					} else {
+						_grayMaterial = grayMatMap [mSprite.path] as Material;
+					}
 					_grayMaterial.mainTexture = mSprite.material.mainTexture;
 				} else {
 					refresh ();

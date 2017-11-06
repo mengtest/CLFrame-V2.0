@@ -64,7 +64,7 @@ namespace Coolape
 //			if (isResetShaderInEdeitorMode) {
 //				Utl.setBodyMatEdit (transform);
 //			}
-			EventDelegate.Execute(onFinshLoad, gameObject);
+			EventDelegate.Execute (onFinshLoad, gameObject);
 		}
 
 		public bool isEmpty ()
@@ -91,6 +91,9 @@ namespace Coolape
 				}
 				if (meshInfor.skinnedMesh != null) {
 					meshInfor.skinnedMesh.sharedMesh = null;
+				}
+				if(meshInfor.animator != null) {
+					meshInfor.animator.avatar = null;
 				}
 			}
 		}
@@ -122,6 +125,9 @@ namespace Coolape
 				}
 				if (meshInfor.skinnedMesh != null) {
 					meshInfor.skinnedMesh.sharedMesh = null;
+				}
+				if(meshInfor.animator != null) {
+					meshInfor.animator.avatar = null;
 				}
 			}
 			#endif
@@ -278,6 +284,7 @@ namespace Coolape
 			public MeshFilter meshFilter;
 			public SkinnedMeshRenderer skinnedMesh;
 			//			public string meshName;
+			public Animator animator;
 			public string modelName;
 
 			object finishCallback;
@@ -319,21 +326,38 @@ namespace Coolape
 					return;
 				}
 				if (obj != null) {
-					MeshFilter mf = obj.GetComponentInChildren<MeshFilter> ();
-					if (mf != null) {
-						meshFilter.sharedMesh = mf.sharedMesh;
-						#if UNITY_EDITOR
-						if (!Application.isPlaying) {
-							EditorUtility.SetDirty (meshFilter);
+					if (meshFilter != null) {
+						MeshFilter mf = obj.GetComponentInChildren<MeshFilter> ();
+						if (mf != null) {
+							meshFilter.sharedMesh = mf.sharedMesh;
+							#if UNITY_EDITOR
+							if (!Application.isPlaying) {
+								EditorUtility.SetDirty (meshFilter);
+							}
+							#endif
 						}
-						#endif
-					} else {
-						SkinnedMeshRenderer smr = obj.GetComponentInChildren<SkinnedMeshRenderer> ();
+					}
+					if (skinnedMesh != null) {
+						SkinnedMeshRenderer smr = obj.GetComponent<SkinnedMeshRenderer> ();
+						if(smr == null) {
+							smr = obj.GetComponentInChildren<SkinnedMeshRenderer> ();
+						}
 						if (smr != null) {
 							skinnedMesh.sharedMesh = smr.sharedMesh;
 							#if UNITY_EDITOR
 							if (!Application.isPlaying) {
 								EditorUtility.SetDirty (skinnedMesh);
+							}
+							#endif
+						}
+					}
+					if (animator != null) {
+						Animator _animator = obj.GetComponentInChildren<Animator> ();
+						if (_animator != null) {
+							animator.avatar = _animator.avatar;
+							#if UNITY_EDITOR
+							if (!Application.isPlaying) {
+								EditorUtility.SetDirty (animator);
 							}
 							#endif
 						}

@@ -35,9 +35,9 @@ namespace Coolape
 		public UIPanel panel {
 			get {
 				if (_panel == null) {
-					_panel = gameObject.GetComponent<UIPanel>();
+					_panel = gameObject.GetComponent<UIPanel> ();
 					if (_panel == null) {
-						_panel = gameObject.AddComponent<UIPanel>();
+						_panel = gameObject.AddComponent<UIPanel> ();
 					}
 				}
 				return _panel;
@@ -55,6 +55,17 @@ namespace Coolape
 		public bool isHideWithEffect = true;
 		public bool isRefeshContentWhenEffectFinish = false;
 		public Transform EffectRoot;
+
+		static int _destoryDelaySec = 5;
+
+		public static int destoryDelaySec {
+			get {
+				return _destoryDelaySec;
+			}
+			set {
+				_destoryDelaySec = value;
+			}
+		}
 		//特效root节点
 		public enum EffectType
 		{
@@ -66,16 +77,16 @@ namespace Coolape
 
 		public EffectType effectType = EffectType.ordered;
 		//特效类型
-		public List<UITweener> EffectList = new List<UITweener>();
+		public List<UITweener> EffectList = new List<UITweener> ();
 
-		static public int SortByName(UITweener a, UITweener b)
+		static public int SortByName (UITweener a, UITweener b)
 		{
-			return string.Compare(a.name, b.name);
+			return string.Compare (a.name, b.name);
 		}
 
 		bool isFinishStart = false;
 
-		public virtual void Start()
+		public virtual void Start ()
 		{
 			if (isFinishStart)
 				return;
@@ -83,34 +94,34 @@ namespace Coolape
 			getSubPanelsDepth ();
 			UITweener[] tws = null;
 			if (EffectRoot != null) {
-				tws = EffectRoot.GetComponents<UITweener>();
-				sortTweeners(tws);
+				tws = EffectRoot.GetComponents<UITweener> ();
+				sortTweeners (tws);
 				for (int j = 0; j < tws.Length; j++) {
 					if (tws [j] != null) {
-						tws [j].ResetToBeginning();
+						tws [j].ResetToBeginning ();
 						tws [j].enabled = false;
-						EffectList.Add(tws [j]);
+						EffectList.Add (tws [j]);
 					}
 				}
 				for (int i = 0; i < EffectRoot.childCount; i++) {
-					tws = EffectRoot.GetChild(i).GetComponents<UITweener>();
-					sortTweeners(tws);
+					tws = EffectRoot.GetChild (i).GetComponents<UITweener> ();
+					sortTweeners (tws);
 					for (int j = 0; j < tws.Length; j++) {
 						if (tws [j] != null) {
-							tws [j].ResetToBeginning();
+							tws [j].ResetToBeginning ();
 							tws [j].enabled = false;
-							EffectList.Add(tws [j]);
+							EffectList.Add (tws [j]);
 						}
 					}
 				}
-				EffectList.Sort(SortByName);
+				EffectList.Sort (SortByName);
 			}
 		
 			for (int i = EffectList.Count - 1; i >= 0; i--) {
 				if (EffectList [i] == null) {
-					EffectList.RemoveAt(i);
+					EffectList.RemoveAt (i);
 				} else {
-					EffectList [i].ResetToBeginning();
+					EffectList [i].ResetToBeginning ();
 				}
 			}
 			isFinishStart = true;
@@ -120,7 +131,7 @@ namespace Coolape
 		/// 冒泡排序法1
 		/// </summary>
 		/// <param name="list"></param>
-		public void sortTweeners(UITweener[] list)
+		public void sortTweeners (UITweener[] list)
 		{
 			UITweener temp = null;
 			for (int i = 0; i < list.Length; i++) {
@@ -136,24 +147,23 @@ namespace Coolape
 
 		object finishShowingCallback = null;
 
-		public void showWithEffect(object finishShowingCallback = null)
+		public void showWithEffect (object finishShowingCallback = null)
 		{
 			this.finishShowingCallback = finishShowingCallback;
-			isActive = true;
 			isMoveOut = false;
-			if (!gameObject.activeSelf) {
-				NGUITools.SetActive(gameObject, true);
+			if (!gameObject.activeInHierarchy || CLPanelManager.showingPanels [gameObject.name] == null) {
+				NGUITools.SetActive (gameObject, true);
 				CLPanelManager.showingPanels [gameObject.name] = this;
 			}
 			if (!isRefeshContentWhenEffectFinish) {
-				callFinishShowingCallback();
+				callFinishShowingCallback ();
 			}
-			playEffect(true);
+			playEffect (true);
 		}
 
-		void callFinishShowingCallback()
+		void callFinishShowingCallback ()
 		{
-			Utl.doCallback(finishShowingCallback, this);
+			Utl.doCallback (finishShowingCallback, this);
 		}
 
 		/// <summary>
@@ -166,14 +176,14 @@ namespace Coolape
 		int EffectIndex = 0;
 		bool EffectForward = true;
 
-		void playEffect(bool forward)
+		void playEffect (bool forward)
 		{
 			if (!isFinishStart) {
-				Start();
+				Start ();
 			}
 			if (EffectList.Count <= 0) {
 				if (!forward) {
-					onFinishHideWithEffect();
+					onFinishHideWithEffect ();
 				}
 				return;
 			}
@@ -190,7 +200,7 @@ namespace Coolape
 				for (int i = 0; i < EffectList.Count; i++) {
 					tw = EffectList [i];
 					if (forward && !isHideWithEffect) {
-						tw.ResetToBeginning();
+						tw.ResetToBeginning ();
 					}
 				
 					if (!forward && i == EffectList.Count - 1) {
@@ -199,20 +209,20 @@ namespace Coolape
 					} else {
 						tw.callWhenFinished = "";
 					}
-					tw.Play(forward);
+					tw.Play (forward);
 				}
 			} else {
 				tw = EffectList [EffectIndex];
 				if (forward && !isHideWithEffect) {
-					tw.ResetToBeginning();
+					tw.ResetToBeginning ();
 				}
 				tw.eventReceiver = gameObject;
 				tw.callWhenFinished = "onFinishEffect";
-				tw.Play(forward);
+				tw.Play (forward);
 			}
 		}
 
-		void onFinishEffect(UITweener tweener)
+		void onFinishEffect (UITweener tweener)
 		{
 			tweener.callWhenFinished = "";
 			tweener.eventReceiver = gameObject;
@@ -224,156 +234,160 @@ namespace Coolape
 			}
 			if (EffectIndex < 0) {
 				if (!EffectForward) {
-					onFinishHideWithEffect();
+					onFinishHideWithEffect ();
 				}
 			} else if (EffectIndex >= EffectList.Count) {
 				if (isRefeshContentWhenEffectFinish) {
-					callFinishShowingCallback();
+					callFinishShowingCallback ();
 				}
 			} else {
 				UITweener tw = EffectList [EffectIndex];
 				if (EffectForward && !isHideWithEffect) {
-					tw.ResetToBeginning();
+					tw.ResetToBeginning ();
 				}
 				tw.eventReceiver = gameObject;
 				tw.callWhenFinished = "onFinishEffect";
-				tw.Play(EffectForward);
+				tw.Play (EffectForward);
 			}
 		}
 
 		bool isMoveOut = true;
 
-		public void hideWithEffect(bool moveOut = false)
+		public void hideWithEffect (bool moveOut = false)
 		{
 			isMoveOut = moveOut;
 			if (isMoveOut) {
 				Vector3 newPos = transform.localPosition;
 				newPos.z = -250;
 				transform.localPosition = newPos;
-				playEffect(false);
+				playEffect (false);
 			} else {
-				onFinishHideWithEffect();
+				onFinishHideWithEffect ();
 			}
 		}
 
-		void onFinishHideWithEffect(UITweener tweener = null)
+		void onFinishHideWithEffect (UITweener tweener = null)
 		{
 			isActive = false;
-			CLPanelManager.showingPanels.Remove(gameObject.name);
-			finishMoveOut();
+			CLPanelManager.showingPanels.Remove (gameObject.name);
+			finishMoveOut ();
 			if (destroyWhenHide) {
-				Invoke("destroySelf", 3);
+				CancelInvoke ("destroySelf");
+				Invoke ("destroySelf", destoryDelaySec);
 			}
 		}
 
-		void finishMoveOut()
+		void finishMoveOut ()
 		{
 			Vector3 newPos = transform.localPosition;
 			newPos.z = -100;
 			transform.localPosition = newPos;
-			NGUITools.SetActive(gameObject, false);
+			NGUITools.SetActive (gameObject, false);
 		}
 
-		void finishMoveIn(UITweener tween)
+		void finishMoveIn (UITweener tween)
 		{
 			if (CLPanelManager.topPanel == this) {
-				callFinishShowingCallback();
+				callFinishShowingCallback ();
 				Vector3 newPos = transform.localPosition;
 				newPos.z = -200;
 				transform.localPosition = newPos;
 			
 				if (effectType != EffectType.synchronized) {
-					playEffect(true);
+					playEffect (true);
 				}
 			}
 		}
 
-		void destroySelf()
+		void destroySelf ()
 		{
 			if (isActive) {
 				return;
 			}
-			//		CLPanelManager.panelBuff [name] = null;
-			//		NGUITools.Destroy (gameObject);
-			CLPanelManager.destroyPanel(this);
+			CLPanelManager.destroyPanel (this, false);
 		}
 
-//		OnNetWorkData tmpNetWorkData = null;
-//		// Update is called once per frame
-//		public override void Update()
-//		{
-//			base.Update();
-//			if (isOnNetWork) {
-//				isOnNetWork = false;
-//				if (networkQueue.Count > 0) {
-//					tmpNetWorkData = networkQueue.Dequeue();
-//					if (tmpNetWorkData != null) {
-//						procNetwork(tmpNetWorkData.interfaceName, tmpNetWorkData.succ, tmpNetWorkData.msg, tmpNetWorkData.objs);
-//					}
-//				
-//					if (tmpNetWorkData.succ != Net.SuccessCode) {
-//						Debug.LogWarning("Net Failed:" + tmpNetWorkData.succ + ":" + tmpNetWorkData.interfaceName);
-//					}
-//				
-//					if (networkQueue.Count > 0) {
-//						isOnNetWork = true;
-//					}
-//				}
-//			}
-//		}
-//
-//		bool isOnNetWork = false;
-//		[HideInInspector]
-//		public static Queue<OnNetWorkData>
-//			networkQueue = new Queue<OnNetWorkData>();
-//
-//		public class OnNetWorkData
-//		{
-//			public string interfaceName;
-//			//接口函数的名字
-//			public int succ = 0;
-//			//接口的返回结果
-//			public string msg = "";
-//			//接口的返回结果
-//			public object objs = null;
-//			//接口的返回内容
-//		}
-//
-//		/// <summary>
-//		/// Ons the network.
-//		/// 网络接口返回时，需要调用NPanelManager.topPanel.onNetwork()
-//		/// </summary>
-//		/// <param name='fname'>
-//		/// Fname.
-//		/// </param>
-//		/// <param name='succ'>
-//		/// Succ.
-//		/// </param>
-//		/// <param name='obj'>
-//		/// Object.
-//		/// </param>
-//		public void onNetwork(string fname, int succ, string msg, object pars)
-//		{
-//			OnNetWorkData data = new CLPanelBase.OnNetWorkData();
-//			data.interfaceName = fname;
-//			data.succ = succ;
-//			data.msg = msg;
-//			data.objs = pars;
-//			networkQueue.Enqueue(data);
-//			isOnNetWork = true;
-//		}
+		//		OnNetWorkData tmpNetWorkData = null;
+		//		// Update is called once per frame
+		//		public override void Update()
+		//		{
+		//			base.Update();
+		//			if (isOnNetWork) {
+		//				isOnNetWork = false;
+		//				if (networkQueue.Count > 0) {
+		//					tmpNetWorkData = networkQueue.Dequeue();
+		//					if (tmpNetWorkData != null) {
+		//						procNetwork(tmpNetWorkData.interfaceName, tmpNetWorkData.succ, tmpNetWorkData.msg, tmpNetWorkData.objs);
+		//					}
+		//
+		//					if (tmpNetWorkData.succ != Net.SuccessCode) {
+		//						Debug.LogWarning("Net Failed:" + tmpNetWorkData.succ + ":" + tmpNetWorkData.interfaceName);
+		//					}
+		//
+		//					if (networkQueue.Count > 0) {
+		//						isOnNetWork = true;
+		//					}
+		//				}
+		//			}
+		//		}
+		//
+		//		bool isOnNetWork = false;
+		//		[HideInInspector]
+		//		public static Queue<OnNetWorkData>
+		//			networkQueue = new Queue<OnNetWorkData>();
+		//
+		//		public class OnNetWorkData
+		//		{
+		//			public string interfaceName;
+		//			//接口函数的名字
+		//			public int succ = 0;
+		//			//接口的返回结果
+		//			public string msg = "";
+		//			//接口的返回结果
+		//			public object objs = null;
+		//			//接口的返回内容
+		//		}
+		//
+		//		/// <summary>
+		//		/// Ons the network.
+		//		/// 网络接口返回时，需要调用NPanelManager.topPanel.onNetwork()
+		//		/// </summary>
+		//		/// <param name='fname'>
+		//		/// Fname.
+		//		/// </param>
+		//		/// <param name='succ'>
+		//		/// Succ.
+		//		/// </param>
+		//		/// <param name='obj'>
+		//		/// Object.
+		//		/// </param>
+		//		public void onNetwork(string fname, int succ, string msg, object pars)
+		//		{
+		//			OnNetWorkData data = new CLPanelBase.OnNetWorkData();
+		//			data.interfaceName = fname;
+		//			data.succ = succ;
+		//			data.msg = msg;
+		//			data.objs = pars;
+		//			networkQueue.Enqueue(data);
+		//			isOnNetWork = true;
+		//		}
 
-		public virtual void procNetwork(string fname, int succ, string msg, object pars)
+		public virtual void procNetwork (string fname, int succ, string msg, object pars)
 		{
 		}
-	
-		//	[HideInInspector]
-		public bool
-			isFinishInit = false;
 
-		public virtual void init()
+		public bool isFinishLoad {
+			set;
+			get;
+		}
+		public bool isFinishInit {
+			set;
+			get;
+		}
+
+		public virtual void init ()
 		{
-			getSubPanelsDepth();
+			getSubPanelsDepth ();
 			_isActive = false;
 			if (Application.isPlaying) {
 				isFinishInit = true;
@@ -383,15 +397,15 @@ namespace Coolape
 		}
 
 		bool isFinishGetSubPanelsDepth = false;
-		Hashtable subPanelsDepth = new Hashtable();
+		Hashtable subPanelsDepth = new Hashtable ();
 
-		public void getSubPanelsDepth()
+		public void getSubPanelsDepth ()
 		{
 			if (isFinishGetSubPanelsDepth) {
 				return;
 			}
 			isFinishGetSubPanelsDepth = true;
-			UIPanel[] ps = gameObject.GetComponentsInChildren<UIPanel>();
+			UIPanel[] ps = gameObject.GetComponentsInChildren<UIPanel> ();
 			int count = ps.Length;
 			for (int i = 0; i < count; i++) {
 				if (ps [i] == panel)
@@ -400,37 +414,40 @@ namespace Coolape
 			}
 		}
 
-		public void setSubPanelsDepth()
+		public void setSubPanelsDepth ()
 		{
 			foreach (DictionaryEntry cell in subPanelsDepth) {
 				((UIPanel)(cell.Key)).depth = ((int)(cell.Value)) + panel.depth;
 			}
 		}
 
-		public abstract void setData(object pars);
+		public abstract void setData (object pars);
 
-		public virtual void show(object pars)
+		public virtual void show (object pars)
 		{
-			setData(pars);
-			show();
+			setData (pars);
+			show ();
 		}
 
-		public virtual void onTopPanelChange(CLPanelBase p) {
+		public virtual void onTopPanelChange (CLPanelBase p)
+		{
 			//TODO:
 		}
 
-		public virtual void show()
+		public virtual void show ()
 		{
+			isActive = true;
 			if (!isFinishInit) {
-				init();
+				init ();
 			}
-			showWithEffect();
-			getSubPanelsDepth();
-			refresh();
-			setSubPanelsDepth();
+			showWithEffect ();
+			getSubPanelsDepth ();
+			refresh ();
+			setSubPanelsDepth ();
+			isFinishLoad = true;
 		}
 
-		public abstract void refresh();
+		public abstract void refresh ();
 
 		/// <summary>
 		/// Raises the press back event.
@@ -438,14 +455,15 @@ namespace Coolape
 		/// 当返回true时表明已经关闭了最顶层页面
 		/// 当返回false时，表明不能关闭最顶层页面，其时可能需要弹出退程序的确认
 		/// </summary>
-		public virtual bool hideSelfOnKeyBack()
+		public virtual bool hideSelfOnKeyBack ()
 		{
 			return false;
 		}
 
-		public virtual void hide()
+		public virtual void hide ()
 		{
-			hideWithEffect(isHideWithEffect);
+			isFinishLoad = false;
+			hideWithEffect (isHideWithEffect);
 		}
 
 		public int depth {
@@ -457,10 +475,67 @@ namespace Coolape
 			}
 		}
 
-		public override void OnDestroy()
+		public override void OnDestroy ()
 		{
-			base.OnDestroy();
+			base.OnDestroy ();
 			isFinishInit = false;
+		}
+
+		public virtual void prepare (object callback, object orgs)
+		{
+			//sprites
+			UISprite[] sps = gameObject.GetComponentsInChildren<UISprite> ();
+			UISprite sp = null;
+			UISpriteData sd = null;
+
+			ArrayList list = new ArrayList ();
+			for (int i = 0; sps != null && i < sps.Length; i++) {
+				sp = sps [i];
+				if (sp.atlas == null || string.IsNullOrEmpty (sp.spriteName)) {
+					continue;
+				}
+				list.Add (sp.atlas);
+				list.Add (sp.spriteName);
+			}
+			prepareSprites4BorrowMode (list, 0, callback, orgs);
+		}
+
+		void onFinishPrepareOneSprite (params object[] paras)
+		{
+			NewList objList = paras [2] as NewList;
+			ArrayList list = objList [0] as ArrayList;
+			int i = (int)(objList [1]);
+			object callback = objList [2];
+			object orgs = objList [3];
+			prepareSprites4BorrowMode (list, i + 2, callback, orgs);
+			ObjPool.listPool.returnObject (objList);
+		}
+
+		public void prepareSprites4BorrowMode (ArrayList list, int i, object callback, object orgs)
+		{
+			if (list == null) {
+				return;
+			}
+			if (list.Count <= i + 1) {
+				Utl.doCallback (callback, orgs);
+				return;
+			}
+			NewList paraList = ObjPool.listPool.borrowObject ();
+			paraList.Add (list);
+			paraList.Add (i);
+			paraList.Add (callback);
+			paraList.Add (orgs);
+			prepareOneSprite4BorrowMode (list [i] as UIAtlas, list [i + 1] as string, (Callback)onFinishPrepareOneSprite, paraList);
+		}
+
+		public void prepareOneSprite4BorrowMode (UIAtlas atlas, string spriteName, object callback, object orgs)
+		{
+			UISpriteData sd = atlas.getSpriteBorrowMode (spriteName);
+			if (sd != null && MapEx.get (UIAtlas.assetBundleMap, sd.path) != null) {
+				Utl.doCallback (callback, null, spriteName, orgs);
+			} else {
+				atlas.borrowSpriteByname (spriteName, null, callback, orgs);
+			}
 		}
 	}
 }

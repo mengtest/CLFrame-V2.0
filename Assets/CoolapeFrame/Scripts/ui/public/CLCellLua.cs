@@ -26,111 +26,147 @@ namespace Coolape
 		LuaFunction lfshow = null;
 		LuaFunction lfRefresh = null;
 
-		public override void setLua()
+		public override void setLua ()
 		{
-			base.setLua();
-			initLuaFunc();
+			base.setLua ();
+			initLuaFunc ();
 		}
 
-		public void initLuaFunc()
+		public void initLuaFunc ()
 		{
-			lfInit = getLuaFunction("init");
-			lfshow = getLuaFunction("show");
-			lfRefresh = getLuaFunction("refresh");
+			lfInit = getLuaFunction ("init");
+			lfshow = getLuaFunction ("show");
+			lfRefresh = getLuaFunction ("refresh");
 		}
 
-		public override void init(object data, object onClick)
+		public override void init (object data, object onClick)
 		{
-			onClickCallback = onClick;
-			if (!isFinishInit) {
-				setLua();
-				isFinishInit = true;
-				if (lfInit != null) {
-					lfInit.Call(this);
+			try {
+				onClickCallback = onClick;
+				if (!isFinishInit) {
+					setLua ();
+					isFinishInit = true;
+					if (lfInit != null) {
+						lfInit.Call (this);
+					}
 				}
-			}
 		
-			if (lfshow != null) {
-				lfshow.Call(gameObject, data);
+				if (lfshow != null) {
+					lfshow.Call (gameObject, data);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
-		public void refresh(object paras)
+		public void refresh (object paras)
 		{
-			if (lfRefresh != null) {
-				lfRefresh.Call(paras);
+			try {
+				if (lfRefresh != null) {
+					lfRefresh.Call (paras);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
-		public void OnClick()
+		public void OnClick ()
 		{
 			try {
 				if (onClickCallback != null) {
-					if (typeof(LuaFunction) == onClickCallback.GetType()) {
-						((LuaFunction)onClickCallback).Call(this);
-					} else if (typeof(Callback) == onClickCallback.GetType()) {
-						((Callback)onClickCallback)(this);
+					if (typeof(LuaFunction) == onClickCallback.GetType ()) {
+						((LuaFunction)onClickCallback).Call (this);
+					} else if (typeof(Callback) == onClickCallback.GetType ()) {
+						((Callback)onClickCallback) (this);
 					}
 				}
 			} catch (System.Exception e) {
-				Debug.LogError(e);
+				Debug.LogError (e);
 			}
 		}
 
 		//== proc event ==============
-		public void onClick4Lua(GameObject button, string functionName)
+		public void onClick4Lua (GameObject button, string functionName)
 		{
-			LuaFunction f = getLuaFunction(functionName);
-			if (f != null) {
-				f.Call(button);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
-		public void onDoubleClick4Lua(GameObject button, string functionName)
+		public void onDoubleClick4Lua (GameObject button, string functionName)
 		{
-			LuaFunction f = getLuaFunction(functionName);
-			if (f != null) {
-				f.Call(button);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
-		public void onHover4Lua(GameObject button, string functionName, bool isOver)
+		public void onHover4Lua (GameObject button, string functionName, bool isOver)
 		{
-			LuaFunction f = getLuaFunction(functionName);
-			if (f != null) {
-				f.Call(button, isOver);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, isOver);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
-		public void onPress4Lua(GameObject button, string functionName, bool isPressed)
+		public void onPress4Lua (GameObject button, string functionName, bool isPressed)
 		{
-			LuaFunction f = getLuaFunction(functionName);
-			if (f != null) {
-				f.Call(button, isPressed);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, isPressed);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
-		public void onDrag4Lua(GameObject button, string functionName, Vector2 delta)
+		public void onDrag4Lua (GameObject button, string functionName, Vector2 delta)
 		{
-			LuaFunction f = getLuaFunction(functionName);
-			if (f != null) {
-				f.Call(button, delta);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, delta);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
-		public void onDrop4Lua(GameObject button, string functionName, GameObject go)
+		public void onDrop4Lua (GameObject button, string functionName, GameObject go)
 		{
-			LuaFunction f = getLuaFunction(functionName);
-			if (f != null) {
-				f.Call(button, go);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, go);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 
-		public void onKey4Lua(GameObject button, string functionName, KeyCode key)
+		public void onKey4Lua (GameObject button, string functionName, KeyCode key)
 		{
-			LuaFunction f = getLuaFunction(functionName);
-			if (f != null) {
-				f.Call(button, key);
+			try {
+				LuaFunction f = getLuaFunction (functionName);
+				if (f != null) {
+					f.Call (button, key);
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 	}

@@ -912,7 +912,12 @@ public static class ECLProjectSetting
 		main.luaPath = data.name + "/upgradeRes/priority/lua/CLLMainLua.lua";
 		mainGo.GetComponent<AudioSource> ().playOnAwake = false;
 
+		#if UNITY_5_6_OR_NEWER
 		Transform lookAtTarget = mainGo.transform.Find ("LookAtTarget");
+		#else
+		Transform lookAtTarget = mainGo.transform.FindChild ("LookAtTarget");
+		#endif
+
 		CLSmoothFollow follow = mainCameraGo.GetComponent<CLSmoothFollow> ();
 		follow.target = lookAtTarget;
 

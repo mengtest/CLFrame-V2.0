@@ -71,6 +71,11 @@ namespace Coolape
 	
 		//显示窗体到最顶层********************************************************************
 		public static Stack<CLPanelBase> panelRetainLayer = new Stack<CLPanelBase> ();
+		public static CLPanelBase[] panels4Retain {
+			get {
+				return panelRetainLayer.ToArray ();
+			}
+		}
 		public static bool isShowTopPanel = false;
 		public static CLPanelBase topPanel = null;
 		public static CLPanelBase oldPanel = null;
@@ -355,7 +360,11 @@ namespace Coolape
 				p = ((CLPanelBase)(panelBuff [pName]));
 			}
 			if (p == null) {
+#if UNITY_5_6_OR_NEWER
 				Transform tr = self.transform.Find (pName);
+#else
+				Transform tr = self.transform.FindChild (pName);
+#endif
 				if (tr != null) {
 					p = tr.GetComponent<CLPanelBase> ();
 					if (p != null) {
@@ -448,7 +457,11 @@ namespace Coolape
 			if (panelBuff [pName] != null) {
 				return ((CLPanelBase)(panelBuff [pName]));
 			}
+#if UNITY_5_6_OR_NEWER
 			Transform tr = self.transform.Find (pName);
+#else
+			Transform tr = self.transform.FindChild (pName);
+#endif
 			if (tr != null) {
 				CLPanelBase p = tr.GetComponent<CLPanelBase> ();
 				if (p != null) {
@@ -477,12 +490,19 @@ namespace Coolape
 
 		public static void destroyPanel (CLPanelBase p)
 		{
+			destroyPanel (p, true);
+		}
+
+		public static void destroyPanel (CLPanelBase p, bool needCallHideFunc)
+		{
 			if (p == null || p.name == CLMainBase.self.firstPanel)
 				return;
 			string pName = p.name;
 			panelBuff.Remove (pName);
 			panelAssetBundle.Remove (pName);
-			p.hide ();
+			if (needCallHideFunc) {
+				p.hide ();
+			}
 			GameObject.DestroyImmediate (p.gameObject, true);
 			p = null;
 		}

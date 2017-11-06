@@ -1,0 +1,17 @@
+.vs
+/Library
+/ProjectSettings
+/Temp
+/*.csproj
+/*.sln
+/build/build*
+UnityVS
+.DS_Store
+*.o
+*.a
+luajit
+buildvm
+minilua
+libluajit.so
+lj_vm.S
+build/*

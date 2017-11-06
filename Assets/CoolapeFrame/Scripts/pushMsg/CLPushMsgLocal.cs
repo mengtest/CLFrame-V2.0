@@ -16,6 +16,7 @@ namespace Coolape
 
 		public static void init (string uid,  string longTimeNotLoginMsg, string notifyAndroidPackageName)
 		{
+			try{
 #if UNITY_ANDROID  && !UNITY_EDITOR
 		if (Application.platform == RuntimePlatform.Android) {
 			AndroidJavaClass unityClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
@@ -33,6 +34,9 @@ namespace Coolape
 					UnityEngine.iOS.NotificationType.Sound);
 			}
 #endif
+			} catch(Exception e) {
+				Debug.LogError (e);
+			}
 		}
 
 		public static void cancelAll ()

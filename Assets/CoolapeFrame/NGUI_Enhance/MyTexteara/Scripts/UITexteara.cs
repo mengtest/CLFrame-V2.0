@@ -31,6 +31,7 @@ public class UITexteara : MonoBehaviour
 	Vector2 mSize = Vector2.zero;
 	public List<UILabelEachLine> labelList = new List<UILabelEachLine> ();
 
+	string oldContent = "";
 	void Start ()
 	{
 		if (mLabel == null) {
@@ -75,7 +76,10 @@ public class UITexteara : MonoBehaviour
 	[ContextMenu ("Refresh")]
 	public void onLabelChange ()
 	{
-		refresh (true);
+		if (!oldContent.Equals (mLabel.text)) {
+			oldContent = mLabel.text;
+			refresh (true);
+		}
 	}
 
 	[ContextMenu ("show Proc Text")]
@@ -252,6 +256,7 @@ public class UITexteara : MonoBehaviour
 				GameObject.DestroyImmediate (label.gameObject);
 		}
 		labelList.Clear ();
+		oldContent = "";
 	}
 }
 

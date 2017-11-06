@@ -173,7 +173,7 @@ public class ECLLocalizeSelection : ScriptableWizard
 
 		PStr pstr = PStr.b ();
 		foreach (KeyValuePair<string, string> cell in tempDic) {
-			pstr.a (cell.Key).a ("=").a (cell.Value).a ("\n");
+			pstr.a (cell.Key).a ("=").a (cell.Value.Replace ("\n", "\\n")).a ("\n");
 		}
 		File.WriteAllText (fileName, pstr.e ());
 		refreshContent ();
@@ -196,7 +196,7 @@ public class ECLLocalizeSelection : ScriptableWizard
 
 					PStr pstr = PStr.b ();
 					foreach (KeyValuePair<string, string> cell in tempDic) {
-						pstr.a (cell.Key).a ("=").a (cell.Value).a ("\n");
+						pstr.a (cell.Key).a ("=").a (cell.Value.Replace ("\n", "\\n")).a ("\n");
 					}
 					File.WriteAllText (fileName, pstr.e ());
 				} else {

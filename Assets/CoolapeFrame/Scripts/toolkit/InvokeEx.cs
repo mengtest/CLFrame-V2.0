@@ -15,10 +15,202 @@ namespace Coolape
 			self = this;
 		}
 
-		public long frameCounter = 0;
+		Hashtable coroutineMap = Hashtable.Synchronized (new Hashtable ());
+		Hashtable coroutineIndex = Hashtable.Synchronized (new Hashtable ());
+
+		/// <summary>
+		/// Invoke4s the lua.回调lua函数， 等待时间
+		/// </summary>
+		/// <param name='callbakFunc'> only support Luafunction or Callback
+		/// Callbak func.
+		/// </param>
+		/// <param name='sec'>
+		/// Sec.
+		/// </param>
+
+		public static UnityEngine.Coroutine invoke (object callbakFunc, float sec)
+		{
+			return self.invoke4Lua (callbakFunc, sec);
+		}
+
+		public static UnityEngine.Coroutine invoke (object callbakFunc, object orgs, float sec)
+		{
+			return self.invoke4Lua (callbakFunc, orgs, sec);
+		}
+
+		public static UnityEngine.Coroutine invoke (object callbakFunc, object orgs, float sec, bool onlyOneCoroutine)
+		{
+			return self.invoke4Lua (callbakFunc, orgs, sec, onlyOneCoroutine);
+		}
+
+		public UnityEngine.Coroutine invoke4Lua (object callbakFunc, float sec)
+		{
+			return invoke4Lua (callbakFunc, "", sec);
+		}
+
+		public UnityEngine.Coroutine invoke4Lua (object callbakFunc, object orgs, float sec)
+		{
+			return invoke4Lua (callbakFunc, orgs, sec, false);
+		}
+
+		/// <summary>
+		/// Invoke4s the lua.
+		/// </summary>
+		/// <param name="callbakFunc">Callbak func.lua函数</param>
+		/// <param name="orgs">Orgs.参数</param>
+		/// <param name="sec">Sec.等待时间</param>
+		public UnityEngine.Coroutine invoke4Lua (object callbakFunc, object orgs, float sec, bool onlyOneCoroutine)
+		{
+			if (!gameObject.activeInHierarchy)
+				return null;
+			if (callbakFunc == null) {
+				Debug.LogError ("callbakFunc is null ......");
+				return null;
+			}
+			try {
+				UnityEngine.Coroutine ct = null;
+				if (onlyOneCoroutine) {
+					cleanCoroutines (callbakFunc);
+				}
+				int index = getCoroutineIndex (callbakFunc);
+				ct = StartCoroutine (doInvoke4Lua (callbakFunc, sec, orgs, index));
+				setCoroutine (callbakFunc, ct, index);
+				return ct;
+			} catch (System.Exception e) {
+				Debug.LogError (callbakFunc + ":" + e);
+				return null;
+			}
+		}
+
+		public  int getCoroutineIndex (object callbakFunc)
+		{
+			object key = getKey4InvokeMap (callbakFunc, coroutineIndex);
+			int ret = MapEx.getInt (coroutineIndex, key);
+			coroutineIndex [key] = ret + 1;
+			return ret;
+		}
+
+		public  void setCoroutineIndex (object callbakFunc, int val)
+		{
+			object key = getKey4InvokeMap (callbakFunc, coroutineIndex);
+			coroutineIndex [key] = val;
+		}
+
+		/// <summary>
+		/// Gets the key4 invoke map.当直接传luafunction时，不能直接用，用Equals查找一下key
+		/// </summary>
+		/// <returns>The key4 invoke map.</returns>
+		/// <param name="callbakFunc">Callbak func.</param>
+		/// <param name="map">Map.</param>
+		public  object getKey4InvokeMap (object callbakFunc, Hashtable map)
+		{
+			if (callbakFunc == null || map == null)
+				return callbakFunc;
+			object key = callbakFunc;
+			if (callbakFunc is LuaFunction) {
+				NewList keys = ObjPool.listPool.borrowObject ();
+				keys.AddRange (map.Keys);
+				for (int i = 0; i < keys.Count; i++) {
+					if (((LuaFunction)callbakFunc).Equals ((keys [i]))) {
+						key = keys [i];
+						break;
+					}
+				}
+				ObjPool.listPool.returnObject (keys);
+				keys = null;
+			}
+			return key;
+		}
+
+		public  Hashtable getCoroutines (object callbakFunc)
+		{
+			object key = getKey4InvokeMap (callbakFunc, coroutineMap);
+			if (coroutineMap [key] == null) {
+				coroutineMap [key] = new Hashtable ();
+			}
+			return (Hashtable)(coroutineMap [key]);
+		}
+
+		public  void setCoroutine (object callbakFunc, UnityEngine.Coroutine ct, int index)
+		{
+			object key = getKey4InvokeMap (callbakFunc, coroutineMap);
+			Hashtable map = getCoroutines (callbakFunc);
+			map [index] = ct;
+			coroutineMap [key] = map;
+		}
+
+		public  void cleanCoroutines (object callbakFunc)
+		{
+			object key = getKey4InvokeMap (callbakFunc, coroutineMap);
+			Hashtable list = getCoroutines (callbakFunc);
+			foreach (DictionaryEntry cell in list) {
+				StopCoroutine ((UnityEngine.Coroutine)(cell.Value));
+			}
+			list.Clear ();
+			setCoroutineIndex (callbakFunc, 0);
+			coroutineMap.Remove (key);
+		}
+
+		public  void rmCoroutine (object callbakFunc, int index)
+		{
+			object key = getKey4InvokeMap (callbakFunc, coroutineMap);
+			Hashtable list = getCoroutines (callbakFunc);
+			list.Remove (index);
+			coroutineMap [key] = list;
+		}
+
+		public static void cancelInvoke ()
+		{
+			self.cancelInvoke4Lua ();
+		}
+
+		public static void cancelInvoke (object callbakFunc)
+		{
+			self.cancelInvoke4Lua (callbakFunc);
+		}
+
+		public  void cancelInvoke4Lua ()
+		{
+			cancelInvoke4Lua (null);
+		}
+
+		public  void cancelInvoke4Lua (object callbakFunc)
+		{
+			if (callbakFunc == null) {
+				Hashtable list = null;
+				foreach (DictionaryEntry item in coroutineMap) {
+					list = getCoroutines ((LuaFunction)(item.Key));
+					foreach (DictionaryEntry cell in list) {
+						StopCoroutine ((UnityEngine.Coroutine)(cell.Value));
+					}
+					list.Clear ();
+				}
+				coroutineMap.Clear ();
+				coroutineIndex.Clear ();
+			} else {
+				cleanCoroutines (callbakFunc);
+			}
+		}
+
+		Queue invokeFuncs = new Queue ();
+
+		IEnumerator doInvoke4Lua (object callbakFunc, float sec, object orgs, int index)
+		{
+			yield return new WaitForSeconds (sec);
+			try {
+				rmCoroutine (callbakFunc, index);
+				Utl.doCallback (callbakFunc, orgs);
+			} catch (System.Exception e) {
+				string msg = "call err:doInvoke4Lua" + ",callbakFunc=[" + callbakFunc + "]";
+				Debug.LogError (msg);
+				Debug.LogError (e);
+			}
+		}
+
 		//================================================
 		// Fixed invoke 4 lua
 		//================================================
+		public long frameCounter = 0;
 		Hashtable _fixedInvokeMap = new Hashtable ();
 
 		public Hashtable fixedInvokeMap {

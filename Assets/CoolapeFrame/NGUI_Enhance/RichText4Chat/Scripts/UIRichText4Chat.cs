@@ -13,7 +13,7 @@ using System.Collections.Generic;
 public class UIRichText4Chat : MonoBehaviour
 {
 	public UILabel _label;
-	
+
 	public UILabel label {
 		get {
 			if (_label == null) {
@@ -25,20 +25,23 @@ public class UIRichText4Chat : MonoBehaviour
 			_label = value;
 		}
 	}
-	
+
 	[HideInInspector]
 	public UIAtlas
-		faceAtlas;		//表情所在的图集
+		faceAtlas;
+	//表情所在的图集
 	public string atlasName;
-	public int faceSize = 30;		//表情图片的大小（最好是font大小的整数倍，当与字体是一样大小时为最宜）
+	public int faceSize = 30;
+	//表情图片的大小（最好是font大小的整数倍，当与字体是一样大小时为最宜）
 	//	public static List<string> faceList = new List<string> ();
 	public string faceHead = "";
-	public bool isFullSpace = true;//用一个全角空格来占表情的位置,***因次使用的font中需要包含全角空格***
+	public bool isFullSpace = true;
+	//用一个全角空格来占表情的位置,***因次使用的font中需要包含全角空格***
 	//	[HideInInspector]
 	public float
 		spaceSize = -1;
 	public static string
-		_FaceChar_ = "　";		
+		_FaceChar_ = "　";
 	[HideInInspector]
 	public int
 		spaceNumber = -1;
@@ -47,9 +50,10 @@ public class UIRichText4Chat : MonoBehaviour
 		faceStr = "";
 	public static SpritePool pool = new SpritePool ();
 	public List<UISprite> spList = new List<UISprite> ();
-	
-	[ContextMenu("init")]
-	public void init() {
+
+	[ContextMenu ("init")]
+	public void init ()
+	{
 		if (isFullSpace) {
 			_FaceChar_ = "　";		//用一个全角空格来占表情的位置,***因次使用的font中需要包含全角空格***
 		} else {
@@ -57,7 +61,7 @@ public class UIRichText4Chat : MonoBehaviour
 		}
 		calculateSpaceSize ();
 	}
-	
+
 	public void calculateSpaceSize ()
 	{
 		string oldStr = label.text;
@@ -76,13 +80,13 @@ public class UIRichText4Chat : MonoBehaviour
 		mTempIndices.Clear ();
 		label.text = oldStr;
 		faceStr = "";
-		for (int i =0; i < spaceNumber; i++) {
+		for (int i = 0; i < spaceNumber; i++) {
 			faceStr += _FaceChar_;
 		}
 	}
-	
+
 	string mText = "";
-	
+
 	public string value {
 		get {
 			return mText;
@@ -94,24 +98,27 @@ public class UIRichText4Chat : MonoBehaviour
 			}
 		}
 	}
-	
-	public string wrapFaceName(string faceName) {
+
+	public string wrapFaceName (string faceName)
+	{
 		return string.IsNullOrEmpty (faceHead) ? faceName : faceHead + faceName;
 	}
-	public void onInputChanged(GameObject go) {
+
+	public void onInputChanged (GameObject go)
+	{
 		if (go == null)
 			return;
-		UIInput input = go.GetComponent<UIInput>();
+		UIInput input = go.GetComponent<UIInput> ();
 		if (input == null)
 			return;
 		value = input.value;
 	}
-	
+
 	static BetterList<Vector3> mTempVerts = new BetterList<Vector3> ();
 	static BetterList<int> mTempIndices = new BetterList<int> ();
 	bool isFinishInit = false;
-	
-	[ContextMenu("Execute Text Changed")]
+
+	[ContextMenu ("Execute Text Changed")]
 	public void onTextChanged (GameObject go)
 	{
 		if (!isFinishInit) {
@@ -137,7 +144,7 @@ public class UIRichText4Chat : MonoBehaviour
 		int index = 0;
 		string faceName = "";
 		Vector3 pos = Vector3.zero;
-		for (int i=0; i<count; i++) {
+		for (int i = 0; i < count; i++) {
 			index = (int)(keyList [i]);
 			faceName = facesMap [index].ToString ();
 			//			Debug.Log ("index==" + index);
@@ -149,7 +156,7 @@ public class UIRichText4Chat : MonoBehaviour
 		mTempVerts.Clear ();
 		mTempIndices.Clear ();
 	}
-	
+
 	public Vector3 calculatePos (Vector3 pos1, Vector3 pos2)
 	{
 		float offsetX = label.printedSize.x;
@@ -202,7 +209,7 @@ public class UIRichText4Chat : MonoBehaviour
 		}
 		return pos;
 	}
-	
+
 	public void showFace (string faceName, Vector3 pos)
 	{
 		UISprite sp = pool.getSprite ();
@@ -210,7 +217,7 @@ public class UIRichText4Chat : MonoBehaviour
 		NGUITools.SetLayer (sp.gameObject, gameObject.layer);
 		sp.pivot = UIWidget.Pivot.Left;
 		sp.atlas = faceAtlas;
-		sp.spriteName = wrapFaceName(faceName);
+		sp.spriteName = wrapFaceName (faceName);
 		sp.SetDimensions (faceSize, faceSize);
 		sp.transform.parent = transform;
 		sp.transform.localScale = Vector3.one;
@@ -220,18 +227,18 @@ public class UIRichText4Chat : MonoBehaviour
 	}
 
 	Hashtable facesMap = new Hashtable ();
-	
+
 	public string findFace ()
 	{
 		facesMap.Clear ();
-		if (string.IsNullOrEmpty(value))
+		if (string.IsNullOrEmpty (value))
 			return "";
 		
 		int len = value.Length;
 		string str = "";
 		int offset = 0;
 		string faceName = "";
-		for (int i =0; i < len; i++) {
+		for (int i = 0; i < len; i++) {
 			//			Debug.Log("val==[" + value[i] + "]");
 			if (value [i] == '\n') {
 				offset += 1;
@@ -241,7 +248,7 @@ public class UIRichText4Chat : MonoBehaviour
 			//			Debug.Log ("val==[" + value [i] + "]==" + offset);
 			if (value [i] == '#') {
 				faceName = "";
-				for (int j =i+1; j < len; j++) {
+				for (int j = i + 1; j < len; j++) {
 					if (value [j] == '\n') {
 						offset += 1;
 					} else if (value [j] == '\\' && (j + 1 < len) && value [j + 1] == 'n') {
@@ -249,7 +256,7 @@ public class UIRichText4Chat : MonoBehaviour
 					}
 					//					Debug.Log ("val==[" + value [j] + "]==" + offset);
 					if (value [j] == '#') {
-						if (faceAtlas.spriteMap.Contains (wrapFaceName(faceName))) {
+						if (faceAtlas.spriteMap.Contains (wrapFaceName (faceName))) {
 							facesMap [str.Length - offset] = faceName;
 							str += faceStr;
 							faceName = "";
@@ -276,24 +283,24 @@ public class UIRichText4Chat : MonoBehaviour
 		}
 		return str;
 	}
-	
-	[ContextMenu("Clean")]
+
+	[ContextMenu ("Clean")]
 	public void clean ()
 	{
 		int count = spList.Count;
-		for (int i=0; i< count; i++) {
+		for (int i = 0; i < count; i++) {
 			pool.retSprite (spList [i]);
 			//			spList [i].transform.parent = null;
 //			NGUITools.SetActive (spList [i].gameObject, false);
 		}
 		spList.Clear ();
 	}
-	
+
 	public void OnDisable ()
 	{
 		clean ();
 	}
-	
+
 	public void OnEnable ()
 	{
 		onTextChanged (gameObject);
@@ -305,7 +312,8 @@ public class UIRichText4Chat : MonoBehaviour
 	{
 		Queue<UISprite> queue = new Queue<UISprite> ();
 
-		public void clean() {
+		public void clean ()
+		{
 			queue.Clear ();
 		}
 
@@ -314,17 +322,31 @@ public class UIRichText4Chat : MonoBehaviour
 			if (queue.Count <= 0) {
 				return newSprite ();
 			} else {
-				return queue.Dequeue ();
+				UISprite sp = queue.Dequeue ();
+				try {
+					if (sp == null && sp.gameObject == null) {
+						return getSprite ();
+					} else {
+						return sp;
+					}
+				} catch (System.Exception e) {
+//					Debug.LogError (e);
+					return getSprite ();
+				}
 			}
 		}
-		
+
 		public void retSprite (UISprite sp)
 		{
-			queue.Enqueue (sp);
-//			sp.gameObject.transform.parent = null;
-			NGUITools.SetActive (sp.gameObject, false);
+			try {
+				queue.Enqueue (sp);
+				sp.gameObject.transform.parent = null;
+				NGUITools.SetActive (sp.gameObject, false);
+			} catch (System.Exception e) {
+				Debug.LogWarning (e);
+			}
 		}
-		
+
 		public UISprite newSprite ()
 		{
 			GameObject go = new GameObject ("Sprite");

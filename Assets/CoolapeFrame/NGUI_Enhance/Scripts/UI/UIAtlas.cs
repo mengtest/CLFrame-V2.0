@@ -15,12 +15,16 @@ using System.IO;
 [AddComponentMenu ("NGUI/UI/Atlas")]
 public class UIAtlas : MonoBehaviour
 {
-	//add by chenbin
+	#region add by chenbin
 	public static Hashtable retainCounter = new Hashtable ();
 	//引用计数器
 	public static Hashtable assetBundleMap = new Hashtable ();
 	//引用AssetBundle
 	static Hashtable notifySprites = new Hashtable ();
+
+	public static Hashtable materailPool = new Hashtable ();
+	public static object onBorrowSpriteCallback;
+	#endregion
 
 	// Legacy functionality, removed in 3.0. Do not use.
 	[System.Serializable]
@@ -37,12 +41,14 @@ public class UIAtlas : MonoBehaviour
 		public float paddingTop = 0f;
 		public float paddingBottom = 0f;
 		
-		//add by chenbin====================start
+		#region add by chenbin
+		//====================start
 		public string path = "";
 		[NonSerialized]
 		public Material
 			material = null;
-		//add by chenbin====================end
+		//====================end
+		#endregion
 
 		public bool hasPadding { get { return paddingLeft != 0f || paddingRight != 0f || paddingTop != 0f || paddingBottom != 0f; } }
 	}
@@ -263,7 +269,8 @@ public class UIAtlas : MonoBehaviour
 				Invoke ("ReleaseTexture", 5);
 				return;
 			}
-			if (sp.material != null && sp.material.mainTexture != null) {
+			Material mat = materailPool[sp.path] as Material;
+			if (mat != null && mat.mainTexture != null) {
 				try {
 					//=================================================
 					#if UNITY_EDITOR
@@ -274,26 +281,27 @@ public class UIAtlas : MonoBehaviour
 					}
 					#endif
 					assetBundleMap [sp.path] = null;
-					if (!string.IsNullOrEmpty (sp.material.mainTexture.name)) {
-						UnityEngine.Resources.UnloadAsset (sp.material.mainTexture);
+					if (!string.IsNullOrEmpty (mat.mainTexture.name)) {
+						UnityEngine.Resources.UnloadAsset (mat.mainTexture);
 					}
 					
 					// 其它引用了该图的都要释放
 					for (int j = 0; j < mSprites.Count; j++) {
 						UISpriteData tmpsp = mSprites [j];
 						if (tmpsp.path == sp.path && tmpsp != sp) {
-							if (tmpsp.material != null) {
-								tmpsp.material.mainTexture = null;
-								GameObject.DestroyImmediate (tmpsp.material, true);
-								tmpsp.material = null;
-							}
+							tmpsp.material = null;
+//							if (tmpsp.material != null) {
+//								tmpsp.material.mainTexture = null;
+//								GameObject.DestroyImmediate (tmpsp.material, true);
+//								tmpsp.material = null;
+//							}
 						}
 					}
 
-					GameObject.DestroyImmediate (sp.material.mainTexture, true);
-					sp.material.mainTexture = null;
-					GameObject.DestroyImmediate (sp.material, true);
-					sp.material = null;
+					GameObject.DestroyImmediate (mat.mainTexture, true);
+					mat.mainTexture = null;
+					GameObject.DestroyImmediate (mat, true);
+					mat = null;
 					//=================================================
 				} catch (System.Exception e) {
 					Debug.LogError (sp.name + " err:" + e);
@@ -506,11 +514,12 @@ public class UIAtlas : MonoBehaviour
 			#endif
 			if (tt != null) {
 				if (ret.material == null) {
-					Shader shader = Shader.Find ("Unlit/Transparent Colored");
-					ret.material = new Material (shader);
-					ret.material.mainTexture = tt;
+//					Shader shader = Shader.Find ("Unlit/Transparent Colored");
+//					ret.material = new Material (shader);
+//					ret.material.mainTexture = tt;
+					ret.material = getMaterail(tt, ret.path);
 					tt = null;
-					shader = null;
+//					shader = null;
 				} else {
 					ret.material.mainTexture = tt;
 				}
@@ -534,7 +543,21 @@ public class UIAtlas : MonoBehaviour
 		}
 		#endif
 		Coolape.Utl.doCallback (callback, uisp, ret.name, args);
+		#if UNITY_EDITOR
+		Coolape.Utl.doCallback (onBorrowSpriteCallback, this, ret);
+		#endif
 		return ret;
+	}
+
+	public Material getMaterail(Texture tt, string texturePath) {
+		Material mat = materailPool [texturePath] as Material;
+		if(mat == null) {
+			Shader shader = Shader.Find ("Unlit/Transparent Colored");
+			mat = new Material (shader);
+			mat.mainTexture = tt;
+			materailPool [texturePath] = mat;
+		}
+		return mat;
 	}
 
 	void getTuxture (UISpriteData ret, UISprite uisp, object callback, object args)

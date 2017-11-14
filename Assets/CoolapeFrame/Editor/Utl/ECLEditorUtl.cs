@@ -7,6 +7,18 @@ using System.Collections.Generic;
 
 public static class ECLEditorUtl
 {
+	public static GUILayoutOption width30 = GUILayout.Width (30);
+	public static GUILayoutOption width50 = GUILayout.Width (50);
+	public static GUILayoutOption width80 = GUILayout.Width (80);
+	public static GUILayoutOption width100 = GUILayout.Width (100);
+	public static GUILayoutOption width120 = GUILayout.Width (120);
+	public static GUILayoutOption width150 = GUILayout.Width (150);
+	public static GUILayoutOption width200 = GUILayout.Width (200);
+	public static GUILayoutOption width250 = GUILayout.Width (250);
+	public static GUILayoutOption width300 = GUILayout.Width (300);
+	public static GUILayoutOption width400 = GUILayout.Width (400);
+	public static GUILayoutOption width500 = GUILayout.Width (500);
+
 	/// <summary>
 	/// Gets the path by object.取得工程对象的路径，但不包含Assets;
 	/// </summary>
@@ -80,7 +92,7 @@ public static class ECLEditorUtl
 		string extension = Path.GetExtension (filePath).ToLower ();
 		string extensionList = ECLProjectManager.data.ingoreResWithExtensionNames.ToLower ();
 
-		if (!string.IsNullOrEmpty(extension) && extensionList.Contains (extension)) {
+		if (!string.IsNullOrEmpty (extension) && extensionList.Contains (extension)) {
 			return true;
 		}
 		return false;
@@ -174,7 +186,7 @@ public static class ECLEditorUtl
 //		Debug.Log ("replacePath===" + replacePath);
 		objName = basePath.Replace (replacePath, "");
 		if (objName != "") {
-			objName = Path.Combine(objName, Path.GetFileNameWithoutExtension (objPath));
+			objName = Path.Combine (objName, Path.GetFileNameWithoutExtension (objPath));
 		} else {
 			objName = Path.GetFileNameWithoutExtension (objPath);
 		}
@@ -258,6 +270,36 @@ public static class ECLEditorUtl
 				}
 			}
 		}
+	}
+
+	public static bool SaveRenderTextureToPNG (Texture inputTex, Shader outputShader, string contents, string pngName)
+	{  
+		RenderTexture temp = RenderTexture.GetTemporary (inputTex.width, inputTex.height, 0, RenderTextureFormat.ARGB32);  
+		Material mat = new Material (outputShader);  
+		Graphics.Blit (inputTex, temp, mat);  
+		bool ret = SaveRenderTextureToPNG (temp, contents, pngName);  
+		RenderTexture.ReleaseTemporary (temp);  
+		return ret;  
+	}
+
+	//将RenderTexture保存成一张png图片
+	public static bool SaveRenderTextureToPNG (RenderTexture rt, string contents, string pngName)
+	{  
+		RenderTexture prev = RenderTexture.active;  
+		RenderTexture.active = rt;  
+		Texture2D png = new Texture2D (rt.width, rt.height, TextureFormat.ARGB32, false);  
+		png.ReadPixels (new Rect (0, 0, rt.width, rt.height), 0, 0);  
+		byte[] bytes = png.EncodeToPNG ();  
+		if (!Directory.Exists (contents))
+			Directory.CreateDirectory (contents);  
+		FileStream file = File.Open (contents + "/" + pngName + ".png", FileMode.Create);  
+		BinaryWriter writer = new BinaryWriter (file);  
+		writer.Write (bytes);  
+		file.Close ();  
+		Texture2D.DestroyImmediate (png);  
+		png = null;  
+		RenderTexture.active = prev;  
+		return true;  
 	}
 
 }

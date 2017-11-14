@@ -31,7 +31,7 @@ namespace Coolape
 				UnityEngine.iOS.NotificationServices.RegisterForNotifications (
 					UnityEngine.iOS.NotificationType.Alert | 
 					UnityEngine.iOS.NotificationType.Badge | 
-					UnityEngine.iOS.NotificationType.Sound);
+					UnityEngine.iOS.NotificationType.Sound, true);
 			}
 #endif
 			} catch(Exception e) {
@@ -109,6 +109,18 @@ namespace Coolape
 				return UnityEngine.iOS.NotificationServices.deviceToken;
 				#endif
 				return null;
+			}
+		}
+
+		public static string deviceTokenStr {
+			get {
+				byte[] bytes = deviceToken;
+				if (bytes != null) {
+//					return System.Text.UTF8Encoding.Default.GetString (bytes);
+					string hexToken = "%" + System.BitConverter.ToString(bytes).Replace('-', '%');
+					return hexToken;
+				}
+				return "";
 			}
 		}
 	}

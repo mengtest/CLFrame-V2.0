@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using Coolape;
 using System.IO;
+using System.Net;
 
 public class ECLUpgradeBindingServer : EditorWindow
 {
@@ -218,11 +219,14 @@ public class ECLUpgradeBindingServer : EditorWindow
 	{
 		string __httpBaseUrl = PStr.b ().a ("http://").a (Net.self.gateHost).a (":").a (Net.self.gatePort).e ();
 		string url = PStr.b ().a (__httpBaseUrl).a ("/KokDirServer/UpdateVerServlet").e ();
-		Dictionary<string,string> paras = new Dictionary<string, string> ();
+		Dictionary<string,object> paras = new Dictionary<string, object> ();
 		paras ["serverid"] = serverID;
 		paras ["version"] = version;
 		paras ["versionType"] = verType;
-		HttpEx.CreatePostHttpResponse (url, paras, 10000, System.Text.Encoding.UTF8);
+		HttpWebResponse response = HttpEx.CreatePostHttpResponse (url, paras, 10000, System.Text.Encoding.UTF8);
+		if (response == null)
+			return;
+		response.Close ();
 	}
 
 	public void refreshData ()
@@ -232,8 +236,16 @@ public class ECLUpgradeBindingServer : EditorWindow
 		// get server list
 		string __httpBaseUrl = PStr.b ().a ("http://").a (Net.self.gateHost).a (":").a (Net.self.gatePort).e ();
 		string url = PStr.b ().a (__httpBaseUrl).a ("/KokDirServer/ServerServlet").e ();
-		Debug.Log (url);
-		string str = HttpEx.readString (url, null);
+
+		Dictionary<string,object> paras = new Dictionary<string, object> ();
+		paras ["serverType"] = 1;
+		HttpWebResponse response = HttpEx.CreatePostHttpResponse (url, paras, 10000, System.Text.Encoding.UTF8);
+		if (response == null)
+			return;
+		string str = HttpEx.readString (response);
+		response.Close ();
+//		Debug.Log (url);
+//		string str = HttpEx.readString (url, null);
 		Debug.Log (str);
 		servers = JSON.DecodeMap (str);
 		Hashtable server = null;

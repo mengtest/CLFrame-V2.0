@@ -20,34 +20,62 @@ namespace Coolape
 		public static CLPBackplate self;
 		//	public UITexture textureBg;
 		//	public Camera camera;
-		public CLPBackplate()
+		public CLPBackplate ()
 		{
 			self = this;
 		}
 
-		public override void show()
+		public override void show ()
 		{
-			base.show();
+			base.show ();
 		}
 
-		public void proc(CLPanelBase clpanel)
+		public void procOtherPanel ()
+		{
+			if (CLPanelManager.panelRetainLayer.Count > 0) {
+				CLPanelBase[] ps = CLPanelManager.panelRetainLayer.ToArray ();
+				if (ps != null) {
+					for (int i = 0; i < ps.Length; i++) {
+						if (ps [i].isNeedBackplate && ps [i].isActive) {
+							_proc (ps [i]);
+							ps = null;
+							return;
+						}
+					}
+					hide ();
+					ps = null;
+				} else {
+					hide ();
+				}
+			} else {
+				hide ();
+			}
+		}
+
+		public void proc (CLPanelBase clpanel)
 		{
 			if (clpanel == null) {
-				hide();
+				procOtherPanel ();
 				return;
 			}
 			if (clpanel.isNeedBackplate) {
-				show();
-				this.panel.depth = clpanel.panel.depth - 1;
-				Vector3 pos = transform.localPosition;
-				this.panel.renderQueue = UIPanel.RenderQueue.StartAt;
-				// 设置startingRenderQueue是为了可以在ui中使用粒子效果，注意在粒子中要绑定CLUIParticle角本
-				this.panel.startingRenderQueue = CLPanelManager.Const_RenderQueue + this.panel.depth;
-				pos.z = -180;
-				transform.localPosition = pos;
+				_proc (clpanel);
 			} else {
-				hide();
+				procOtherPanel ();
 			}
+		}
+
+		public void _proc (CLPanelBase clpanel)
+		{
+			setData (clpanel);
+			show ();
+			this.panel.depth = clpanel.panel.depth - 1;
+			Vector3 pos = transform.localPosition;
+			this.panel.renderQueue = UIPanel.RenderQueue.StartAt;
+			// 设置startingRenderQueue是为了可以在ui中使用粒子效果，注意在粒子中要绑定CLUIParticle角本
+			this.panel.startingRenderQueue = CLPanelManager.Const_RenderQueue + this.panel.depth;
+			pos.z = -180;
+			transform.localPosition = pos;
 		}
 	}
 }

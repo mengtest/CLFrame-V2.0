@@ -10,7 +10,7 @@ using System.Collections.Generic;
 public class FindReferences
 {
 
-	[MenuItem("Assets/Find References(Coolape)", false, 10)]
+	[MenuItem("Coolape/Tools/Find References(Coolape)", false, 10)]
 	static private void Find()
 	{
 		EditorSettings.serializationMode = SerializationMode.ForceText;
@@ -47,7 +47,7 @@ public class FindReferences
 		}
 	}
 
-	[MenuItem("Assets/Find References", true)]
+	[MenuItem("Coolape/Tools/Find References", true)]
 	static private bool VFind()
 	{
 		string path = AssetDatabase.GetAssetPath(Selection.activeObject);
@@ -61,7 +61,7 @@ public class FindReferences
 
 	#if UNITY_EDITOR_OSX
 
-	[MenuItem("Assets/Find References In Project(Coolape)", false, 10)]
+	[MenuItem("Coolape/Tools/Find References In Project(Coolape)", false, 10)]
 	private static void FindProjectReferences()
 	{
 		string appDataPath = Application.dataPath;

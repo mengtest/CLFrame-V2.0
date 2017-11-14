@@ -627,7 +627,7 @@ public class ECLPublisher : EditorWindow
 		
 		GUILayout.BeginHorizontal ();
 		{
-			GUILayout.Label ("CTCC Channel", GUILayout.Width (width));
+			GUILayout.Label ("SubChannel2", GUILayout.Width (width));
 			currChlData.mCtccChannel = EditorGUILayout.TextField (currChlData.mCtccChannel);
 		}
 		GUILayout.EndHorizontal ();
@@ -966,6 +966,7 @@ public class ECLPublisher : EditorWindow
 			chlMap = new Hashtable ();
 		}
 		chlMap ["SubChannel"] = currChlData.mSubChannel;
+		chlMap ["SubChannel2"] = currChlData.mCtccChannel;
 		chlMap ["chn"] = currChlData.mChlName;
 		chlMap ["isThirdExit"] = currChlData.isThirdExit;
 		chlMap ["isMoreGame"] = currChlData.isMoreGame;

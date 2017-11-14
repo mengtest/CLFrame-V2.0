@@ -23,6 +23,7 @@ namespace Coolape
 		{
 			self = this;
 		}
+		public bool isContBorrowSpriteTimes = false;
 
 		// 在编辑器下模拟真机
 		public bool isNotEditorMode = false;

@@ -71,11 +71,13 @@ namespace Coolape
 	
 		//显示窗体到最顶层********************************************************************
 		public static Stack<CLPanelBase> panelRetainLayer = new Stack<CLPanelBase> ();
+
 		public static CLPanelBase[] panels4Retain {
 			get {
 				return panelRetainLayer.ToArray ();
 			}
 		}
+
 		public static bool isShowTopPanel = false;
 		public static CLPanelBase topPanel = null;
 		public static CLPanelBase oldPanel = null;
@@ -267,7 +269,8 @@ namespace Coolape
 			}
 		}
 
-		void onTopPanelChange(CLPanelBase p) {
+		void onTopPanelChange (CLPanelBase p)
+		{
 //			CLPanelBase[] ps = panelRetainLayer.ToArray ();
 //			if (ps != null) {
 //				for (int i = 0; i < ps.Length; i++) {
@@ -283,6 +286,7 @@ namespace Coolape
 				list = null;
 			}
 		}
+
 		void CLPBackplateProc (CLPanelBase p)
 		{
 			CLPanelBase panel = getPanel ("PanelBackplate");
@@ -306,6 +310,22 @@ namespace Coolape
 					}
 				}
 				isFinishStart = true;
+			}
+		}
+
+		GameObject _mask;
+
+		public GameObject mask {
+			get {
+				if (_mask == null) {
+					_mask = new GameObject ("_____mask");
+					_mask.transform.parent = CLUIInit.self.transform;
+					NGUITools.SetLayer (_mask, LayerMask.NameToLayer ("UI"));
+					UIWidget w = _mask.AddComponent<UIWidget> ();
+					w.SetAnchor (CLUIInit.self.gameObject, -2, -2, 2, 2);
+					NGUITools.AddWidgetCollider (_mask);
+				}
+				return _mask;
 			}
 		}
 
@@ -352,6 +372,7 @@ namespace Coolape
 
 		public static void getPanelAsy (string pName, object callback, object paras)
 		{
+			NGUITools.SetActive (self.mask, true);
 			if (!isFinishStart) {
 				CLPanelManager.self.Start ();
 			}
@@ -375,6 +396,7 @@ namespace Coolape
 		
 			if (p != null) {
 				Utl.doCallback (callback, p, paras);
+				NGUITools.SetActive (self.mask, false);
 			} else {
 				self.StartCoroutine (loadPanel (pName, callback, paras));
 			}
@@ -419,11 +441,6 @@ namespace Coolape
 
 		public static void finishGetPanel (string pName, AssetBundle ab, object callback, object paras)
 		{
-			onGetPanel (pName, ab, callback, paras);
-		}
-
-		public static CLPanelBase onGetPanel (string pName, AssetBundle ab, object callback, object paras)
-		{
 			if (ab != null) {
 				GameObject prefab = ab.mainAsset as GameObject;
 				ab.Unload (false);
@@ -444,9 +461,9 @@ namespace Coolape
 				if (p != null) {
 					Utl.doCallback (callback, p, paras);
 				}
-				return p;
 			}
-			return null;
+			NGUITools.SetActive (self.mask, false);
+			return;// null;
 		}
 
 		public static CLPanelBase  getPanel (string pName)

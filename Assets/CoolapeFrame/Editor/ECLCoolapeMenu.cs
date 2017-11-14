@@ -266,6 +266,12 @@ static public class ECLCoolapeMenu
 		EditorUtility.SetDirty (go);
 	}
 
+	[MenuItem (toolesName + "/UI/Sprite Packer", false, 20)]
+	static public void showSpritePacker ()
+	{
+		EditorWindow.GetWindow<ECLSpritePacker> (false, "Sprite Packer", true);
+	}
+
 	[MenuItem (toolesName + "/Clean Cache", false, 999)]
 	static public void cleanCache ()
 	{

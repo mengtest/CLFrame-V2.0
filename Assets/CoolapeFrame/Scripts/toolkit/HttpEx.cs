@@ -40,7 +40,7 @@ namespace Coolape
 			return str;
 		}
 
-		private static string readString (HttpWebResponse response)
+		public static string readString (HttpWebResponse response)
 		{
 			if (response == null)
 				return "";
@@ -118,7 +118,7 @@ namespace Coolape
 		}
 
 		//
-		public static HttpWebResponse CreatePostHttpResponse (string url, IDictionary<string,string> parameters, int? timeout, Encoding requestEncoding)
+		public static HttpWebResponse CreatePostHttpResponse (string url, IDictionary<string,object> parameters, int? timeout, Encoding requestEncoding)
 		{  
 			if (string.IsNullOrEmpty (url)) {  
 				throw new ArgumentNullException ("url");  

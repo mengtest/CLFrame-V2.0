@@ -702,7 +702,8 @@ public class UIInput : MonoBehaviour
  #endif // UNITY_METRO
 				if (mKeyboard.done || !mKeyboard.active)
 				{
-					if (!mKeyboard.wasCanceled) Submit();
+//					if (!mKeyboard.wasCanceled) Submit();		// del by chenbin
+					Submit();		// add by chenbin
 					mKeyboard = null;
 					isSelected = false;
 					mCached = "";

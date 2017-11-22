@@ -67,11 +67,11 @@ public class UISprite : UIBasicSprite
 	{
 		base.OnDisable ();
 		
-		if (_grayMaterial != null) {
-			_grayMaterial.mainTexture = null;
+//		if (_grayMaterial != null) {
+//			_grayMaterial.mainTexture = null;
 //			GameObject.DestroyImmediate (_grayMaterial);
-			_grayMaterial = null;
-		}
+//			_grayMaterial = null;
+//		}
 		
 		if (mAtlas != null) {
 			if (mAtlas.isBorrowSpriteMode) {
@@ -108,11 +108,9 @@ public class UISprite : UIBasicSprite
 				if (mSprite != null  && mSprite.material != null) {
 					if (grayMatMap [mSprite.path] == null) {
 						Shader shader = Shader.Find ("Unlit/Transparent Colore Gray");
-						_grayMaterial = new Material (shader);
-						grayMatMap [mSprite.path] = _grayMaterial;
-					} else {
-						_grayMaterial = grayMatMap [mSprite.path] as Material;
+						grayMatMap [mSprite.path] = new Material (shader);
 					}
+					_grayMaterial = grayMatMap [mSprite.path] as Material;
 					_grayMaterial.mainTexture = mSprite.material.mainTexture;
 				} else {
 					refresh ();

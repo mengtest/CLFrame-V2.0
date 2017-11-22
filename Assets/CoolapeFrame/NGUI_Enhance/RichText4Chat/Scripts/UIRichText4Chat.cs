@@ -32,6 +32,7 @@ public class UIRichText4Chat : MonoBehaviour
 	//表情所在的图集
 	public string atlasName;
 	public int faceSize = 30;
+	public float faceScaleOffset = 1;
 	//表情图片的大小（最好是font大小的整数倍，当与字体是一样大小时为最宜）
 	//	public static List<string> faceList = new List<string> ();
 	public string faceHead = "";
@@ -220,8 +221,12 @@ public class UIRichText4Chat : MonoBehaviour
 		sp.spriteName = wrapFaceName (faceName);
 		sp.SetDimensions (faceSize, faceSize);
 		sp.transform.parent = transform;
-		sp.transform.localScale = Vector3.one;
-		sp.transform.localPosition = pos;
+		sp.transform.localScale = Vector3.one*faceScaleOffset;
+		if (sp.transform.parent == label.transform) {
+			sp.transform.localPosition = pos;
+		} else {
+			sp.transform.localPosition = pos + label.transform.localPosition;
+		}
 		sp.depth = label.depth + 1;
 		NGUITools.SetActive (sp.gameObject, true);
 	}

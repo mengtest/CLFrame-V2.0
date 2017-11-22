@@ -25,6 +25,7 @@ namespace Coolape
 		// How much we
 		public float heightDamping = 2.0f;
 		public float rotationDamping = 3.0f;
+//		public float moveDamping = 2.0f;
 		public Vector3 offset = Vector3.zero;
 		public bool isCanRotate = true;
 		public bool isRole = false;
@@ -64,8 +65,9 @@ namespace Coolape
 			// Set the position of the camera on the x-z plane to:
 			// distance meters behind the target
 			if (isCanRotate) {
-				transform.position = target.position;
-				transform.position -= currentRotation * Vector3.forward * distance;
+				var newPos = target.position;
+				newPos -= currentRotation * Vector3.forward * distance;
+				transform.position = newPos;//Vector3.Lerp (transform.position, newPos, Time.deltaTime*moveDamping);
 			} else {
 				var newPos = target.position;
 				newPos.y -= distance;

@@ -225,7 +225,7 @@ namespace Coolape
 				mSocket.BeginSend (data, 0, data.Length, 0,
 					(AsyncCallback)SendCallback, this);
 			} catch (System.Exception e) {
-				Debug.LogError (e);
+				Debug.LogError ("socket:" + e);
 				if (offLineCallback != null) {
 					offLineCallback (this, null);
 				}

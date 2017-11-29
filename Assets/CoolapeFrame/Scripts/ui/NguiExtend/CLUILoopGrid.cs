@@ -156,6 +156,11 @@ namespace Coolape
 
 		public void refreshContentOnly (object data)
 		{
+			refreshContentOnly (data, true);
+		}
+
+		public void refreshContentOnly (object data, bool UpdatePosition)
+		{
 			list = wrapList (data);
 			UIWidget t = null;
 			int tmpIndex = 0;
@@ -199,16 +204,21 @@ namespace Coolape
 						}
 					}
 				}
-				grid.Reposition ();
-
-				if (scrollView != null) {
-					scrollView.ResetPosition ();
-				}
+//				grid.Reposition ();
+//
+//				if (scrollView != null) {
+//					scrollView.ResetPosition ();
+//				}
 			}
-			if (needScrollReposiont && scrollView != null) {
-				grid.Reposition ();
-				scrollView.ResetPosition ();
+			if (UpdatePosition && scrollView != null) {
+				scrollView.RestrictWithinBounds (true);
+				scrollView.UpdateScrollbars ();
+				scrollView.UpdatePosition ();
 			}
+//			if (needScrollReposiont && scrollView != null) {
+//				grid.Reposition ();
+//				scrollView.ResetPosition ();
+//			}
 		}
 
 		ArrayList wrapList (object data)

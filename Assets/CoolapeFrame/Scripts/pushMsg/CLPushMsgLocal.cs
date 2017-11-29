@@ -112,13 +112,24 @@ namespace Coolape
 			}
 		}
 
-		public static string deviceTokenStr {
+		public static string deviceTokenStr2 {
 			get {
 				byte[] bytes = deviceToken;
 				if (bytes != null) {
 //					return System.Text.UTF8Encoding.Default.GetString (bytes);
 					string hexToken = "%" + System.BitConverter.ToString(bytes).Replace('-', '%');
 					return hexToken;
+				}
+				return "";
+			}
+		}
+
+		public static string deviceTokenStr {
+			get {
+				byte[] bytes = deviceToken;
+				if (bytes != null) {
+					//					return System.Text.UTF8Encoding.Default.GetString (bytes);
+					return System.BitConverter.ToString(bytes).Replace("-", "");
 				}
 				return "";
 			}

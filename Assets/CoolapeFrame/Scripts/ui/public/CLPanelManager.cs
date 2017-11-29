@@ -140,38 +140,62 @@ namespace Coolape
 		//关闭顶层窗体********************************************************************
 		public static void hideTopPanel ()
 		{
-			hideTopPanel (true, true);
+			hideTopPanel (null, true, true);
 		}
 
-		public static void hideTopPanel (bool showMain, bool immed)
+		public static void hideTopPanel (CLPanelBase panel)
 		{
-			if (showMain && !string.IsNullOrEmpty (self.mainPanelName)
-			    && topPanel != null && string.Compare (self.mainPanelName, topPanel.name) == 0) {
-				topPanel.refresh ();
-				return;
-			}
-			if (panelRetainLayer.Count > 0) {
-				self.depth -= depthOffset;
-				self.depth = self.depth < depthOffset ? depthOffset : self.depth;
-				seaHidePanel.Enqueue (panelRetainLayer.Pop ());
+			hideTopPanel (panel, true, true);
+		}
+
+		public static void hideTopPanel (CLPanelBase panel, bool showMain, bool immed)
+		{
+			if (panel == null || (panelRetainLayer.Count > 0 && panelRetainLayer.Peek() == panel)) {
+				if (showMain && !string.IsNullOrEmpty (self.mainPanelName)
+				    && topPanel != null && string.Compare (self.mainPanelName, topPanel.name) == 0) {
+					topPanel.refresh ();
+					return;
+				}
+				if (panelRetainLayer.Count > 0) {
+					self.depth -= depthOffset;
+					self.depth = self.depth < depthOffset ? depthOffset : self.depth;
+					seaHidePanel.Enqueue (panelRetainLayer.Pop ());
+					isHidePanel = true;
+				}
+				if (panelRetainLayer.Count > 0) {
+					isShowTopPanel = true;
+				} else {
+					if (CLPBackplate.self != null) {
+						CLPBackplate.self.proc (null);
+					}
+				}
+				oldPanel = oldoldPanel;
+				oldoldPanel = null;
+			} else {
+				rmPanelRetainLayer (panel);
+				seaHidePanel.Enqueue (panel);
 				isHidePanel = true;
 			}
-			if (panelRetainLayer.Count > 0) {
-				isShowTopPanel = true;
-			} else {
-				if (CLPBackplate.self != null) {
-					CLPBackplate.self.proc (null);
-				}
-			}
-		
-			oldPanel = oldoldPanel;
-			oldoldPanel = null;
 		
 			if (immed) {
 				self.Update ();
 			}
 		}
-	
+
+		public static void rmPanelRetainLayer(CLPanelBase panel) {
+			Stack<CLPanelBase> tmpStack = new Stack<CLPanelBase> ();	
+			CLPanelBase p = null;
+			while(panelRetainLayer.Count > 0 ) {
+				p = panelRetainLayer.Pop ();
+				if (p != panel) {
+					tmpStack.Push (p);
+				}
+			}
+			while(tmpStack.Count > 0) {
+				panelRetainLayer.Push (tmpStack.Pop());
+			}
+		}
+
 		//关闭所有层**********************************************************************
 		public static void hideAllPanel ()
 		{
@@ -179,7 +203,7 @@ namespace Coolape
 			oldoldPanel = null;
 			int count = panelRetainLayer.Count;
 			for (int i = 0; i < count; i++) {
-				hideTopPanel (false, true);
+				hideTopPanel (null, false, true);
 			}
 		}
 
@@ -217,23 +241,19 @@ namespace Coolape
 					if (!isShowPrePanel) {
 						oldPanel.hide ();
 						if (oldoldPanel != null) {
-							Vector3 newPos = oldoldPanel.transform.localPosition;
-//							newPos.z = -50;
-							oldoldPanel.transform.localPosition = newPos;
+//							Vector3 newPos = oldoldPanel.transform.localPosition;
+//							oldoldPanel.transform.localPosition = newPos;
 							oldPanel = oldoldPanel;
 							oldoldPanel = null;
 						}
 					} else {
-						Vector3 newPos = oldPanel.transform.localPosition;
-//						newPos.z = -50;
-						oldPanel.transform.localPosition = newPos;
-						if (oldoldPanel != null) {
-							newPos = oldoldPanel.transform.localPosition;
-//							newPos.z = 0;
-							oldoldPanel.transform.localPosition = newPos;
-						}
+//						Vector3 newPos = oldPanel.transform.localPosition;
+//						oldPanel.transform.localPosition = newPos;
+//						if (oldoldPanel != null) {
+//							newPos = oldoldPanel.transform.localPosition;
+//							oldoldPanel.transform.localPosition = newPos;
+//						}
 					}
-					//oldPanel = null;
 				}
 				//置顶的处理放在后面，防止oldoldPannel = curPannel的情况
 				if (panelRetainLayer.Count > 0) {
@@ -436,6 +456,7 @@ namespace Coolape
 				pName = orgs [1].ToString ();
 				paras = orgs [2];
 			}
+
 			finishGetPanel (pName, (AssetBundle)(content), callback, paras);
 		}
 
@@ -457,13 +478,43 @@ namespace Coolape
 				}
 				panelBuff [pName] = p;
 				panelAssetBundle [pName] = p;
-			
-				if (p != null) {
-					Utl.doCallback (callback, p, paras);
+
+				CLSharedAssets sharedAsset = go.GetComponent<CLSharedAssets> ();
+				if (sharedAsset != null) {
+					NewList param = ObjPool.listPool.borrowObject ();
+					param.Add (callback);
+					param.Add (p);
+					param.Add (paras);
+					sharedAsset.init ((Callback)onGetSharedAssets, param, null);
+				} else {
+					if (p != null) {
+						Utl.doCallback (callback, p, paras);
+					}
 				}
+
 			}
 			NGUITools.SetActive (self.mask, false);
 			return;// null;
+		}
+
+		static void onGetSharedAssets (params object[] param)
+		{
+			if (param == null) {
+				Debug.LogWarning ("param == null");
+				return;
+			}
+			NewList list = (NewList)(param [0]);
+			if (list.Count >= 3) {
+				object cb = list [0];
+				CLPanelBase p = list [1] as CLPanelBase;
+				object orgs = list [2];
+				if (cb != null) {
+					Utl.doCallback (cb, p, orgs);
+				}
+			} else {
+				Debug.LogWarning ("list.Count ====0");
+			}
+			ObjPool.listPool.returnObject (list);
 		}
 
 		public static CLPanelBase  getPanel (string pName)

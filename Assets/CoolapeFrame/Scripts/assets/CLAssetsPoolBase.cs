@@ -21,7 +21,7 @@ namespace Coolape
 	{
 		public CLDelegate OnSetPrefabCallbacks4Borrow = new CLDelegate ();
 		public CLDelegate OnSetPrefabCallbacks = new CLDelegate ();
-		public static ListPool listPool = new ListPool ();
+//		public static ListPool listPool = new ListPool ();
 		public bool isFinishInitPool = false;
 		public Hashtable poolMap = new Hashtable ();
 		public Hashtable prefabMap = new Hashtable ();
@@ -207,7 +207,7 @@ namespace Coolape
 			if (go != null) {
 				CLSharedAssets sharedAsset = go.GetComponent<CLSharedAssets> ();
 				if (sharedAsset != null) {
-					NewList param = listPool.borrowObject ();
+					NewList param = ObjPool.listPool.borrowObject ();
 					param.Add (cb);
 					param.Add (unit);
 					param.Add (args);
@@ -240,7 +240,7 @@ namespace Coolape
 			} else {
 				Debug.LogWarning ("list.Count ====0");
 			}
-			listPool.returnObject (list);
+			ObjPool.listPool.returnObject (list);
 		}
 
 		//释放资源

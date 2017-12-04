@@ -203,8 +203,16 @@ namespace Coolape
 			oldoldPanel = null;
 			int count = panelRetainLayer.Count;
 			for (int i = 0; i < count; i++) {
-				hideTopPanel (null, false, true);
+//				hideTopPanel (null, false, true);
+				self.depth -= depthOffset;
+				self.depth = self.depth < depthOffset ? depthOffset : self.depth;
+				seaHidePanel.Enqueue (panelRetainLayer.Pop ());
+				isHidePanel = true;
 			}
+			oldPanel = null;
+			oldoldPanel = null;
+			self.mask.SetActive (false);
+			self.Update ();
 		}
 
 		public void Update ()
@@ -231,6 +239,8 @@ namespace Coolape
 				}
 				if (seaHidePanel.Count > 0) {
 					isHidePanel = true;
+				} else {
+					CLPBackplateProc (null);
 				}
 			}
 		
@@ -344,6 +354,7 @@ namespace Coolape
 					UIWidget w = _mask.AddComponent<UIWidget> ();
 					w.SetAnchor (CLUIInit.self.gameObject, -2, -2, 2, 2);
 					NGUITools.AddWidgetCollider (_mask);
+					_mask.SetActive (false);
 				}
 				return _mask;
 			}
@@ -356,6 +367,7 @@ namespace Coolape
 			topPanel = null;
 			isFinishStart = false;
 			showingPanels.Clear ();
+			mask.SetActive (false);
 		}
 
 		public void reset ()

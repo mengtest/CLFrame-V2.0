@@ -623,7 +623,8 @@ namespace Coolape
 			               (delta1.y >= 0 && delta2.y < 0) ||
 			               (delta1.y > 0 && delta2.y <= 0)) 
 			               ))) {	//缩放
-				dragProcType = 2;
+//				dragProcType = 2;
+				procScalerSoft (Vector2.zero);
 			} else {
 				float angle1 = getAngle (new Vector3 (cachDelta1.x, 0, cachDelta1.y));
 				float angle2 = getAngle (new Vector3 (-cachDelta2.x, 0, -cachDelta2.y));
@@ -644,7 +645,8 @@ namespace Coolape
 				if (Mathf.Abs (angle3 - angle1) < 50f &&
 				    Mathf.Abs (angle3 - angle2) < 50f) {
 					//缩放
-					dragProcType = 2;
+//					dragProcType = 2;
+					procScalerSoft (Vector2.zero);
 				} else {
 					if (
 						(delta1.y <= 0 && delta2.y > 0) ||

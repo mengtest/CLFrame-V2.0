@@ -25,9 +25,10 @@
 do
     require("public.CLLInclude");
 
-    #SCRIPTNAME# = {};
+    local mApplicationPauseDelegate = {};
+    CLLMainLua = {};
 
-
+    MyCfg.mode = GameMode.none;
     --     UIAtlas.releaseSpriteTime = 30; -- 释放ui资源的时间（秒）
 
     -- 设置是否可以成多点触控
@@ -39,6 +40,8 @@ do
 
     --设置帧率
     Application.targetFrameRate = 30;
+    QualitySettings.SetQualityLevel (1, false);
+    Time.fixedDeltaTime = 0.08
 
     -- 日志开关
     --CS.Debug.logger.logEnabled = false;
@@ -46,8 +49,8 @@ do
     -- 设置是否测试环境
     if (Prefs.getTestMode()) then
         local url = Prefs.getTestModeUrl();
-        if (url ~= "") then
-            CLAlert.add("Test...", Color.red, - 1, 1, false);
+        if (not isNilOrEmpty(url )) then
+            CLAlert.add("Test...", Color.red, -1, 1, false);
             CLVerManager.self.baseUrl = url;
         end
     end
@@ -55,30 +58,34 @@ do
     local fps = CLMainBase.self:GetComponent("CLFPS")
     fps.displayRect = Rect(10, 200, 640, 40);
 
+    if Net.self.switchNetType == NetWorkType.publish then
+        fps.enabled = false;
+    end
+
     -- 当离线调用
-    function #SCRIPTNAME#.onOffline(...)
-        CLAlert.add("网络连接已经断开！", Color.red, 1);
+    function CLLMainLua.onOffline()
+        procOffLine();
     end
 
     -- 退出游戏确认
-    function #SCRIPTNAME#.exitGmaeConfirm(...)
+    function CLLMainLua.exitGmaeConfirm()
         if (CLCfgBase.self.isGuidMode) then
             return;
         end
         -- 退出确认
         if (CLPanelManager.topPanel == nil or
         (not CLPanelManager.topPanel:hideSelfOnKeyBack())) then
-            CLUIUtl.showConfirm(Localization.Get("MsgExitGame"), #SCRIPTNAME#.doExitGmae, nil);
+            CLUIUtl.showConfirm(Localization.Get("MsgExitGame"), CLLMainLua.doExitGmae, nil);
         end
     end
 
     -- 退出游戏
-    function #SCRIPTNAME#.doExitGmae(...)
+    function CLLMainLua.doExitGmae(...)
         Application.Quit();
     end
 
     -- 暂停游戏或恢复游戏
-    function #SCRIPTNAME#.OnApplicationPause(isPause)
+    function CLLMainLua.OnApplicationPause(isPause)
         if (isPause) then
             --设置帧率
             Application.targetFrameRate = 1;
@@ -88,29 +95,45 @@ do
             -- 设置帧率
             Application.targetFrameRate = 30;
         end
+        for k,v in pairs(mApplicationPauseDelegate) do
+            Utl.doCallback(v, isPause);
+        end
     end
 
-    function #SCRIPTNAME#.OnApplicationQuit(...)
+    function CLLMainLua.addApplicationPauseCallback(callback)
+        mApplicationPauseDelegate[callback] = callback;
+    end
+
+    function CLLMainLua.removeApplicationPauseCallback(callback)
+        mApplicationPauseDelegate[callback] = nil;
+    end
+
+    function CLLMainLua.OnApplicationQuit()
+        __ApplicationQuit__ = true;
+
+        if CLCfgBase.self.isEditMode and CLCfgBase.self.isContBorrowSpriteTimes then
+            onApplicationPauseCallback4CountAtlas();
+        end
     end
     --=========================================
-    function #SCRIPTNAME#.showPanelStart()
+    function CLLMainLua.showPanelStart()
         if (CLPanelManager.topPanel ~= nil and
         CLPanelManager.topPanel.name == "PanelStart") then
             CLPanelManager.topPanel:show();
         else
             --异步方式打开页面
-            CLPanelManager.getPanelAsy("PanelSplash", #SCRIPTNAME#.showSplash);
+            CLPanelManager.getPanelAsy("PanelSplash", CLLMainLua.showSplash);
         end
     end
 
-    function #SCRIPTNAME#.showSplash(p)
+    function CLLMainLua.showSplash(p)
         CLPanelManager.showPanel(p);
     end
 
     --------------------------------------------
     ---------- 验证热更新器是否需要更新------------
     --------------------------------------------
-    function #SCRIPTNAME#.onCheckUpgrader(isHaveUpdated)
+    function CLLMainLua.onCheckUpgrader(isHaveUpdated)
         if (isHaveUpdated) then
             -- 说明热更新器有更新，需要重新加载lua
             CLMainBase.self:reStart();
@@ -120,28 +143,48 @@ do
 
             if (CLCfgBase.self.isEditMode) then
                 --主初始化完后，打开下一个页面
-                CLMainBase.self:invoke4Lua(#SCRIPTNAME#.showPanelStart, 0.2);
+                CLMainBase.self:invoke4Lua(CLLMainLua.showPanelStart, 0.2);
             else
                 -- 先执行一次热更新，注意isdoUpgrade=False,因为如果更新splash的atalse资源时，会用到
                 CLLVerManager.init(nil,
-                                   function()
-                                       --主初始化完后，打开下一个页面
-                                       CLMainBase.self:invoke4Lua(CLLMainLua.showPanelStart, 0.1);
-                                   end,
-                                   false, "");
+                function()
+                    --主初始化完后，打开下一个页面
+                    CLMainBase.self:invoke4Lua(CLLMainLua.showPanelStart, 0.1);
+                end,
+                false, "");
             end
         end
     end
 
-    -- 处理开始
-    if (CLCfgBase.self.isEditMode) then
-        #SCRIPTNAME#.onCheckUpgrader(false);
-    else
-        -- 更新热更新器
-        CLLUpdateUpgrader.checkUpgrader(#SCRIPTNAME#.onCheckUpgrader);
+    function CLLMainLua.begain()
+        -- 日志logveiw
+        if ReporterMessageReceiver.self ~= nil then
+            ReporterMessageReceiver.self.luaPath = "KOK/upgradeRes/priority/lua/toolkit/KKLogListener.lua";
+            ReporterMessageReceiver.self:setLua()
+        end
+
+        -- 处理开始
+        if (CLCfgBase.self.isEditMode) then
+            CLLMainLua.onCheckUpgrader(false);
+        else
+            -- 更新热更新器
+            -- CLLUpdateUpgrader.checkUpgrader(CLLMainLua.onCheckUpgrader);
+            local ret, msg = pcall(CLLUpdateUpgrader.checkUpgrader, CLLMainLua.onCheckUpgrader)
+            if not ret then
+                printe(msg)
+                CLLMainLua.onCheckUpgrader(false);
+            end
+        end
     end
+
+    --------------------------------------------
+    --------------------------------------------
+    if CLCfgBase.self.isEditMode and CLCfgBase.self.isContBorrowSpriteTimes then
+        UIAtlas.onBorrowSpriteCallback = onBorrowedSpriteCB;
+    end
+    CLLMainLua.begain();
     --------------------------------------------
     --------------------------------------------
 
-    return #SCRIPTNAME#;
+    return CLLMainLua;
 end

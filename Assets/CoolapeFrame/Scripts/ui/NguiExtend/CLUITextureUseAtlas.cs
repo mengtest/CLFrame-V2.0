@@ -72,47 +72,56 @@ namespace Coolape
 				}
 			}
 		}
+
 		void OnEnable ()
 		{
-			if (!string.IsNullOrEmpty (spriteName)) {
-				setMainTexture (spriteName);
-				MarkAsChanged ();
-			}
+			try {
+				if (!string.IsNullOrEmpty (spriteName)) {
+					setMainTexture (spriteName);
+					MarkAsChanged ();
+				}
 
-			Texture tt = null;
-			string _spName = "";
-			ArrayList list = MapEx.keys2List (subTextureNameMap);
-			for (int i = 0; i < list.Count;i++) {
-				_spName = subTextureNameMap[list[i]] as string;
-				setTexture (list[i].ToString (), _spName);
+				Texture tt = null;
+				string _spName = "";
+				ArrayList list = MapEx.keys2List (subTextureNameMap);
+				for (int i = 0; i < list.Count; i++) {
+					_spName = subTextureNameMap [list [i]] as string;
+					setTexture (list [i].ToString (), _spName);
+				}
+				list.Clear ();
+				list = null;
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
-			list.Clear ();
-			list = null;
 		}
 
 		void OnDisable ()
 		{
-			if (!string.IsNullOrEmpty (spriteName)) {
-				mAtlas.returnSpriteByname (_spriteName);
-				if (newTexture != null) {
-					material.mainTexture = null;
-					Texture2D.DestroyImmediate (newTexture);
-					newTexture = null;
+			try {
+				if (!string.IsNullOrEmpty (spriteName)) {
+					mAtlas.returnSpriteByname (_spriteName);
+					if (newTexture != null) {
+						material.mainTexture = null;
+						Texture2D.DestroyImmediate (newTexture);
+						newTexture = null;
+					}
+					MarkAsChanged ();
 				}
-				MarkAsChanged ();
-			}
-			Texture tt = null;
-			string _spName = "";
-			foreach (DictionaryEntry cell in subTextureMap) {
-				tt = cell.Value as Texture;
-				if (tt != null) {
-					_spName = subTextureNameMap [cell.Key] as string;
-					if (mAtlas != null) {
-						mAtlas.returnSpriteByname (_spName);
+				Texture tt = null;
+				string _spName = "";
+				foreach (DictionaryEntry cell in subTextureMap) {
+					tt = cell.Value as Texture;
+					if (tt != null) {
+						_spName = subTextureNameMap [cell.Key] as string;
+						if (mAtlas != null) {
+							mAtlas.returnSpriteByname (_spName);
+						}
 					}
 				}
+				subTextureMap.Clear ();
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
-			subTextureMap.Clear ();
 		}
 
 		public string spriteName {
@@ -120,30 +129,35 @@ namespace Coolape
 				return _spriteName;
 			}
 			set {
-				if (!string.IsNullOrEmpty (_spriteName) && _spriteName != value) {
-					if (gameObject.activeInHierarchy) {
-						mAtlas.returnSpriteByname (_spriteName);
-						if (newTexture != null) {
-							material.mainTexture = null;
-							Texture2D.DestroyImmediate (newTexture);
-							newTexture = null;
+				try {
+					if (!string.IsNullOrEmpty (_spriteName) && _spriteName != value) {
+						if (gameObject.activeInHierarchy) {
+							mAtlas.returnSpriteByname (_spriteName);
+							if (newTexture != null) {
+								material.mainTexture = null;
+								Texture2D.DestroyImmediate (newTexture);
+								newTexture = null;
+							}
 						}
 					}
-				}
-				if (_spriteName != value) {
-					_spriteName = value;
-					if (!string.IsNullOrEmpty (_spriteName)) {
-						setMainTexture (_spriteName);
+					if (_spriteName != value) {
+						_spriteName = value;
+						if (!string.IsNullOrEmpty (_spriteName)) {
+							setMainTexture (_spriteName);
+						}
 					}
+				} catch (System.Exception e) {
+					Debug.LogError (e);
 				}
 			}
 		}
 
-		void setMainTexture(string spriteName) {
+		void setMainTexture (string spriteName)
+		{
 			if (!gameObject.activeInHierarchy)
 				return;
 			UISpriteData sd = mAtlas.getSpriteBorrowMode (spriteName);
-			if (sd != null && UIAtlas.assetBundleMap[sd.path] != null) {
+			if (sd != null && UIAtlas.assetBundleMap [sd.path] != null) {
 				mAtlas.borrowSpriteByname (spriteName, null, (Callback)onGetMainTexture2, null);
 			} else {
 				mAtlas.borrowSpriteByname (spriteName, null, (Callback)onGetMainTexture, null);
@@ -195,45 +209,49 @@ namespace Coolape
 
 		public void setTexture (string propName, string spriteName)
 		{
-			if (string.IsNullOrEmpty (spriteName)) {
-				Debug.Log (spriteName+"<<setTexture null spriteName>>"+propName);
-				return;
-			}
-			
-			Texture tt = subTextureMap [propName] as Texture;
-			if (tt == null) {
-				subTextureNameMap [propName] = spriteName;
-				if(!gameObject.activeInHierarchy) {
+			try {
+				if (string.IsNullOrEmpty (spriteName)) {
+					Debug.Log (spriteName + "<<setTexture null spriteName>>" + propName);
 					return;
 				}
-				UISpriteData sd = mAtlas.getSpriteBorrowMode (spriteName);
-				if (sd != null && UIAtlas.assetBundleMap[sd.path] != null) {
-					mAtlas.borrowSpriteByname (spriteName, null, (Callback)onGetSubTexture2, propName);
-				} else {
-					mAtlas.borrowSpriteByname (spriteName, null, (Callback)onGetSubTexture, propName);
-				}
-			} else {
-				string _spName = subTextureNameMap [propName] as string;
-				if (_spName == spriteName) {
-					material.SetTexture (propName, tt);
-
-					MarkAsChanged ();
-					panel.Refresh ();
-				} else {
-					mAtlas.returnSpriteByname (_spName);
-					subTextureMap.Remove (propName);
-					subTextureNameMap.Remove (propName);
+			
+				Texture tt = subTextureMap [propName] as Texture;
+				if (tt == null) {
 					subTextureNameMap [propName] = spriteName;
-					if(!gameObject.activeInHierarchy) {
+					if (!gameObject.activeInHierarchy) {
 						return;
 					}
 					UISpriteData sd = mAtlas.getSpriteBorrowMode (spriteName);
-					if (sd != null && UIAtlas.assetBundleMap[sd.path] != null) {
+					if (sd != null && UIAtlas.assetBundleMap [sd.path] != null) {
 						mAtlas.borrowSpriteByname (spriteName, null, (Callback)onGetSubTexture2, propName);
 					} else {
 						mAtlas.borrowSpriteByname (spriteName, null, (Callback)onGetSubTexture, propName);
 					}
+				} else {
+					string _spName = subTextureNameMap [propName] as string;
+					if (_spName == spriteName) {
+						material.SetTexture (propName, tt);
+
+						MarkAsChanged ();
+						panel.Refresh ();
+					} else {
+						mAtlas.returnSpriteByname (_spName);
+						subTextureMap.Remove (propName);
+						subTextureNameMap.Remove (propName);
+						subTextureNameMap [propName] = spriteName;
+						if (!gameObject.activeInHierarchy) {
+							return;
+						}
+						UISpriteData sd = mAtlas.getSpriteBorrowMode (spriteName);
+						if (sd != null && UIAtlas.assetBundleMap [sd.path] != null) {
+							mAtlas.borrowSpriteByname (spriteName, null, (Callback)onGetSubTexture2, propName);
+						} else {
+							mAtlas.borrowSpriteByname (spriteName, null, (Callback)onGetSubTexture, propName);
+						}
+					}
 				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 		}
 

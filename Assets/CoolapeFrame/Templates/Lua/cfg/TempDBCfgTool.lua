@@ -57,11 +57,11 @@ do
         local lev = 0;
         local heros = {};
 
-        list = {}
+        local list = {}
         for i, v in pairs(roleLevData) do
             gid = bio2Int(v.GID);
             lev = bio2Int(v.Lev);
-            key = gid .. "_" .. lev;
+            key = joinStr( gid , "_" , lev);
             local m = {}
             m.base = roleBaseData[gid];
             m.vals = v;
@@ -83,11 +83,11 @@ do
         local gid = 0;
         local lev = 0;
 
-        list = {}
+        local list = {}
         for i, v in pairs(levData) do
             gid = bio2Int(v.GID);
             lev = bio2Int(v.Lev);
-            key = gid .. "_" .. lev;
+            key = joinStr(gid , "_" , lev);
             local m = {}
             m.base = baseData[gid];
             m.vals = v;
@@ -96,19 +96,37 @@ do
         return list;
     end
 
-    function DBCfgTool.pubGetList4GID(dataPath)
-        local datas = DBCfgTool.getDatas(dataPath);
+    function DBCfgTool.pubGetList4GID(dataPath, gidKey)
+        local datas, map = DBCfgTool.getDatas(dataPath, true);
         local gid;
         local m = {};
         local list = {}
-        for i, v in pairs(datas) do
-            gid = bio2Int(v.GID);
+        gidKey = gidKey or "GID";
+        for i, v in ipairs(datas) do
+            gid = bio2Int(v[gidKey]);
             list = m[gid];
             if(list == nil) then
                 list = {};
             end
             table.insert(list, v);
             m[gid] = list;
+        end
+        return m, map;
+    end
+
+    function DBCfgTool.pubGet4GIDLev(dataPath)
+        local datas = DBCfgTool.getDatas(dataPath);
+        local gid;
+        local lev;
+        local key = "";
+        local m = {};
+        local list = {}
+        local count = 0;
+        for i, v in pairs(datas) do
+            gid = bio2Int(v.GID);
+            lev = bio2Int(v.Lev);
+            key = PStr.b():a(tostring(gid)):a("_"):a(tostring(lev)):e();
+            m[key] = v;
         end
         return m;
     end

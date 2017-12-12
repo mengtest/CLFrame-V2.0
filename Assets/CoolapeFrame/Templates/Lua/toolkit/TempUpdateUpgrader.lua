@@ -3,13 +3,16 @@
 -- 判断热更新器本身是不是需要更新，同时判断渠道配置是否要更新
 --]]
 do
+    ---@type System.Collections.Hashtable
     local localVer = Hashtable();
+    ---@type System.Collections.Hashtable
     local serverVer = Hashtable();
     local serverVerStr = "";
     -- 热更新器的版本
     local upgraderVer = "upgraderVer.json";
     local localVerPath = upgraderVer;
-    local upgraderName = PStr.b():a(CLPathCfg.self.basePath):a("/upgradeRes/priority/lua/toolkit/CLLVerManager.lua"):e();
+    --local upgraderName = PStr.b():a(CLPathCfg.self.basePath):a("/upgradeRes/priority/lua/toolkit/CLLVerManager.lua"):e();
+    local upgraderName = "preUpgradeList";
     -- 控制渠道更新的
     local channelName = "channels.json";
     local finishCallback = nil; -- finishCallback(isHaveUpdated)
@@ -32,9 +35,9 @@ do
         url = Utl.urlAddTimes(url);
 
         WWWEx.newWWW(CLVerManager.self, url, CLAssetType.text,
-            3, 3, CLLUpdateUpgrader.onGetServerUpgraderVer,
-            CLLUpdateUpgrader.onGetServerUpgraderVer,
-            CLLUpdateUpgrader.onGetServerUpgraderVer, nil);
+        3, 3, CLLUpdateUpgrader.onGetServerUpgraderVer,
+        CLLUpdateUpgrader.onGetServerUpgraderVer,
+        CLLUpdateUpgrader.onGetServerUpgraderVer, nil);
     end
 
     function CLLUpdateUpgrader.onGetServerUpgraderVer(content, orgs)
@@ -54,25 +57,55 @@ do
         local url = "";
         local verVal = MapEx.getString(serverVer, "upgraderVer");
         url = PStr.b():a(CLVerManager.self.baseUrl):a("/"):a(upgraderName):a("."):a(verVal):e();
-        WWWEx.newWWW(CLVerManager.self, url, CLAssetType.bytes,
-            3, 5, CLLUpdateUpgrader.ongetNewestUpgrader,
-            CLLUpdateUpgrader.ongetNewestUpgrader,
-            CLLUpdateUpgrader.ongetNewestUpgrader, upgraderName);
+        WWWEx.newWWW(CLVerManager.self, url, CLAssetType.text,
+        3, 5, CLLUpdateUpgrader.ongetNewestPreupgradList,
+        CLLUpdateUpgrader.ongetNewestPreupgradList,
+        CLLUpdateUpgrader.ongetNewestPreupgradList, upgraderName);
     end
 
-    function CLLUpdateUpgrader.ongetNewestUpgrader(content, orgs)
+    function CLLUpdateUpgrader.ongetNewestPreupgradList(content, orgs)
         if (content ~= nil) then
-            local file = PStr.begin():a(CLPathCfg.persistentDataPath):a("/"):a(upgraderName):e();
-            FileEx.CreateDirectory(Path.GetDirectoryName(file));
-            File.WriteAllBytes(file, content);
-
-            file = PStr.begin():a(CLPathCfg.persistentDataPath):a("/"):a(localVerPath):e();
-            File.WriteAllText(file, serverVerStr);
-
-            CLLUpdateUpgrader.checkChannelVer(true);
+            local preupgradList = JSON.DecodeList(content)
+            if preupgradList == nil or preupgradList.Count == 0 then
+                CLLUpdateUpgrader.checkChannelVer(false);
+            else
+                CLLUpdateUpgrader.loadServerRes({ preupgradList, 0 })
+            end
         else
             CLLUpdateUpgrader.checkChannelVer(false);
         end
+    end
+
+    function CLLUpdateUpgrader.loadServerRes(orgs)
+        local list = orgs[1]
+        local i = orgs[2]
+        if i >= list.Count then
+            -- 完成
+            CLLUpdateUpgrader.checkChannelVer(true);
+        else
+            local cell = list[i];
+            local name = cell[0]
+            local ver = cell[1]
+            local url = PStr.b():a(CLVerManager.self.baseUrl):a("/"):a(name):a("."):a(ver):e();
+            WWWEx.newWWW(CLVerManager.self, url, CLAssetType.bytes,
+            3, 5, CLLUpdateUpgrader.ongetNewestUpgrader,
+            CLLUpdateUpgrader.ongetNewestUpgrader,
+            CLLUpdateUpgrader.ongetNewestUpgrader, { list, i, name });
+        end
+    end
+
+    function CLLUpdateUpgrader.ongetNewestUpgrader(content, orgs)
+        local list = orgs[1]
+        local i = orgs[2]
+        local fileName = orgs[3]
+        if (content ~= nil) then
+            local file = PStr.begin():a(CLPathCfg.persistentDataPath):a("/"):a(fileName):e();
+            FileEx.CreateDirectory(Path.GetDirectoryName(file));
+            File.WriteAllBytes(file, content);
+        else
+            printe(joinStr(fileName , "get content == nil"));
+        end
+        CLLUpdateUpgrader.loadServerRes({ list, i + 1 })
     end
 
     -- 取得最新的渠道更新控制信息
@@ -82,19 +115,18 @@ do
         if (MapEx.getInt(localVer, "channelVer") < MapEx.getInt(serverVer, "channelVer")) then
             CLLUpdateUpgrader.getChannelInfor();
         else
-            Utl.doCallback(finishCallback, isUpdatedUpgrader);
+            CLLUpdateUpgrader.finished()
         end
     end
-
 
     function CLLUpdateUpgrader.getChannelInfor(...)
         local verVal = MapEx.getInt(serverVer, "channelVer");
         -- 注意是加了版本号的，会使用cdn
         local url = PStr.b():a(CLVerManager.self.baseUrl):a("/"):a(channelName):a("."):a(verVal):e();
         WWWEx.newWWW(CLVerManager.self, url, CLAssetType.text,
-            3, 5, CLLUpdateUpgrader.onGetChannelInfor,
-            CLLUpdateUpgrader.onGetChannelInfor,
-            CLLUpdateUpgrader.onGetChannelInfor, channelName);
+        3, 5, CLLUpdateUpgrader.onGetChannelInfor,
+        CLLUpdateUpgrader.onGetChannelInfor,
+        CLLUpdateUpgrader.onGetChannelInfor, channelName);
     end
 
     function CLLUpdateUpgrader.onGetChannelInfor(content, orgs)
@@ -103,7 +135,14 @@ do
             FileEx.CreateDirectory(Path.GetDirectoryName(file));
             File.WriteAllText(file, content);
         end
+        CLLUpdateUpgrader.finished()
+    end
 
+    function CLLUpdateUpgrader.finished()
+        if isUpdatedUpgrader then
+            local file = PStr.begin():a(CLPathCfg.persistentDataPath):a("/"):a(localVerPath):e();
+            File.WriteAllText(file, serverVerStr);
+        end
         Utl.doCallback(finishCallback, isUpdatedUpgrader);
     end
 end

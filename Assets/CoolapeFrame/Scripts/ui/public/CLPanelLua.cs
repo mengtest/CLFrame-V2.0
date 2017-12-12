@@ -57,10 +57,10 @@ namespace Coolape
 
 		public override void OnDestroy ()
 		{
-			base.OnDestroy ();
 			if (lfOnDestroy != null) {
 				lfOnDestroy.Call ();
 			}
+			base.OnDestroy ();
 		}
 
 		public override void onTopPanelChange (CLPanelBase p)

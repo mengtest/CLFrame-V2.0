@@ -11,7 +11,8 @@ do
     -- 放在后面加载的页面
     local lateLoadPanels = {
         "PanelSceneManager", -- 切换场景页面
-        "PanelChat"
+        "PanelChat",
+        "PanelLossSource",
     }
 
     CLLPStart = {};
@@ -20,6 +21,8 @@ do
         csSelf = go;
         transform = csSelf.transform;
         gameObject = csSelf.gameObject;
+        -- 加载一些必要的lua
+        CLLPStart.setLuasAtBegainning();
     end
 
     function CLLPStart.setData(pars)
@@ -38,25 +41,37 @@ do
 
         CallNet = PorotocolService.callNet
         require("db.KKDBRoot");
-		require("db.KKConstant");
+        require("db.KKConstant");
         require("public.KKCameraMgr");
         require("public.KKFormula");
+        require("toolkit.KKPushMsg");
+        require("channel.KKChlIAP");
+
+        KKPushMsg.init(uidx);
         MyCfg.self.worldMap:setLua();
-        MyCfg.self.worldMap.luaTable._init();
+        --MyCfg.self.worldMap.luaTable._init();
+        MyCfg.self.worldMap:invoke4Lua(MyCfg.self.worldMap.luaTable._init, 0.5);
+
+        -- 资源释放时间
+        if CLAssetsManager.self then
+            CLAssetsManager.self.timeOutSec4Realse = 10;
+        end
+
+        if ReporterMessageReceiver.self and ReporterMessageReceiver.self.gameObject then
+            if KKWhiteList.isWhiteName() then
+                ReporterMessageReceiver.self.gameObject:SetActive(true)
+            else
+                ReporterMessageReceiver.self.gameObject:SetActive(false)
+            end
+        end
+
+        CLPanelManager.self.mainPanelName = "PanelCityUi";
+        -- 添加屏蔽字
+        MyMain.self:invoke4Lua(CLLPStart.addShieldWords, 1);
     end
 
     function CLLPStart.show()
-        -- 加载一些必要的lua
-        CLLPStart.setLuasAtBegainning();
-
-        local p = CLPanelManager.getPanel("PanelSplash");
-        if (p ~= nil) then
-            CLPanelManager.hidePanel(p);
-        end
-
-        CLLPStart.createPanel();
     end
-
 
     -- 创建ui
     function CLLPStart.createPanel()
@@ -90,6 +105,20 @@ do
 
     -- 刷新页面
     function CLLPStart.refresh()
+        if isNilOrEmpty(PorotocolService.callNet.__sessionid) or PorotocolService.callNet.__sessionid == 0 then
+            CLLPStart.createPanel();
+        end
+    end
+
+    -- 添加屏蔽字
+    function CLLPStart.addShieldWords()
+        local onGetShieldWords = function(path, content, originals)
+            if (content ~= nil) then
+                BlockWordsTrie.getInstanse():init(content);
+            end
+        end;
+        local path = joinStr(CLPathCfg.self.basePath, "/", CLPathCfg.upgradeRes, "/priority/txt/shieldWords");
+        CLVerManager.self:getNewestRes(path, CLAssetType.text, onGetShieldWords, nil);
     end
 
     -- 连接服务器相关处理
@@ -108,7 +137,6 @@ do
         Net.self:connectGame(MapEx.getString(selectedServer, "serverip"), MapEx.getInt(selectedServer, "serverport"))
     end
 
-
     -- 处理网络接口
     function CLLPStart.procNetwork(cmd, succ, msg, pars)
         if (succ == 1) then
@@ -124,51 +152,38 @@ do
                 showHotWheel();
 
                 local uid = uidx;
-                --uid= '9215be325c6649bead13c2b9def749d9'
-                --uid="8962bdf6c39d4d0c9e41a00bb0089173"
                 if CLCfgBase.self.isEditMode then
-                    if MyCfg.self.default_UID ~= "" then
+                    if not isNilOrEmpty(MyCfg.self.default_UID) then
                         uid = MyCfg.self.default_UID;
+                    elseif (not isNilOrEmpty(__UUID__)) then
+                        uid = __UUID__;
+                    end
+                else
+                    if not isNilOrEmpty(__UUID__) then
+                        uid = __UUID__;
                     end
                 end
+
+                PorotocolService.callNet.__sessionid = uid;
                 Net.self:send(PorotocolService.callNet.login(uid))
                 --CLLPStart.doEnterGame();
             elseif cmd == "login" then
                 hideHotWheel();
-                CLLPStart.doEnterGame();
-                --elseif (cmd == "verifyVer") then
-                --    if (CLCfgBase.self.isNetMode) then
-                --        showHotWheel();
-                --        -- 取得公告(注意是在消息分发的地方处理的显示)
-                --        Net.self:sendGate(CallNet.getNotices(CLCfgBase.Channel, __version__));
-                --
-                --        -- send to server
-                --        Net.self:sendGate(CallNet.lgRegUser(Utl.uuid(), "", Utl.uuid(), CLCfgBase.Channel,
-                --                                            SystemInfo.deviceModel, __version__));
-                --    else
-                --        local p = CLPanelManager.getPanel("PanelEnterGame");
-                --        CLPanelManager.showTopPanel(p, true, true);
-                --    end
-                --elseif (cmd == "registUser"
-                --or cmd == "lgUser"
-                --or cmd == "lgRegUser") then
-                --    local data = pars;
-                --    local user = data[0];
-                --    -- local lastNsv = data[1];
-                --    -- 判断用户是否已经被封号
-                --    if (NumEx.bio2Int(user.status) == GboConstant.PubAttr.Type_User_Close) then
-                --        CLUIUtl.showConfirm(Localization.Get("MsgUserIsColsed"), nil);
-                --        return;
-                --    end
-                --    local p = CLPanelManager.getPanel("PanelEnterGame");
-                --    p:setData(data);
-                --    CLPanelManager.showTopPanel(p, true, true);
-                --
-                --elseif (cmd == "entryGame") then
-                --    -- 进入游戏
-                --    -- CLLPStart.enterGame(nil, nil);
-                --elseif (cmd == "lastLoginSv") then
-                --    Net.self.gateTcp:stop(); -- 关掉网关连接
+                if msg == "-1" then
+                    CLPanelManager.getPanelAsy("PanelSelectPlayer", onLoadedPanelTT, uidx)
+                else
+                    CLLPStart.doEnterGame();
+                end
+
+                -- IAP 登陆成功后再初化iap
+                local rt, err = pcall(KKChlIAP.init);
+                if not rt then
+                    printe(err)
+                end
+            elseif cmd == "getUserTaskList" then
+                if CLPanelManager.topPanel == csSelf then
+                    CLLPStart.doEnterGame();
+                end
             end
         else
             -- 接口返回不成功
@@ -178,7 +193,14 @@ do
                 LGet("UIOutofConnect"),
                 function()
                     csSelf:invoke4Lua(CLLPStart.connectGame, 0.5);
-                end );
+                end,
+                function()
+                    local p = CLPanelManager.getPanel("PanelSplash");
+                    if (p ~= nil) then
+                        CLPanelManager.showPanel(p);
+                    end
+                    hideTopPanel();
+                end);
             elseif (cmd == "verifyVer") then
                 -- 版本号验证失败
                 if (succ ~= GboConstant.ResultStatus.R_User_ChnFalse) then
@@ -197,7 +219,7 @@ do
 
     -- 更新安装游戏
     function CLLPStart.upgradeGame(...)
-        if (upgradeUrl ~= nil and upgradeUrl ~= "") then
+        if not isNilOrEmpty(upgradeUrl ) then
             Application.OpenURL(upgradeUrl);
         end
     end
@@ -208,15 +230,37 @@ do
     end
 
     function CLLPStart.doEnterGame()
-        --CLPanelManager.getPanelAsy("mainCity", onLoadedPanel)
-        CLPanelManager.getPanelAsy("PanelSceneManager", function(p)
-            p:setData({ mode = GameMode.city });
-            CLPanelManager.showTopPanel(p);
-        end);
+        local tasks = KKDBUser.getTasks()
+        if tasks == nil then
+            return
+        end
 
-        --csSelf:invoke4Lua(function()
-        --    CLPanelManager.hidePanel(csSelf);
-        --end, 0.2);
+        CLLPStart._EnterGame(KKDBUser.isNewPlayer());
+    end
+
+    function CLLPStart._EnterGame(isNewPlayer)
+        if isNewPlayer then
+            CLLPStart.guidNewPlayer();
+        else
+            CLPanelManager.getPanelAsy("PanelSceneManager",
+            function(p)
+                p:setData({ mode = GameMode.city });
+                CLPanelManager.showTopPanel(p);
+
+                local p2 = CLPanelManager.getPanel("PanelSplash");
+                if (p2 ~= nil) then
+                    CLPanelManager.hidePanel(p2);
+                end
+            end);
+        end
+    end
+
+    function CLLPStart.guidNewPlayer()
+        openGuidPanel(KKDBGuid.getCaptionList(1))
+        local p2 = CLPanelManager.getPanel("PanelSplash");
+        if (p2 ~= nil) then
+            CLPanelManager.hidePanel(p2);
+        end
     end
 
     ----------------------------------------------

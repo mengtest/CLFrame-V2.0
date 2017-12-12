@@ -1,6 +1,9 @@
 ﻿--开始loading页面，处理资源更新、及相关初始化
 do
+    require("channel.KKChl");
+    require("toolkit.KKWhiteList");
 
+    ---@type Coolape.CLPanelLua
     local csSelf = nil;
     local transform = nil;
     local gameObject = nil;
@@ -20,6 +23,7 @@ do
     local oldServerIdx = "";
     local currServer;
     local user;
+    local bottom;
 
     local www4UpgradeCell = nil; -- 更新时单个单元的www
 
@@ -38,6 +42,7 @@ do
         csSelf = go;
         transform = csSelf.transform;
         gameObject = csSelf.gameObject;
+        bottom = getChild(transform, "Bottom")
         progressBar = getChild(transform, "Bottom", "Progress Bar");
         progressBar = progressBar:GetComponent("UISlider");
         NGUITools.SetActive(progressBar.gameObject, false);
@@ -62,16 +67,14 @@ do
     --     end
 
     function CLLPSplash.show()
-        SoundEx.playMainMusic("enterGame");
+        csSelf.panel.depth = 200;
+        --SoundEx.playMainMusic("enterGame");
         --panelIndex = 0;
         loadedPanelCount = 0;
         SetActive(progressBar.gameObject, false);
         SetActive(progressBarTotal.gameObject, false);
         SetActive(ButtonEntry, false)
         SetActive(currServer.gameObject, false)
-
-        -- 设置哪些页面时可以点击3D场景
-        -- CLUIDrag4World.setCanClickPanel("PanelBattle");
 
         -- load alert
         CLLPSplash.addAlertHud();
@@ -91,38 +94,48 @@ do
             if (p ~= nil) then
                 CLPanelManager.hidePanel(p);
             end
-        end, 0.2);
+        end, 1.5);
     end
 
     -- 取得系统账号
     function CLLPSplash.accountLogin()
-        local url = PStr.b():a(__httpBaseUrl):a("/KokAccount/AccountServlet"):e();
-        local chnCfg = nil;
-        local chlCode = "0000";
-        if not CLCfgBase.self.isEditMode then
-            local fpath = "chnCfg.json"; -- 该文在打包时会自动放在streamingAssetsPath目录下，详细参见打包工具
-            local content = FileEx.readNewAllText(fpath);
-            if (content ~= nil) then
-                chnCfg = JSON.DecodeMap(content);
-                chlCode = chnCfg.SubChannel;
+        local onGetUid = function(uid, orgs)
+            if isNilOrEmpty(uid) then
+                -- 取得uid失败
+                return;
             end
-        end
-        local formData = Hashtable();
-        formData:Add("accountKey", Utl.uuid) -- 唯一机器码	String
-        formData:Add("email", "") -- 邮箱 （没有可以不填）	String
-        formData:Add("pwd", "")--密码 （没有可以不填）	String
-        formData:Add("type", 1)--登录类型  1;//机器码登陆  2;//邮箱登陆  Int
-        formData:Add("channel", chlCode)--渠道号 	String
+            local url = PStr.b():a(__httpBaseUrl):a("/KokAccount/AccountServlet"):e();
+            local chnCfg = nil;
+            local chlCode = getChlCode();
+            local formData = Hashtable();
+            formData:Add("accountKey", uid) -- 唯一String
+            formData:Add("machineid", Utl.uuid); -- 机器码
+            formData:Add("userName", "") -- 邮箱 （没有可以不填）	String
+            formData:Add("passWord", "")--密码 （没有可以不填）	String
+            formData:Add("type", 1)--登录类型  1;//机器码登陆  2;//邮箱登陆  Int
+            formData:Add("channel", chlCode)--渠道号 	String
+            if KKWhiteList.isWhiteName() then
+                formData:Add("isMax", 0)--是否验证同一机子注册限制 0:不限制 1：限制最多5个
+            else
+                formData:Add("isMax", 1)--是否验证同一机子注册限制
+            end
 
-        local loginError = function(...)
-            CLUIUtl.showConfirm(LGet("UIMsg001"), CLLPSplash.accountLogin);
+            local loginError = function(...)
+                CLUIUtl.showConfirm(LGet("UIMsg001"), CLLPSplash.accountLogin);
+            end
+            WWWEx.newWWW(CLVerManager.self, Utl.urlAddTimes(url),
+            formData,
+            CLAssetType.text,
+            5, 10, CLLPSplash.onAccountLogin,
+            loginError,
+            loginError, nil);
         end
-        WWWEx.newWWW(CLVerManager.self, Utl.urlAddTimes(url),
-        formData,
-        CLAssetType.text,
-        5, 10, CLLPSplash.onAccountLogin,
-        loginError,
-        loginError, nil);
+
+        if isNilOrEmpty(KKChl.uid) then
+            getPanelAsy("PanelLogin", onLoadedPanelTT, { onGetUid, nil })
+        else
+            onGetUid(KKChl.uid, nil);
+        end
     end
 
     function CLLPSplash.onAccountLogin(content, orgs)
@@ -131,15 +144,16 @@ do
         user = d;
         local errorCode = MapEx.getInt(d, "errorCode");
         if errorCode == 1 then
-            --local idx           = MapEx.getString(d, "idx")
             local accountStatus = MapEx.getString(d, "accountStatus")
-            local lastServerid = CLLPSplash.getLastServerId( ) or d.lastServerid
-            print(' lastServerid ', lastServerid)
+            local lastServerid = MapEx.getString(d, "lastServerid")
+            lastServerid = lastServerid and lastServerid or CLLPSplash.getLastServerId( )-- '1'
             if tostring(accountStatus) == "1" then
+                local idx = MapEx.getString(d, "idx")
                 -- 正常
                 oldServerIdx = lastServerid;
-                CLLPSplash.getCurrServer(lastServerid)
+                CLLPSplash.getCurrServer(lastServerid, CLLPSplash.onGetCurrServer)
                 --CLLPSplash.getLastServerId( )
+                pcall(KKWhiteList.init, idx)
             else
                 -- 异常
                 CLAlert.add(LGet("UIMsg003"), Color.red, 1);
@@ -150,8 +164,8 @@ do
     end
 
     -- 取得当前服务器
-    function CLLPSplash.getCurrServer(sid)
-        local url = PStr.b():a(__httpBaseUrl):a("/KokDirServer/LoginServlet"):e();
+    function CLLPSplash.getCurrServer(sid, callback, errorCallback)
+        local url = PStr.b():a(__httpBaseUrl2):a("/KokDirServer/LoginServlet"):e();
         local formData = Hashtable();
         formData:Add("serverid", sid) -- 服务器ID	String
 
@@ -161,9 +175,10 @@ do
         WWWEx.newWWW(CLVerManager.self, Utl.urlAddTimes(url),
         formData,
         CLAssetType.text,
-        5, 10, CLLPSplash.onGetCurrServer,
-        loginError,
-        loginError, nil);
+        5, 10,
+        callback,
+        errorCallback and errorCallback or loginError,
+        errorCallback and errorCallback or loginError, nil);
     end
 
     function CLLPSplash.onGetCurrServer(content, orgs)
@@ -179,22 +194,17 @@ do
     -- 关闭页面
     function CLLPSplash.hide()
         csSelf:cancelInvoke4Lua();
+
+        ---@type Coolape.CLPanelLua
+        local p = CLPanelManager.getPanel(MyMain.self.firstPanel);
+        if (p ~= nil and p.gameObject.activeInHierarchy) then
+            CLPanelManager.hidePanel(p);
+        end
     end
 
     -- 刷新页面
     function CLLPSplash.refresh()
-        LabelVer.text = Localization.Get("Version") .. __version__;
-    end
-
-    -- 添加屏蔽字
-    function CLLPSplash.addShieldWords()
-        local onGetShieldWords = function(path, content, originals)
-            if (content ~= nil) then
-                BlockWordsTrie.getInstanse():init(content);
-            end
-        end;
-        local path = CLPathCfg.self.basePath .. "/" .. CLPathCfg.upgradeRes .. "/priority/txt/shieldWords";
-        CLVerManager.self:getNewestRes(path, CLAssetType.text, onGetShieldWords, nil);
+        LabelVer.text = joinStr(Localization.Get("Version"), __version__);
     end
 
     -- 处理热更新
@@ -221,7 +231,12 @@ do
 
     function CLLPSplash.checkHotUpgrade()
         if CLCfgBase.self.hotUpgrade4EachServer then
-            local resMd5 = selectedServer.version;
+            local resMd5 = "";
+            if CLPathCfg.self.platform == "IOS" then
+                resMd5 = MapEx.getString(selectedServer, "iosversion");
+            else
+                resMd5 = MapEx.getString(selectedServer, "androidversion");
+            end
             -- 更新资源
             CLLVerManager.init(CLLPSplash.onProgress, CLLPSplash.onFinishResUpgrade, true, resMd5);
         else
@@ -249,7 +264,7 @@ do
                     progressBarTotal.value = value;
                     if (www4UpgradeCell ~= nil) then
                         -- 说明有单个资源
-                        lbprogressBarTotal.text = v .. "/" .. all;
+                        lbprogressBarTotal.text = joinStr(v, "/", all);
                     end
                     -- 单个资源的进度
                     CLLPSplash.onProgressCell();
@@ -269,7 +284,7 @@ do
                     NGUITools.SetActive(progressBar.gameObject, false);
                 end
             else
-                print("all====" .. all);
+                print(joinStr("all====", all));
             end
         end
     end
@@ -298,7 +313,7 @@ do
                     CLCfgBase.self.isDirectEntry = true;
                 end
                 csSelf:cancelInvoke4Lua();
-                csSelf:invoke4Lua(CLLPSplash.reLoadGame, 0.3);
+                csSelf:invoke4Lua(CLLPSplash.reLoadGame, 0.1);
                 return;
             end
         end
@@ -313,7 +328,42 @@ do
     end
 
     -- 重新启动lua
-    function CLLPSplash.reLoadGame(...)
+    function CLLPSplash.reLoadGame()
+        --- 释放资源开始-------------------------------
+        local cleanRes = function()
+            -- 把主城删掉
+            if KKPSceneManager and KKPSceneManager.mainCityObj and KKMainCity ~= nil and KKMainCity.transform ~= nil then
+                KKMainCity.cleanRoles();
+                --GameObject.DestroyImmediate (KKMainCity.transform.gameObject, true);
+                CLThingsPool.returnObj(KKMainCity.transform.name, KKMainCity.transform.gameObject);
+                SetActive(KKMainCity.transform.gameObject, false)
+                KKPSceneManager.mainCityObj = nil;
+            end
+
+            -- 把战场删掉
+            if KKBattle ~= nil and KKBattle.csSelf ~= nil then
+                GameObject.DestroyImmediate(KKBattle.csSelf.gameObject, true);
+            end
+
+            if KKCarbon ~= nil and KKCarbon.csSelf ~= nil then
+                GameObject.DestroyImmediate(KKCarbon.csSelf.gameObject, true);
+            end
+
+            if CLAlert ~= nil and CLAlert.csSelf ~= nil then
+                GameObject.DestroyImmediate(CLAlert.csSelf.gameObject, true);
+            end
+
+            Net.self.luaTable = nil;
+            MyCfg.self.worldMap.luaTable = nil;
+            CLMaterialPool.materialTexRefCfg = nil; -- 重新把配置清空
+            releaseRes4GC(true);
+        end
+        --- 释放资源结束-------------------------------
+        pcall(cleanRes)
+        local panel = CLPanelManager.getPanel(CLMainBase.self.firstPanel);
+        if panel then
+            CLPanelManager.showPanel(panel);
+        end
         CLMainBase.self:reStart();
     end
 
@@ -331,9 +381,6 @@ do
         -- 播放背景音乐---------------
         -- SoundEx.playMainMusic();
         ----------------------------
-
-        -- 添加屏蔽字
-        -- CLLPSplash.addShieldWords();
     end
 
     -- 加载hud alert
@@ -365,7 +412,12 @@ do
         if (loadedPanelCount >= #(beforeLoadPanels)) then
             -- 页面已经加载完成
             -- 处理热更新
-            csSelf:invoke4Lua(CLLPSplash.updateRes, 0.2);
+
+            if (not Application.isEditor) then
+                CLLPSplash.checkNewVersion()
+            else
+                csSelf:invoke4Lua(CLLPSplash.updateRes, 0.2);
+            end
         end
     end
 
@@ -382,7 +434,7 @@ do
 
     -- 签名是否有效(Only 4 android)
     function CLLPSplash.isSignCodeValid(...)
-        if (CLCfgBase.self.singinMd5Code == "" or CLCfgBase.self.singinMd5Code == nil) then
+        if isNilOrEmpty(CLCfgBase.self.singinMd5Code) then
             return true;
         end
         -- 取得签名串
@@ -407,29 +459,47 @@ do
     function CLLPSplash.uiEventDelegate(go)
         local goName = go.name;
         if goName == "ButtonServer" then
-            CLPanelManager.getPanelAsy("PanelServers", onLoadedPanelTT, { CLLPSplash.onSelectServer , selectedServer })
+            CLPanelManager.getPanelAsy("PanelServers", onLoadedPanelTT, { CLLPSplash.onSelectServer, selectedServer })
         elseif goName == "ButtonEntry" then
             --if oldServerIdx ~= selectedServer.idx then
             --    -- 说明换区了
             --    CLLPSplash.notifyServer();
             --end
-            -- 服务器状态
-            if selectedServer.serverstatus ~= 1 then
-                -- 服务器停服了
-                CLAlert.add(LGet("UIMsg005"), Color.red, 1);
-                return;
-            end
-            SetActive(ButtonEntry, false)
-            CLLPSplash.checkHotUpgrade();
 
-            CLLPSplash.saveServerId(selectedServer.idx)
+            SetActive(ButtonEntry, false)
+            CLLPSplash.getCurrServer(MapEx.getString(selectedServer, "idx"),
+            function(content, orgs)
+                Prefs.setCurrServer(content);
+                local d = JSON.DecodeMap(content);
+                selectedServer = d;
+                currServer:init({ data = d, selected = d }, nil);
+                -- 服务器状态
+                local state = MapEx.getString(selectedServer, "serverstatus")
+                if state ~= "1" and (KKWhiteList == nil or (not KKWhiteList.isWhiteName())) then
+                    -- 服务器停服了
+                    CLAlert.add(LGet("UIMsg005"), Color.red, 1);
+                    SetActive(ButtonEntry, true)
+                    return;
+                end
+                CLLPSplash.checkHotUpgrade();
+            end,
+            function()
+                SetActive(ButtonEntry, true)
+            end
+            )
+
+            --CLLPSplash.saveServerId(MapEx.getString(selectedServer, "idx"))
+        elseif goName == "ButtonXieyi" then
+            --CLPanelManager.getPanelAsy("PanelRobotTest", onLoadedPanelTT, { MapEx.getString(user, "idx"), selectedServer })
+        elseif goName == "ButtonSetting" then
+            getPanelAsy("PanelSetting", onLoadedPanelTT);
         end
     end
 
     function CLLPSplash.notifyServer()
         local url = PStr.b():a(__httpBaseUrl):a("/KokAccount/SaveServlet"):e();
         local formData = Hashtable();
-        formData:Add("serverid", selectedServer.idx)
+        formData:Add("serverid", MapEx.getString(selectedServer, "idx"))
         formData:Add("uidx", MapEx.getString(user, "idx")) -- 邮箱 （没有可以不填）	String
 
         WWWEx.newWWW(CLVerManager.self, Utl.urlAddTimes(url),
@@ -447,12 +517,12 @@ do
         CLPanelManager.getPanelAsy("PanelStart", onLoadedPanel, { MapEx.getString(user, "idx"), selectedServer });
     end
 
-    local savePath = Application.persistentDataPath ..'/'
+    local savePath = joinStr(Application.persistentDataPath, '/')
     local fname = 'loginserverid'
     --FileEx.CreateDirectory(savePath)
 
     function CLLPSplash.getLastServerId( )
-        local str = FileEx.ReadAllText(savePath..fname)
+        local str = FileEx.ReadAllText(joinStr(savePath, fname))
         if str and str:len() > 2 then
             local tb = json.decode(str)
             return tb.svid;
@@ -460,10 +530,56 @@ do
     end
 
     function CLLPSplash.saveServerId(id)
-        print('save login server ', id)
-        local str = json.encode({svid=id})
-        FileEx.WriteAllText(savePath..fname, str)
+        --print('save login server ', id)
+        local str = json.encode({ svid = id })
+        FileEx.WriteAllText(joinStr(savePath, fname), str)
     end
+
+    --[[
+    --{"ver":"1.0","force":true,"url":"http://"}
+    --]]
+    function CLLPSplash.checkNewVersion()
+        local oldVer = __version__;
+        local onGetVer = function(content, orgs)
+            local map = JSON.DecodeMap(content);
+            local newVer = MapEx.getString(map, "ver");
+            --print(Utl.MapToString(map));
+            --print(oldVer);
+            if (tonumber(newVer) > tonumber(oldVer)) then
+                local doUpgradeApp = function()
+                    CLLPSplash.upgradeGame(MapEx.getString(map, "url"))
+                end
+                if MapEx.getBool(map, "force") then
+                    CLUIUtl.showConfirm(LGet("UIMsg012"), true, LGet("UI057"), doUpgradeApp, "", nil);
+                else
+                    CLUIUtl.showConfirm(LGet("UIMsg012"), false, LGet("UI057"), doUpgradeApp, LGet("UI056"), CLLPSplash.updateRes);
+                end
+            else
+                CLLPSplash.updateRes();
+            end
+        end
+
+        local onGetVerError = function(msg, orgs)
+            CLAlert.add(LGet("UIMsg013"), Color.white, 1)
+            CLLPSplash.updateRes();
+        end
+
+        local chlCode = getChlCode();
+        local url = Utl.urlAddTimes(joinStr(CLVerManager.self.baseUrl, "/appVer.", chlCode, ".json"));
+        WWWEx.newWWW(CLVerManager.self, url, CLAssetType.text,
+        5, 5, onGetVer,
+        onGetVerError,
+        onGetVerError, nil);
+    end
+
+
+    -- 更新安装游戏
+    function CLLPSplash.upgradeGame(url)
+        if not isNilOrEmpty(url ) then
+            Application.OpenURL(url);
+        end
+    end
+
     ----------------------------------------------
     return CLLPSplash;
 end

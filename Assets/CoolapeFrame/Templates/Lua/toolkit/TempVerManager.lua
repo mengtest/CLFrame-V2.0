@@ -8,15 +8,21 @@ do
     local resVer = "resVer";
     local versPath = "VerCtl";
     local fverVer = "VerCtl.ver"; --本地所有版本的版本信息
+    ---@type System.Collections.Hashtable
     local localverVer = Hashtable();
+    ---@type System.Collections.Hashtable
     local serververVer = Hashtable();
     --========================
     local verPriority = "priority.ver";
+    ---@type System.Collections.Hashtable
     local localPriorityVer = Hashtable(); --本地优先更新资源
+    ---@type System.Collections.Hashtable
     local serverPriorityVer = Hashtable(); --服务器优先更新资源
 
     local verOthers = "other.ver";
+    ---@type System.Collections.Hashtable
     local otherResVerOld = Hashtable(); --所有资源的版本管理
+    ---@type System.Collections.Hashtable
     local otherResVerNew = Hashtable(); --所有资源的版本管理
 
     local tmpUpgradePirorityPath = "tmpUpgrade4Pirority";
@@ -31,6 +37,7 @@ do
     local mVerPrioriPath = "";
     local mVerOtherPath = "";
 
+    ---@type System.Collections.Hashtable
     local needUpgradeVerver = Hashtable();
     local progress = 0;
 
@@ -158,7 +165,7 @@ do
             return defaultReuslt;
         end
         -- 取得当前包的渠道在渠道配置文件中是否有配置可更新
-        if (MapEx.getBool(channels, chnCfg.SubChannel)) then
+        if (MapEx.getBool(channels, MapEx.getString(chnCfg, "SubChannel"))) then
             return true;
         else
             return false;
@@ -171,7 +178,7 @@ do
     function CLLVerManager.netWorkActived()
         local onCheckNetSateSuc = function(...)
             CLVerManager.self:StartCoroutine(FileEx.readNewAllBytesAsyn(mVerverPath,
-                                                                        CLLVerManager.onGetlcalVerverMap));
+            CLLVerManager.onGetlcalVerverMap));
         end
 
         local onCheckNetSateFail = function(...)
@@ -183,9 +190,9 @@ do
 
         local url = Utl.urlAddTimes(PStr.b():a(baseUrl):a("/netState.txt"):e());
         WWWEx.newWWW(CLVerManager.self, url, CLAssetType.text,
-                     5, 5, onCheckNetSateSuc,
-                     onCheckNetSateFail,
-                     onCheckNetSateFail, nil);
+        5, 5, onCheckNetSateSuc,
+        onCheckNetSateFail,
+        onCheckNetSateFail, nil);
     end
 
 
@@ -221,10 +228,10 @@ do
         end
 
         WWWEx.newWWW(CLVerManager.self, Utl.urlAddTimes(url),
-                     CLAssetType.bytes,
-                     3, 5, CLLVerManager.onGetServerVerverBuff,
-                     CLLVerManager.onGetServerVerverBuff,
-                     CLLVerManager.onGetServerVerverBuff, nil);
+        CLAssetType.bytes,
+        3, 5, CLLVerManager.onGetServerVerverBuff,
+        CLLVerManager.onGetServerVerverBuff,
+        CLLVerManager.onGetServerVerverBuff, nil);
     end
 
     function CLLVerManager.onGetServerVerverBuff(content, orgs)
@@ -247,9 +254,9 @@ do
         local key = "";
         for i = 0, count - 1 do
             key = keysList[i];
-            ver = localverVer[key];
-            if (ver == nil or ver ~= serververVer[key]) then
-                needUpgradeVerver[key] = false;
+            ver = MapEx.getString(localverVer, key);
+            if (ver == nil or ver ~= MapEx.getString(serververVer, key)) then
+                MapEx.set(needUpgradeVerver, key, false);
             end
         end
         keysList:Clear();
@@ -265,7 +272,7 @@ do
             key = "";
             for i = 0, count - 1 do
                 key = keysList[i];
-                CLLVerManager.getVerinfor(key, serververVer[key]);
+                CLLVerManager.getVerinfor(key, MapEx.getString(serververVer, key));
             end
             keysList:Clear();
             keysList = nil;
@@ -280,20 +287,21 @@ do
     function CLLVerManager.getVerinfor(fPath, verVal)
         local url = PStr.b():a(baseUrl):a("/"):a(fPath):a("."):a(verVal):e(); -- 注意是加了版本号的，可以使用cdn
         WWWEx.newWWW(CLVerManager.self,
-                     url, CLAssetType.bytes,
-                     3, 9, CLLVerManager.onGetVerinfor,
-                     CLLVerManager.onGetVerinfor,
-                     CLLVerManager.onGetVerinfor, fPath);
+        url, CLAssetType.bytes,
+        3, 9, CLLVerManager.onGetVerinfor,
+        CLLVerManager.onGetVerinfor,
+        CLLVerManager.onGetVerinfor, fPath);
     end
 
     function CLLVerManager.onGetVerinfor(content, orgs)
         if (content ~= nil) then
             local fPath = orgs;
             progress = progress + 1;
-            localverVer[fPath] = serververVer[fPath];
+            MapEx.set(localverVer, fPath, MapEx.getString(serververVer, fPath));
 
             local fName = PStr.b():a(CLPathCfg.persistentDataPath):a("/"):a(newestVerPath):a("/"):a(fPath):e();
-            if (Path.GetFileName(fName) == "priority.ver") then -- 优先更新需要把所有资源更新完后才记录
+            if (Path.GetFileName(fName) == "priority.ver") then
+                -- 优先更新需要把所有资源更新完后才记录
                 isNeedUpgradePriority = true;
                 serverPriorityVer = CLVerManager.self:toMap(content);
 
@@ -302,7 +310,7 @@ do
                 File.WriteAllBytes(fName, content);
             end
 
-            needUpgradeVerver[fPath] = true;
+            MapEx.set(needUpgradeVerver, fPath, true);
 
             if (progressCallback ~= nil) then
                 progressCallback(needUpgradeVerver.Count, progress);
@@ -334,7 +342,7 @@ do
     function CLLVerManager.checkPriority()
         --取得本地优先更新资源版本信息
         CLVerManager.self:StartCoroutine(FileEx.readNewAllBytesAsyn(mVerPrioriPath,
-                                                                    CLLVerManager.onGetNewPriorityMap));
+        CLLVerManager.onGetNewPriorityMap));
     end
 
     function CLLVerManager.onGetNewPriorityMap(buff)
@@ -354,9 +362,9 @@ do
         local count = keysList.Count;
         for i = 0, count - 1 do
             key = keysList[i];
-            ver = localPriorityVer[key];
+            ver = MapEx.getString(localPriorityVer, key);
             if (ver == nil or ver ~= MapEx.getString(serverPriorityVer, key)) then
-                needUpgradeVerver[key] = false;
+                MapEx.set(needUpgradeVerver, key, false);
                 needUpgradePrioritis:Enqueue(key);
             end
         end
@@ -390,10 +398,10 @@ do
         -- print("Url==" .. Url);
 
         WWWEx.newWWW(CLVerManager.self,
-                     Url, CLAssetType.bytes,
-                     3, 0, CLLVerManager.onGetPriorityFiles,
-                     CLLVerManager.initFailed,
-                     CLLVerManager.initFailed, fPath);
+        Url, CLAssetType.bytes,
+        3, 0, CLLVerManager.onGetPriorityFiles,
+        CLLVerManager.initFailed,
+        CLLVerManager.initFailed, fPath);
 
         if (progressCallback ~= nil) then
             progressCallback(needUpgradeVerver.Count, progress, WWWEx.getWwwByUrl(Url));
@@ -414,8 +422,8 @@ do
         File.WriteAllBytes(fName, content);
 
         --同步到本地
-        localPriorityVer[fPath] = serverPriorityVer[fPath];
-        needUpgradeVerver[fPath] = true;
+        MapEx.set(localPriorityVer, fPath, MapEx.getString(serverPriorityVer, fPath));
+        MapEx.set(needUpgradeVerver, fPath, true);
         CLVerManager.self.localPriorityVer = localPriorityVer;
 
         if (progressCallback ~= nil) then

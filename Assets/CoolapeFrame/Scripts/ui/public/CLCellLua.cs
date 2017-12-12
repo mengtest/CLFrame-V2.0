@@ -39,6 +39,10 @@ namespace Coolape
 			lfRefresh = getLuaFunction ("refresh");
 		}
 
+		public void init (object data)
+		{
+			init (data, null);
+		}
 		public override void init (object data, object onClick)
 		{
 			try {

@@ -1,6 +1,13 @@
 ﻿--- - 管理数据配置
 do
     require("cfg.DBCfgTool")
+    pseudoMoneyItemIDBuild = 10000;--建筑升级用元宝
+    pseudoMoneyItemIDTech = 20000;--科技升级用元宝
+    pseudoMoneyItemIDMarch = 30000;--出征
+    pseudoMoneyItemIDRes = 40000;--铁木粮
+    pseudoMoneyItemIDCopper = 50000;--铜币
+    pseudoMoneyItemIDAvoidWar = 60000;--免战
+    pseudoMoneyItemIDMoveCity = 70000;--迁城
     local bio2Int = NumEx.bio2Int;
     local int2Bio = NumEx.int2Bio;
     local db = {} -- 经过处理后的数据
@@ -11,27 +18,15 @@ do
     end
     local priorityPath = PStr.b():a(CLPathCfg.persistentDataPath):a("/"):a(CLPathCfg.self.basePath):a(upgradeRes):a("/priority/"):e();
     local cfgBasePath = PStr.b():a(priorityPath):a("cfg/"):e();
+    local cfgWorldBasePath = PStr.b():a(priorityPath):a("worldMap/"):e();
+
+    -- 大地图
+    local cfgMapPath = PStr.b():a(cfgWorldBasePath):e();
 
     -- 全局变量定义
     local cfgCfgPath = PStr.b():a(cfgBasePath):a("DBCFCfgData.cfg"):e();
-    -- 角色base属性
-    local cfgRolePath = PStr.b():a(cfgBasePath):a("DBCFRoleData.cfg"):e();
-    -- 角色等级属性
-    local cfgRoleLevPath = PStr.b():a(cfgBasePath):a("DBCFRoleLevData.cfg"):e();
-    -- 技能base属性
-    local cfgSkillPath = PStr.b():a(cfgBasePath):a("DBCFSkillData.cfg"):e();
-    -- 技能等级属性
-    local cfgSkillLevPath = PStr.b():a(cfgBasePath):a("DBCFSkillLevData.cfg"):e();
-    -- 子弹
-    local cfgBulletPath = PStr.b():a(cfgBasePath):a("DBCFBulletData.cfg"):e();
-    -- 大地图中的物件属性
-    local cfgMapCellPath = PStr.b():a(cfgBasePath):a("DBCFMapCellData.cfg"):e();
-    -- 剧情对话
-    local cfgPlotPath = PStr.b():a(cfgBasePath):a("DBCFPlotData.cfg"):e();
-    -- buff
-    local cfgBuffPath = PStr.b():a(cfgBasePath):a("DBCFBuffData.cfg"):e();
-    -- 物品
-    local cfgThingPath = PStr.b():a(cfgBasePath):a("DBCFThingData.cfg"):e();
+
+    --local cfgGoodsPath = PStr.b():a(cfgBasePath):a("DBCFGoodsData.cfg"):e();
 
     DBCfg = {};
 
@@ -39,101 +34,76 @@ do
     function DBCfg.getData(path)
         local dbMap = db[path];
         if (dbMap == nil) then
-            if (path == cfgRolePath) then
-                dbMap = DBCfgTool.getRoleData(cfgRolePath, cfgRoleLevPath);
-            elseif (path == cfgSkillPath) then
-                dbMap = DBCfgTool.pubGetBaseAndLevData(cfgSkillPath, cfgSkillLevPath);
-            elseif (path == cfgPlotPath) then
-                dbMap = DBCfgTool.pubGetList4GID(cfgPlotPath);
+            --if (path == cfgRolePath) then
+            --dbMap = DBCfgTool.getRoleData(cfgRolePath, cfgRoleLevPath);
+            --elseif (path == cfgSkillPath) then
+            --    dbMap = DBCfgTool.pubGetBaseAndLevData(cfgSkillPath, cfgSkillLevPath);
+            if path == cfgMapCellPath then
+                dbMap = DBCfgTool.pubGet4GIDLev(path);
+            elseif path == cfgTalkingPath or path == cfgCarbonPath then
+                local gidList;
+                gidList, dbMap = DBCfgTool.pubGetList4GID(path);
+				if path == cfgCarbonPath then
+					gidList[0] = nil; -- 把新手剧情的移除
+				end
+                dbMap.list = gidList;
             else
-                -- 其它没有特殊处理的都以ID为key（因些在配置数据时，ID列必须是以1开始且连续）
-                local tmp = nil;
-                tmp, dbMap = DBCfgTool.getDatas(path, true);
+                -- 其它没有特殊处理的都以ID为key（dbList:下标连续的列表, dbMap：以ID为key的luatable）
+                local dbList = nil;
+                dbList, dbMap = DBCfgTool.getDatas(path, true);
+
+                if path == cfgGoodsPath then
+                    -- 商品
+                    local list = {};
+                    local chlCode = getChlCode();
+                    for i,v in ipairs(dbList) do
+                        if true or v.Channel == chlCode then
+                            table.insert(list, v);
+                        end
+                    end
+                    table.sort(list, function(a, n)
+                        return bio2Int(a.ListOrder) < bio2Int(n.ListOrder)
+                    end)
+
+                    dbList = list;
+                end
+
+                -- ====================================
+                dbMap.list = dbList;
             end
             db[path] = dbMap;
         end
         return dbMap;
     end
 
-
     -- 取得常量配置
     function DBCfg.getConstCfg(...)
         local datas = DBCfg.getData(cfgCfgPath);
-        if (datas == nil) then return nil end
+        if (datas == nil) then
+            return nil
+        end
         return datas[1];
     end
 
     -- 常量配置
     GConstCfg = DBCfg.getConstCfg();
 
-    -- 取得角色的数据
-    function DBCfg.getRoleByIDAndLev(id, lev)
-        local datas = DBCfg.getData(cfgRolePath);
-        if (datas == nil) then return nil end
-        return datas[id .. "_" .. lev];
-    end
 
-    -- 取得英雄列表
-    function DBCfg.getHeroList()
-        local datas = DBCfg.getData(cfgRolePath);
-        if (datas == nil) then return nil end
-        return datas.heros;
-    end
-
-    -- 取得技能的数据
-    function DBCfg.getSkillByIDAndLev(id, lev)
-        local datas = DBCfg.getData(cfgSkillPath);
-        if (datas == nil) then return nil end
-        return datas[id .. "_" .. lev];
-    end
-
-    -- 取得子弹属性
-    function DBCfg.getBulletByID(id)
-        local datas = DBCfg.getData(cfgBulletPath);
-        if (datas == nil) then return nil end
-        return datas[id];
-    end
-
-    -- 取得大地图物件
-    function DBCfg.getMapCellByID(id)
-        local datas = DBCfg.getData(cfgMapCellPath);
-        if (datas == nil) then return nil end
-        return datas[id];
-    end
-
-    -- 取得大地图数据
-    function DBCfg.getMapByMapID(id)
-        local path = PStr.b():a(cfgMapPath):a(id):a(".json"):e();
-        local data = db[path];
-        if (data == nil) then
-            local centent = File.ReadAllText(path);
-            data = cjson.decode(centent);
-            db[path] = data;
-        end
-        return data;
-    end
-
-    -- 取得对话
-    function DBCfg.getPlotsByGID(gid)
-        local datas = DBCfg.getData(cfgPlotPath);
-        if (datas == nil) then return nil end
-        return datas[gid];
-    end
-
-    -- 取得buff
-    function DBCfg.getBuffByID(id)
-        local datas = DBCfg.getData(cfgBuffPath);
-        if (datas == nil) then return nil end
-        return datas[id];
-    end
-
-
-    -- 取得物品
-    function DBCfg.getThingByID(id)
-        local datas = DBCfg.getData(cfgThingPath);
-        if (datas == nil) then return nil end
-        return datas[id];
-    end
+    --function DBCfg.getGoodsList()
+    --    local datas = DBCfg.getData(cfgGoodsPath);
+    --    if (datas == nil) then
+    --        return nil
+    --    end
+    --    return datas.list;
+    --end
+    --
+    --function DBCfg.getGoodsByID(id)
+    --    local datas = DBCfg.getData(cfgGoodsPath);
+    --    if (datas == nil) then
+    --        return nil
+    --    end
+    --    return datas[id]
+    --end
     --------------------------------------------------
     return DBCfg;
 end

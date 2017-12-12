@@ -491,6 +491,7 @@ namespace Coolape
 		{
 			if (sprite.atlas.isBorrowSpriteMode) {
 				Callback cb = onGetSprite;
+				sprite.spriteName = sprName;
 				sprite.atlas.borrowSpriteByname (sprName, sprite, cb);
 			} else {
 				sprite.spriteName = sprName;
@@ -508,7 +509,6 @@ namespace Coolape
 			UISprite sprite = (UISprite)(paras [0]);
 			string sprName = paras [1].ToString ();
 			sprite.spriteName = sprName;
-			sprite.GetAtlasSprite ();
 			UISpriteData sd = sprite.GetAtlasSprite ();
 			if (sd == null) {
 				return;
@@ -522,6 +522,7 @@ namespace Coolape
 		{
 			if (sprite.atlas.isBorrowSpriteMode) {
 				Callback cb = onGetSprite2;
+				sprite.spriteName = sprName;
 				sprite.atlas.borrowSpriteByname (sprName, sprite, cb, maxSize);
 			} else {
 				sprite.spriteName = sprName;

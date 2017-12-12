@@ -190,15 +190,14 @@ public class UIAtlas : MonoBehaviour
 				Debug.LogError ("returnSpriteByname====" + s.path + "===" + rc);
 			}
 			#endif
+			retainCounter [s.path] = rc < 0 ? 0 : rc;
 			if (rc <= 0) {
-				rc = 0;
 				s.lastReturnTime = System.DateTime.Now.AddSeconds (releaseSpriteTime).ToFileTime ();
 				if (s.material != null && !releaseTex.Contains (name)) {
 					releaseTex.Enqueue (name);
-					Invoke ("ReleaseTexture", releaseSpriteTime);
+					ReleaseTexture ();
 				}
 			}
-			retainCounter [s.path] = rc;
 		}
 		
 	}
@@ -266,6 +265,7 @@ public class UIAtlas : MonoBehaviour
 				if (!releaseTex.Contains (name)) {
 					releaseTex.Enqueue (name);
 				}
+				CancelInvoke ("ReleaseTexture");
 				Invoke ("ReleaseTexture", 5);
 				return;
 			}
@@ -281,7 +281,7 @@ public class UIAtlas : MonoBehaviour
 					}
 					#endif
 					assetBundleMap [sp.path] = null;
-					if (!string.IsNullOrEmpty (mat.mainTexture.name)) {
+					if(!string.IsNullOrEmpty(mat.mainTexture.name)) {
 						UnityEngine.Resources.UnloadAsset (mat.mainTexture);
 					}
 					
@@ -290,14 +290,9 @@ public class UIAtlas : MonoBehaviour
 						UISpriteData tmpsp = mSprites [j];
 						if (tmpsp.path == sp.path && tmpsp != sp) {
 							tmpsp.material = null;
-//							if (tmpsp.material != null) {
-//								tmpsp.material.mainTexture = null;
-//								GameObject.DestroyImmediate (tmpsp.material, true);
-//								tmpsp.material = null;
-//							}
 						}
 					}
-
+					sp.material = null;
 					GameObject.DestroyImmediate (mat.mainTexture, true);
 					mat.mainTexture = null;
 					GameObject.DestroyImmediate (mat, true);
@@ -341,46 +336,50 @@ public class UIAtlas : MonoBehaviour
 		if (string.IsNullOrEmpty (path)) {
 			return;
 		}
-		ArrayList list = null;
-		object temp = notifySprites [path];
-		UISprite sp = null;
-		object item = null;
-		object finishCallback = null;
-		string spriteName = null;
-		object args = null;
-		if (temp != null) {
-			list = (ArrayList)temp;
-			if (list != null && list.Count > 0) {
-				for (int i = 0; i < list.Count; i++) {
-					item = list [i];
-					if (item == null) {
-						continue;
-					}
-					if (item is UISprite) {
-						sp = (UISprite)(item); 
-						if (texture != null && sp != null) {
-							//                      Debug.LogWarning ("sp.refresh==" + path + "     " + sp.name);
-							sp.refresh ();
+		try {
+			ArrayList list = null;
+			object temp = notifySprites [path];
+			UISprite sp = null;
+			object item = null;
+			object finishCallback = null;
+			string spriteName = null;
+			object args = null;
+			if (temp != null) {
+				list = (ArrayList)temp;
+				if (list != null && list.Count > 0) {
+					for (int i = 0; i < list.Count; i++) {
+						item = list [i];
+						if (item == null) {
+							continue;
 						}
-					} else {
-						object[] objs = (object[])item;
-						if (objs.Length > 2) {
-							sp = (UISprite)(objs [0]);
+						if (item is UISprite) {
+							sp = (UISprite)(item); 
 							if (texture != null && sp != null) {
 								//                      Debug.LogWarning ("sp.refresh==" + path + "     " + sp.name);
 								sp.refresh ();
 							}
-							finishCallback = objs [1];
-							spriteName = objs [2].ToString ();
-							args = objs [3];
+						} else {
+							object[] objs = (object[])item;
+							if (objs.Length > 3) {
+								sp = (UISprite)(objs [0]);
+								if (texture != null && sp != null) {
+									//                      Debug.LogWarning ("sp.refresh==" + path + "     " + sp.name);
+									sp.refresh ();
+								}
+								finishCallback = objs [1];
+								spriteName = objs [2].ToString ();
+								args = objs [3];
 
-							Coolape.Utl.doCallback (finishCallback, sp, spriteName, args);
+								Coolape.Utl.doCallback (finishCallback, sp, spriteName, args);
+							}
 						}
 					}
+					list.Clear ();
+					notifySprites [path] = list;
 				}
-				list.Clear ();
-				notifySprites [path] = list;
 			}
+		} catch(System.Exception e) {
+			Debug.LogError (e);
 		}
 	}
 
@@ -562,61 +561,56 @@ public class UIAtlas : MonoBehaviour
 
 	void getTuxture (UISpriteData ret, UISprite uisp, object callback, object args)
 	{
-		Coolape.Callback cb = onGetTuxture;
-		string path = ret.path;
-		
-		setNotifySprite (ret.path, uisp, ret.name, callback, args);
-		if (Coolape.CLCfgBase.self.isEditMode) {
-			path = path.Replace ("/upgradeRes/", "/upgradeRes4Publish/");
-			path = path.Replace ("/upgradeRes4Dev/", "/upgradeRes4Publish/");
-		} else {
-			path = path.Replace ("/upgradeRes4Dev/", "/upgradeRes/");
-			path = path.Replace ("/upgradeRes4Publish/", "/upgradeRes/");
+		try {
+			Coolape.Callback cb = onGetTuxture;
+			string path = ret.path;
+			
+			setNotifySprite (ret.path, uisp, ret.name, callback, args);
+			if (Coolape.CLCfgBase.self.isEditMode) {
+				path = path.Replace ("/upgradeRes/", "/upgradeRes4Publish/");
+				path = path.Replace ("/upgradeRes4Dev/", "/upgradeRes4Publish/");
+			} else {
+				path = path.Replace ("/upgradeRes4Dev/", "/upgradeRes/");
+				path = path.Replace ("/upgradeRes4Publish/", "/upgradeRes/");
+			}
+			
+			#if UNITY_ANDROID
+			path = Path.GetDirectoryName (path) + "/Android/" + Path.GetFileNameWithoutExtension (path) + ".unity3d";
+			#elif UNITY_IOS
+			path = Path.GetDirectoryName(path) + "/IOS/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
+			#else
+			path = Path.GetDirectoryName(path) + "/Standalone/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
+			#endif
+			Coolape.CLVerManager.self.getNewestRes (path, Coolape.CLAssetType.assetBundle, cb, ret.path, callback, uisp, ret.name);
+		} catch (System.Exception e) {
+			Debug.LogError (e);
 		}
-		
-		#if UNITY_ANDROID
-		path = Path.GetDirectoryName (path) + "/Android/" + Path.GetFileNameWithoutExtension (path) + ".unity3d";
-		#elif UNITY_IOS
-		path = Path.GetDirectoryName(path) + "/IOS/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
-		#else
-		path = Path.GetDirectoryName(path) + "/Standalone/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
-		#endif
-		Coolape.CLVerManager.self.getNewestRes (path, Coolape.CLAssetType.assetBundle, cb, ret.path, callback, uisp, ret.name);
 	}
 
 	void onGetTuxture (params object[] paras)
 	{
-		AssetBundle tt = null;
-		string tPath = "";
-		if (paras != null && paras.Length > 1) {
-			tPath = (string)(paras [0]); 
-			tt = (AssetBundle)(paras [1]);
-			object[] org = (object[])(paras [2]);
-			string spritePth = (string)(org [0]);
-			if (tt != null) {
-				assetBundleMap [spritePth] = tt.mainAsset as Texture;
-				tt.Unload (false);
-				doNotifySprite (spritePth, assetBundleMap [spritePth] as Texture);
-				tt = null;
-				
-				//				if (org .Length > 3) {
-				//					object finishCallback = org [1];
-				//					UISprite sp = (UISprite)(org [2]);
-				//					string spName = org [3].ToString();
-				//					if (finishCallback != null) {
-				//						if (finishCallback.GetType() == typeof(Callback)) {
-				//							((Callback)finishCallback)(sp, spName);
-				//						} else if (finishCallback.GetType() == typeof(LuaInterface.LuaFunction)) {
-				//							((LuaInterface.LuaFunction)finishCallback).Call(sp, spName);
-				//						}
-				//					}
-				//				}
+		try {
+			AssetBundle tt = null;
+			string tPath = "";
+			if (paras != null && paras.Length > 1) {
+				tPath = (string)(paras [0]); 
+				tt = (AssetBundle)(paras [1]);
+				object[] org = (object[])(paras [2]);
+				string spritePth = (string)(org [0]);
+				if (tt != null) {
+					assetBundleMap [spritePth] = tt.mainAsset as Texture;
+					tt.Unload (false);
+					doNotifySprite (spritePth, assetBundleMap [spritePth] as Texture);
+					tt = null;
+				} else {
+					doNotifySprite (spritePth, null);
+					Debug.LogWarning ("can't find Texture in Resource path :[" + tPath + "]");
+				}
 			} else {
-				doNotifySprite (spritePth, null);
-				Debug.LogWarning ("can't find Texture in Resource path :[" + tPath + "]");
+				Debug.LogWarning ("can't find Texture in Resource path :[" + (paras.Length > 0 ? paras [0] : "") + "]");
 			}
-		} else {
-			Debug.LogWarning ("can't find Texture in Resource path :[" + (paras.Length > 0 ? paras [0] : "") + "]");
+		} catch(System.Exception e) {
+			Debug.LogError (e);
 		}
 	}
 

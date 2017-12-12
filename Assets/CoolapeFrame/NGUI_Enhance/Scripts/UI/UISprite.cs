@@ -75,7 +75,7 @@ public class UISprite : UIBasicSprite
 		
 		if (mAtlas != null) {
 			if (mAtlas.isBorrowSpriteMode) {
-				if (!string.IsNullOrEmpty (spriteName)) {
+				if (!string.IsNullOrEmpty (spriteName) && mSprite != null) {
 					mAtlas.returnSpriteByname (spriteName);		// add by chenbin
 				}
 				mSprite = null;
@@ -89,12 +89,17 @@ public class UISprite : UIBasicSprite
 			return;
 		if (mAtlas != null) {
 			if (mAtlas.isBorrowSpriteMode) { // && mSprite == null) {
-				if (mSprite != null) {
+				if (mSprite != null && mSprite.name != spriteName) {
 					mAtlas.returnSpriteByname (mSprite.name);
+					mSprite = null;
 				} 
-				mSprite = null;
-				SetAtlasSprite (mAtlas.borrowSpriteByname (spriteName, this));		// add by chenbin
-				
+				if (mSprite == null) {
+					SetAtlasSprite (mAtlas.borrowSpriteByname (spriteName, this));		// add by chenbin
+				}
+			} else {
+				if (mSprite == null) {
+					SetAtlasSprite (mAtlas.GetSprite (spriteName));
+				}
 			}
 		}
 	}
@@ -140,8 +145,7 @@ public class UISprite : UIBasicSprite
 		mChanged = true;
 		MarkAsChanged();
 		if(panel != null) {
-//			panel.RebuildAllDrawCalls ();
-            panel.Refresh();
+			panel.RebuildAllDrawCalls ();
 		}
 	}
 	
@@ -153,8 +157,7 @@ public class UISprite : UIBasicSprite
 		mChanged = true;
 		MarkAsChanged();
 		if(panel != null) {
-//			panel.RebuildAllDrawCalls ();
-            panel.Refresh();
+			panel.RebuildAllDrawCalls ();
 		}
 	}
 	#endregion
@@ -187,7 +190,9 @@ public class UISprite : UIBasicSprite
 					if (mAtlas != null && mAtlas.spriteList.Count > 0)
 					{
 						SetAtlasSprite(mAtlas.spriteList[0]);
-						mSpriteName = mSprite.name;
+						if (mSprite != null) { // add by chenbin
+							mSpriteName = mSprite.name;
+						}
 					}
 				}
 				
@@ -234,30 +239,22 @@ public class UISprite : UIBasicSprite
 			}
 			else if (mSpriteName != value)
 			{
-				
 				#region add by chenbin
 				if (mAtlas != null && mAtlas.isBorrowSpriteMode) {
 					//					SetAtlasSprite(mAtlas.borrowSpriteByname (value, this));
 					mSpriteName = value;
+					mSpriteSet = false;
+					mChanged = true;
 					refresh ();
 				} else {
-					mSprite = null;
+					// If the sprite name changes, the sprite reference should also be updated
+					mSpriteName = value;
+					mChanged = true;
 					mSpriteSet = false;
+					mSprite = null;
 				}
 				#endregion add end chenbin
-
-				// If the sprite name changes, the sprite reference should also be updated
-				mSpriteName = value;
-//				mSprite = null;		//modify by chenbin
-				mChanged = true;
-				mSpriteSet = false;
-				
 				MarkAsChanged ();	//add by chenbin
-				
-				if (panel != null && mSprite != null) {			//add by chenbin
-//					panel.RebuildAllDrawCalls ();	//add by chenbin
-					panel.Refresh(); // add by chenbin
-				}
 			}
 		}
 	}
@@ -455,15 +452,15 @@ public class UISprite : UIBasicSprite
 
 		if (mSprite == null && mAtlas != null)
 		{
-			if (!string.IsNullOrEmpty(mSpriteName))
+			if (!string.IsNullOrEmpty(spriteName))
 			{
 //				UISpriteData sp = mAtlas.GetSprite(mSpriteName);
 				#region add by chenbin
 				UISpriteData sp = null;//modify by chenbin
 				if (mAtlas != null && mAtlas.isBorrowSpriteMode) {		//modify by chenbin
-					sp = mAtlas.borrowSpriteByname (mSpriteName, this);//modify by chenbin
+					sp = mAtlas.borrowSpriteByname (spriteName, this);//modify by chenbin
 				} else {
-					sp = mAtlas.GetSprite (mSpriteName);
+					sp = mAtlas.GetSprite (spriteName);
 				}
 				#endregion
 				if (sp == null) return null;
@@ -497,23 +494,24 @@ public class UISprite : UIBasicSprite
 
 	protected void SetAtlasSprite (UISpriteData sp)
 	{
-		mChanged = true;
-		mSpriteSet = true;
+		if (sp != null) {
+			if (spriteName == sp.name) {
+				mSprite = sp;
+				mSpriteSet = true;		// add by chenbin
+				mChanged = true;		// add by chenbin
 
-		if (sp != null)
-		{
-			mSprite = sp;
-			mSpriteName = mSprite.name;
+				if (panel != null && mSprite != null && drawCall == null) {			//add by chenbin
+					panel.RebuildAllDrawCalls (); 					// add by chenbin
+				} else {
+					if (drawCall != null) {
+						SetDirty ();
+					}
+					MarkAsChanged ();
+				}
+			} else {
+				atlas.returnSpriteByname (sp.name);
+			}
 		}
-		else
-		{
-//			mSpriteName = (mSprite != null) ? mSprite.name : "";	// delete by chenbin
-			mSprite = sp;
-		}
-
-		mSpriteSet = true;		// add by chenbin
-		mChanged = true;		// add by chenbin
-		MarkAsChanged();
 	}
 
 	/// <summary>

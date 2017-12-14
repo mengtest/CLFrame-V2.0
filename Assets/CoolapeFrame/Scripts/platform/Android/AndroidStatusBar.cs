@@ -99,6 +99,8 @@ namespace Coolape
 
 		private static void applyUIStates ()
 		{
+			
+			#if UNITY_ANDROID
 			if (Application.platform == RuntimePlatform.Android) {
 				int newFlagsValue = 0;
 				int newSystemUiVisibilityValue = 0;
@@ -141,13 +143,16 @@ namespace Coolape
 				setSystemUiVisibility (newSystemUiVisibilityValue);
 
 			}
+		#endif
 		}
 
 		private static void applyUIColors ()
 		{
+			#if UNITY_ANDROID
 			if (Application.platform == RuntimePlatform.Android) {
 				runOnAndroidUiThread (applyUIColorsAndroidInThread);
 			}
+			#endif
 		}
 
 		#if UNITY_ANDROID

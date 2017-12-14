@@ -252,9 +252,9 @@ public class UISprite : UIBasicSprite
 					mChanged = true;
 					mSpriteSet = false;
 					mSprite = null;
+					MarkAsChanged ();	//add by chenbin
 				}
 				#endregion add end chenbin
-				MarkAsChanged ();	//add by chenbin
 			}
 		}
 	}

@@ -517,7 +517,7 @@ public class UIAtlas : MonoBehaviour
 //					ret.material = new Material (shader);
 //					ret.material.mainTexture = tt;
 					ret.material = getMaterail(tt, ret.path);
-					tt = null;
+//					tt = null;
 //					shader = null;
 				} else {
 					ret.material.mainTexture = tt;

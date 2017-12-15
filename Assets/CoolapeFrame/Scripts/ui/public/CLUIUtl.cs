@@ -522,7 +522,7 @@ namespace Coolape
 		{
 			if (sprite.atlas.isBorrowSpriteMode) {
 				Callback cb = onGetSprite2;
-				sprite.spriteName = sprName;
+//				sprite.spriteName = sprName;
 				sprite.atlas.borrowSpriteByname (sprName, sprite, cb, maxSize);
 			} else {
 				sprite.spriteName = sprName;

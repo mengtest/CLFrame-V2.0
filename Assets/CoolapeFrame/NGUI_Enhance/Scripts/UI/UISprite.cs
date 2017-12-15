@@ -500,14 +500,11 @@ public class UISprite : UIBasicSprite
 				mSpriteSet = true;		// add by chenbin
 				mChanged = true;		// add by chenbin
 
-				if (panel != null && mSprite != null && drawCall == null) {			//add by chenbin
-					panel.RebuildAllDrawCalls (); 					// add by chenbin
-				} else {
-					if (drawCall != null) {
-						SetDirty ();
-					}
-					MarkAsChanged ();
-				}
+				if (panel != null) 						//add by chenbin
+					panel.RemoveWidget(this);	//add by chenbin
+				if (panel != null) 						//add by chenbin
+					panel.AddWidget(this);		//add by chenbin
+				MarkAsChanged ();
 			} else {
 				atlas.returnSpriteByname (sp.name);
 			}

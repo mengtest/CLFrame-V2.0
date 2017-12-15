@@ -1697,9 +1697,9 @@ public class UIPanel : UIRect
 	{
 		if (widgets.Remove(w) && w.drawCall != null)
 		{
-			int depth = w.depth;
-			if (depth == w.drawCall.depthStart || depth == w.drawCall.depthEnd)
-				mRebuild = true;
+//			int depth = w.depth;		//del by chenbin
+//			if (depth == w.drawCall.depthStart || depth == w.drawCall.depthEnd) 	//del by chenbin
+//				mRebuild = true;	//del by chenbin
 
 			w.drawCall.isDirty = true;
 			w.drawCall = null;

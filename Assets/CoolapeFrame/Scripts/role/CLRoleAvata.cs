@@ -238,7 +238,9 @@ namespace Coolape
 				string name = list [1].ToString ();
 				object callback = list [2];
 //            setMat(render, name);
-				render.sharedMaterial = mat;
+				if (render != null) {
+					render.sharedMaterial = mat;
+				}
 				Utl.doCallback (callback);
 			} else {
 				Debug.LogWarning ("Get material is null: " + args [0]);

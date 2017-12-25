@@ -1387,7 +1387,7 @@ public class UIPanel : UIRect
 				if (w == null)
 				{
 #if UNITY_EDITOR
-					Debug.LogError("This should never happen");
+					Debug.LogError("This should never happen==" + name);
 #endif
 					widgets.RemoveAt(i);
 					continue;
@@ -1662,6 +1662,11 @@ public class UIPanel : UIRect
 
 	public void AddWidget (UIWidget w)
 	{
+		#region add by chenbin
+		if (w == null) {
+			return;
+		}
+		#endregion
 		mUpdateScroll = true;
 
 		if (widgets.Count == 0)
@@ -1670,11 +1675,17 @@ public class UIPanel : UIRect
 		}
 		else if (mSortWidgets)
 		{
+			if(widgets != null && widgets.Contains(w)) { // add by chenbin
+				RemoveWidget(w); // add by chenbin
+			}
 			widgets.Add(w);
 			SortWidgets();
 		}
 		else if (UIWidget.PanelCompareFunc(w, widgets[0]) == -1)
 		{
+			if(widgets != null && widgets.Contains(w)) { // add by chenbin
+				RemoveWidget(w); // add by chenbin
+			}
 			widgets.Insert(0, w);
 		}
 		else
@@ -1682,7 +1693,15 @@ public class UIPanel : UIRect
 			for (int i = widgets.Count; i > 0; )
 			{
 				if (UIWidget.PanelCompareFunc(w, widgets[--i]) == -1) continue;
-				widgets.Insert(i+1, w);
+				if(widgets != null && widgets.Contains(w)) { // add by chenbin
+					RemoveWidget(w); // add by chenbin
+				}
+				if (i + 1 >= widgets.Count) {
+					//add by chenbin
+					widgets.Add(w);
+				} else {
+					widgets.Insert (i + 1, w);
+				}
 				break;
 			}
 		}
@@ -1695,11 +1714,10 @@ public class UIPanel : UIRect
 
 	public void RemoveWidget (UIWidget w)
 	{
-		if (widgets.Remove(w) && w.drawCall != null)
-		{
-//			int depth = w.depth;		//del by chenbin
-//			if (depth == w.drawCall.depthStart || depth == w.drawCall.depthEnd) 	//del by chenbin
-//				mRebuild = true;	//del by chenbin
+		if (widgets.Remove (w) && w.drawCall != null) {
+			int depth = w.depth;	
+			if (depth == w.drawCall.depthStart || depth == w.drawCall.depthEnd)
+				mRebuild = true;
 
 			w.drawCall.isDirty = true;
 			w.drawCall = null;

@@ -242,7 +242,7 @@ namespace Coolape
 			if (currCell + 1 < pageCount && (currCell + 1) >= 0) {
 				currPage.next.data.init (dataList [currCell + 1], currCell + 1);//刷新数据
 			} else {
-				currPage.prev.data.init (null, currCell + 1);//刷新数据
+				currPage.next.data.init (null, currCell + 1);//刷新数据
 			}
 
 			if(dataList.Length > currCell && currCell >= 0) { 

@@ -491,7 +491,6 @@ namespace Coolape
 		{
 			if (sprite.atlas.isBorrowSpriteMode) {
 				Callback cb = onGetSprite;
-				sprite.spriteName = sprName;
 				sprite.atlas.borrowSpriteByname (sprName, sprite, cb);
 			} else {
 				sprite.spriteName = sprName;
@@ -507,22 +506,24 @@ namespace Coolape
 		public static void onGetSprite (params object[] paras)
 		{
 			UISprite sprite = (UISprite)(paras [0]);
+			if (sprite == null || sprite.atlas == null) {
+				return;
+			}
 			string sprName = paras [1].ToString ();
 			sprite.spriteName = sprName;
-			UISpriteData sd = sprite.GetAtlasSprite ();
+			sprite.refresh ();
+			UISpriteData sd = sprite.atlas.getSpriteBorrowMode (sprite.spriteName);
 			if (sd == null) {
 				return;
 			}
 //			sprite.MakePixelPerfect ();
 			sprite.SetDimensions (sd.width, sd.height);
-//		sprite.Update();
 		}
 
 		public static void setSpriteFit (UISprite sprite, string sprName, int maxSize)
 		{
 			if (sprite.atlas.isBorrowSpriteMode) {
 				Callback cb = onGetSprite2;
-//				sprite.spriteName = sprName;
 				sprite.atlas.borrowSpriteByname (sprName, sprite, cb, maxSize);
 			} else {
 				sprite.spriteName = sprName;
@@ -545,11 +546,14 @@ namespace Coolape
 		public static void onGetSprite2 (params object[] paras)
 		{
 			UISprite sprite = (UISprite)(paras [0]);
+			if (sprite == null || sprite.atlas == null) {
+				return;
+			}
 			string sprName = paras [1].ToString ();
 			int maxSize = NumEx.stringToInt (paras [2].ToString ());
-//		NGUITools.SetActive(sprite.gameObject, false);
 			sprite.spriteName = sprName;
-			UISpriteData sd = sprite.GetAtlasSprite ();
+			sprite.refresh ();
+			UISpriteData sd = sprite.atlas.getSpriteBorrowMode (sprite.spriteName);
 			if (sd == null) {
 				return;
 			}
@@ -562,7 +566,6 @@ namespace Coolape
 			}
 //		sprite.MakePixelPerfect();
 			sprite.SetDimensions ((int)(sd.width * rate), (int)(sd.height * rate));
-//		NGUITools.SetActive(sprite.gameObject, true);
 		}
 
 		//设置所有图片是否灰色

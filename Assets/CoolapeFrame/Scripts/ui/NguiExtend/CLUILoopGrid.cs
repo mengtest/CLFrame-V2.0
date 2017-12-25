@@ -36,8 +36,8 @@ namespace Coolape
 		public List<UIWidget> itemList = new List<UIWidget> ();
 		private Vector4 posParam;
 		private Transform cachedTransform;
-		UIGrid grid = null;
-		UIPanel panel;
+		public UIGrid grid = null;
+		public UIPanel panel;
 		//	void Awake ()
 		//	{
 		//		cachedTransform = this.transform;

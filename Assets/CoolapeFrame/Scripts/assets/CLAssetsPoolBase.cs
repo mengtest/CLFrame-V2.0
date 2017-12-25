@@ -414,19 +414,19 @@ namespace Coolape
 				poolMap [name] = pool;
 				if (unit is MonoBehaviour) {
 					MonoBehaviour unitObj = unit as MonoBehaviour;
-					if (setParent) {
-						unitObj.transform.parent = null;
-					}
 					if (inActive) {
 						unitObj.gameObject.SetActive (false);
 					}
-				} else if (unit is GameObject) {
-					GameObject unitObj = unit as GameObject;
 					if (setParent) {
 						unitObj.transform.parent = null;
 					}
+				} else if (unit is GameObject) {
+					GameObject unitObj = unit as GameObject;
 					if (inActive) {
 						unitObj.SetActive (false);
+					}
+					if (setParent) {
+						unitObj.transform.parent = null;
 					}
 				}
 			}

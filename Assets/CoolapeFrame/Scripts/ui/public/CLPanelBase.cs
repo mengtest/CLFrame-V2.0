@@ -304,7 +304,10 @@ namespace Coolape
 			if (isActive) {
 				return;
 			}
-			CLPanelManager.destroyPanel (this, false);
+			if (!CLPanelManager.panelRetainLayer.Contains (this)) {
+				//虽然页面是关掉了，但是如果还是在panelRetainLayer里，则不能删除，因为当关掉顶层页面时，这个页面还是会被打开
+				CLPanelManager.destroyPanel (this, false);
+			}
 		}
 
 		//		OnNetWorkData tmpNetWorkData = null;

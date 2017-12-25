@@ -25,6 +25,14 @@ namespace Coolape
 			return wrapPath (path, name);
 		}
 
+		public override void _returnObj (string name, GameObject unit, bool inActive = true, bool setParent = true)
+		{
+			base._returnObj (name, unit, inActive, setParent);
+			if (unit != null && setParent) {
+				NGUITools.MarkParentAsChanged (unit);
+			}
+		}
+
 		public static void clean ()
 		{
 			pool._clean ();

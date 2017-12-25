@@ -421,7 +421,9 @@ public class UIWidget : UIRect
 				
 				if (panel != null)
 				{
-					panel.AddWidget(this);
+//					if (material != null) { // add by chenbin
+						panel.AddWidget (this);
+//					}
 
 					if (!Application.isPlaying)
 					{
@@ -997,7 +999,9 @@ public class UIWidget : UIRect
 			if (panel != null)
 			{
 				mParentFound = false;
-				panel.AddWidget(this);
+//				if (material != null) { //add by chenbin
+					panel.AddWidget (this);
+//				}
 				CheckLayer();
 				Invalidate(true);
 			}

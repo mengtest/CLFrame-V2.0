@@ -397,6 +397,9 @@ public class UIAtlas : MonoBehaviour
 
 	public UISpriteData getSpriteBorrowMode (string name)
 	{
+		if (string.IsNullOrEmpty (name)) {
+			return null;
+		}
 		if (mReplacement != null) {
 			return mReplacement.getSpriteBorrowMode (name);
 		}

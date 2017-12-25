@@ -75,8 +75,8 @@ public class UISprite : UIBasicSprite
 		
 		if (mAtlas != null) {
 			if (mAtlas.isBorrowSpriteMode) {
-				if (!string.IsNullOrEmpty (spriteName) && mSprite != null) {
-					mAtlas.returnSpriteByname (spriteName);		// add by chenbin
+				if (mSprite != null && !string.IsNullOrEmpty (mSprite.name)) {
+					mAtlas.returnSpriteByname (mSprite.name);		// add by chenbin
 				}
 				mSprite = null;
 			}
@@ -85,7 +85,7 @@ public class UISprite : UIBasicSprite
 	
 	public virtual void refresh ()
 	{
-		if (!gameObject.activeInHierarchy)
+		if (!gameObject.activeInHierarchy || string.IsNullOrEmpty(spriteName))
 			return;
 		if (mAtlas != null) {
 			if (mAtlas.isBorrowSpriteMode) { // && mSprite == null) {
@@ -95,6 +95,15 @@ public class UISprite : UIBasicSprite
 				} 
 				if (mSprite == null) {
 					SetAtlasSprite (mAtlas.borrowSpriteByname (spriteName, this));		// add by chenbin
+					if (mSprite != null) {
+						if (panel != null) 						//add by chenbin
+							panel.RemoveWidget (this);	//add by chenbin
+						if (panel != null) 						//add by chenbin
+							panel.AddWidget (this);		//add by chenbin
+						MarkAsChanged ();
+					}
+				} else {
+					mSpriteSet = true;		// add by chenbin
 				}
 			} else {
 				if (mSprite == null) {
@@ -109,6 +118,12 @@ public class UISprite : UIBasicSprite
 	
 	public Material grayMaterial {
 		get {
+			if (mSprite != null) {
+				_grayMaterial = grayMatMap [mSprite.path] as Material;
+			} else {
+				refresh ();
+				return null;
+			}
 			if (_grayMaterial == null) {
 				if (mSprite != null  && mSprite.material != null) {
 					if (grayMatMap [mSprite.path] == null) {
@@ -494,19 +509,18 @@ public class UISprite : UIBasicSprite
 
 	protected void SetAtlasSprite (UISpriteData sp)
 	{
-		if (sp != null) {
-			if (spriteName == sp.name) {
-				mSprite = sp;
-				mSpriteSet = true;		// add by chenbin
-				mChanged = true;		// add by chenbin
-
-				if (panel != null) 						//add by chenbin
-					panel.RemoveWidget(this);	//add by chenbin
-				if (panel != null) 						//add by chenbin
-					panel.AddWidget(this);		//add by chenbin
-				MarkAsChanged ();
+		if (sp != null ) {
+			if (atlas != null && atlas.isBorrowSpriteMode) {
+				if (spriteName == sp.name && NGUITools.GetActive (gameObject)) { // modify by chenbin
+					mSprite = sp;
+					mSpriteSet = true;		// add by chenbin
+					mChanged = true;		// add by chenbin
+					MarkAsChanged ();
+				} else {
+					atlas.returnSpriteByname (sp.name);
+				}
 			} else {
-				atlas.returnSpriteByname (sp.name);
+				MarkAsChanged ();
 			}
 		}
 	}

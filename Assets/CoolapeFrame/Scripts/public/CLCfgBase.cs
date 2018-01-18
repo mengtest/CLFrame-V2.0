@@ -23,6 +23,8 @@ namespace Coolape
 		{
 			self = this;
 		}
+		// 应用的唯一id，内部管理用，非渠道的appid
+		public int appUniqueID = 0;
 		public bool isContBorrowSpriteTimes = false;
 
 		// 在编辑器下模拟真机

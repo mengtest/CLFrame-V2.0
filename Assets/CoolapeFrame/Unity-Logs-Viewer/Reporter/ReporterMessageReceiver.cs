@@ -3,6 +3,7 @@ using System.Collections;
 using Coolape;
 using XLua;
 
+[LuaCallCSharp]
 public class ReporterMessageReceiver : CLBaseLua
 {
 	Reporter reporter;

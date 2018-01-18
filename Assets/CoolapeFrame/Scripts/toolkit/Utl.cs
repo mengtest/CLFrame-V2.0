@@ -1040,6 +1040,17 @@ namespace Coolape
 			goPool.returnObject (go);
 			return v3;
 		}
+
+		public static byte[] read4MemoryStream(MemoryStream ms, int offset, int len)
+		{
+			if(ms == null || len <= 0 ) {
+				return null;
+			}
+
+			byte[] ret = new byte[len];
+			ms.Read (ret, offset, len);
+			return ret;
+		}
 	}
 
 }

@@ -198,7 +198,7 @@ public class ECLProjectManager : EditorWindow
 							GUI.color = Color.green;
 							if (GUILayout.Button ("One Key Refresh All AssetBundles", GUILayout.Width (300), GUILayout.Height (50))) {
 								if (EditorUtility.DisplayDialog ("Alert", "Really want to refresh all assetbundles!", "Okey", "cancel")) {
-									refreshAllAssetbundles ();
+									EditorApplication.delayCall += onRefreshAllAssetbundles;
 								}
 							}
 							GUILayout.Space (10);
@@ -212,7 +212,7 @@ public class ECLProjectManager : EditorWindow
 									if (GUILayout.Button ("Update & Publish All AssetBundles\n(每次更新执行)", GUILayout.Width (300))) {
 										if (EditorUtility.DisplayDialog ("Alert", "Really want to Refresh & Publish all assetbundles!", "Okey", "cancel")) {
 											if (EditorUtility.DisplayDialog ("Alert", "OKay, let me confirm again:)\n Really want to Refresh & Publish all assetbundles!", "Do it now!", "cancel")) {
-												upgrade4Publish ();
+												EditorApplication.delayCall += upgrade4Publish;
 											}
 										}
 									}
@@ -239,8 +239,7 @@ public class ECLProjectManager : EditorWindow
 									GUILayout.Space (10);
 									using (new SwitchColor (Color.yellow)) {
 										if (GUILayout.Button ("热更新前需要更新的列表\n(需要手工处理)", GUILayout.Width (300))) {
-											string path = PStr.b ().a (Application.dataPath).a ("/").a (data.name).a ("/upgradeRes4Publish").e ();
-											ECLGUIResList.show (path, (Callback)onGetFiles4Preupgrade, null);
+											EditorApplication.delayCall += onShowPreugradeFiles;
 										}
 									}
 								}
@@ -881,11 +880,21 @@ public class ECLProjectManager : EditorWindow
 		}
 		return retVal;
 	}
+	/// <summary>
+	/// Refreshs all assetbundles. 根据md5来刷新资源
+	/// </summary>
+	/// <returns>The all assetbundles.</returns>
+
+	public void onRefreshAllAssetbundles ()
+	{
+		refreshAllAssetbundles();
+	}
 
 	/// <summary>
 	/// Refreshs all assetbundles. 根据md5来刷新资源
 	/// </summary>
 	/// <returns>The all assetbundles.</returns>
+
 	public string refreshAllAssetbundles ()
 	{
 		AssetDatabase.Refresh (ImportAssetOptions.ForceUpdate);
@@ -1156,6 +1165,12 @@ public class ECLProjectManager : EditorWindow
 
 		EditorUtility.DisplayDialog ("success", "Publish Version File Created!", "Okay");
 	}
+	
+	// 更新前的准备工作
+	public void onShowPreugradeFiles() {
+		string path = PStr.b ().a (Application.dataPath).a ("/").a (data.name).a ("/upgradeRes4Publish").e ();
+		ECLGUIResList.show (path, (Callback)onGetFiles4Preupgrade, null);
+	}
 
 	void onGetFiles4Preupgrade (params object[] args)
 	{
@@ -1176,7 +1191,7 @@ public class ECLProjectManager : EditorWindow
 			preupgradeList.Add (cell);
 		}
 		// 热更新的资源包目录
-		string newUpgradeDir = DateEx.format (DateEx.fmt_yyyy_MM_dd_HH_mm_ss);
+		string newUpgradeDir = DateEx.format (DateEx.fmt_yyyy_MM_dd_HH_mm_ss_fname);
 		string toPathBase = (Application.dataPath + "/").Replace ("/Assets/", "/Assets4PreUpgrade/" + newUpgradeDir + "/");
 		Debug.Log (toPathBase);
 		string toPath = toPathBase;
@@ -1233,7 +1248,7 @@ public class ECLProjectManager : EditorWindow
 		bool isNeedUpgradePriori = false;
 		ECLResInfor ri = null;
 		// 热更新的资源包目录
-		string newUpgradeDir = DateEx.format (DateEx.fmt_yyyy_MM_dd_HH_mm_ss);
+		string newUpgradeDir = DateEx.format (DateEx.fmt_yyyy_MM_dd_HH_mm_ss_fname);
 		string toPathBase = (Application.dataPath + "/").Replace ("/Assets/", "/Assets4Upgrade/" + newUpgradeDir + "/");
 		string toPath = toPathBase;
 		if (Directory.Exists (toPath)) {
@@ -1391,13 +1406,14 @@ public class ECLProjectManager : EditorWindow
 	public class ProjectData
 	{
 		public string name = "";
+		public int id = 0;
 		//		public string upgradeUrl = "";
 		public string cfgFolderStr = "";
 
 		//		public int	assetsTimeout4Rlease = 60;
 		public string companyPanelName = "";
 		//		public string hudAlertBackgroundSpriteName = "";
-		public string ingoreResWithExtensionNames = ".meta;.ds_store;.iml;.idea;.project;.buildpath";
+		public string ingoreResWithExtensionNames = ".meta;.ds_store;.iml;.idea;.project;.buildpath;.git;.vscode";
 		public bool isLuaPackaged = true;
 		public string host4UploadUpgradePackage = "";
 		public int port4UploadUpgradePackage = 21;
@@ -1432,6 +1448,7 @@ public class ECLProjectManager : EditorWindow
 		{
 			Hashtable r = new Hashtable ();
 			r ["name"] = name;
+			r ["id"] = id;
 //			r ["upgradeUrl"] = upgradeUrl;
 			r ["cfgFolderStr"] = cfgFolderStr;
 //			r ["assetsTimeout4Rlease"] = assetsTimeout4Rlease;
@@ -1456,6 +1473,7 @@ public class ECLProjectManager : EditorWindow
 			}
 			ProjectData r = new ProjectData ();
 			r.name = MapEx.getString (map, "name");
+			r.id = MapEx.getInt (map, "id");
 //			r.upgradeUrl = MapEx.getString (map, "upgradeUrl");
 //			r.assetsTimeout4Rlease = MapEx.getInt (map, "assetsTimeout4Rlease");
 			r.cfgFolderStr = MapEx.getString (map, "cfgFolderStr");

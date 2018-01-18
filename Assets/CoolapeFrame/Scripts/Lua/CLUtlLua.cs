@@ -157,23 +157,24 @@ namespace Coolape
 		{
 			try {
 				string path = _path.Replace ("\\", "/");
+				string filebase = Path.GetFileName(path);
 				path = path.Replace ("/upgradeRes4Publish/", "/upgradeRes/");
 				string luaContent = "";
-				#if UNITY_EDITOR
+#if UNITY_EDITOR
 				if (CLCfgBase.self.isEditMode) {
 					string tmpPath = path.Replace ("/upgradeRes/", "/upgradeRes4Dev/");
 					luaContent = getLua (tmpPath);
 				} else {
 					luaContent = getLua (path);
 				}
-				#else
+#else
 				luaContent = getLua (path);
-				#endif
+#endif
 				if(string.IsNullOrEmpty(luaContent)) {
 					Debug.LogError (_path + " get content is null!");
 					return null;
 				} else {
-					return lua.DoString(luaContent);
+					return lua.DoString(luaContent, filebase);
 				}
 			} catch (System.Exception e) {
 				Debug.LogError (_path + "," + e);

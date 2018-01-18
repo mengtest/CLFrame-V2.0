@@ -22,7 +22,24 @@ namespace Coolape
 	{
 		public bool isPause = false;
 		public string luaPath;
-		public static LuaEnv mainLua = new LuaEnv ();
+
+		protected static LuaEnv _mainLua = null;
+		// 防止报错
+		public static LuaEnv mainLua
+		{
+			get
+			{
+				if (_mainLua == null)
+					_mainLua = new LuaEnv ();
+				return _mainLua;
+			}
+		}
+
+		public void resetMainLua()
+		{
+			_mainLua = new LuaEnv ();
+		}
+
 		public LuaEnv lua;
 
 		public virtual void setLua ()

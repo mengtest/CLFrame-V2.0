@@ -1541,7 +1541,8 @@ public class UIPanel : UIRect
 		bool clipped = hasCumulativeClipping;
 
 		// Update all widgets
-		for (int i = 0, imax = widgets.Count; i < imax; ++i)
+//		for (int i = 0, imax = widgets.Count; i < imax; ++i)
+		for (int i = 0, imax = widgets.Count; i < widgets.Count; ++i) //modify by chenbin
 		{
 			UIWidget w = widgets[i];
 

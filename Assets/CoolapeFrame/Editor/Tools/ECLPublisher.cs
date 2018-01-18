@@ -21,6 +21,7 @@ using CSObjectWrapEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.Purchasing;
 
+
 /// <summary>
 /// Coolape Publisher .
 /// 库猿编译发布工具
@@ -93,7 +94,12 @@ public class ECLPublisher : EditorWindow
 	{
 		isFinishInit = false;
 	}
-
+	// 防止在 onGUI 中处理点击事件会出现编辑器报错，从而使用 delayCall 的方式来实现点击处理 - by Ken.
+	void onClickOK() {
+		if (onClickCallbak != null) {
+			onClickCallbak();
+		}
+	}
 	void OnGUI ()
 	{
 		if (!isFinishInit) {
@@ -216,9 +222,7 @@ public class ECLPublisher : EditorWindow
 									GUI.color = Color.green;
 									if (GUILayout.Button ("Okey")) {
 										isShowHelpBox = false;
-										if (onClickCallbak != null) {
-											onClickCallbak ();
-										}
+										EditorApplication.delayCall += onClickOK;
 									}
 									GUI.color = Color.red;
 									if (GUILayout.Button ("Cancel")) {
@@ -870,7 +874,7 @@ public class ECLPublisher : EditorWindow
 			}
 		}
 		symbols += (";" + currChlData.mScriptingDefineSymbols);
-		symbols += (";USE_UNITYIAP");
+//		symbols += (";USE_UNITYIAP");
 
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Android, symbols);
 #if UNITY_5
@@ -954,7 +958,7 @@ public class ECLPublisher : EditorWindow
 			}
 		}
 		symbols += (";" + currChlData.mScriptingDefineSymbols);
-		symbols += (";USE_UNITYIAP");
+//		symbols += (";USE_UNITYIAP");
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup, symbols);
 		
 		// subchannel
@@ -1100,7 +1104,11 @@ public class ECLPublisher : EditorWindow
 			levels [0] = EditorApplication.currentScene;
 		}
 		
-		string locationName = currChlData.mPlatform.ToString () + "_" + currChlData.mChlName + "_" + currChlAlias + "_" + currChlData.mBundleIndentifier + "_v" + currChlData.mBundleVersion + "_" + DateEx.format (DateEx.fmt_yyyy_MM_dd) + "_" + DateEx.nowMS;
+		// string locationName = currChlData.mPlatform.ToString () + "_" + currChlData.mChlName + "_" + currChlAlias + "_" + currChlData.mBundleIndentifier + "_v" + currChlData.mBundleVersion + "_" + DateEx.format (DateEx.fmt_yyyy_MM_dd) + "_" + DateEx.nowMS;
+		string locationName = currChlData.mBundleIndentifier;
+		locationName = locationName.Substring(locationName.LastIndexOf(".")+1);
+		locationName += "_v" + currChlData.mBundleVersion + "_" + DateEx.format (DateEx.fmt_yyyy_MM_dd_HH_mm_ss_fname);
+
 		if (currChlData.mPlatform == ChlPlatform.android) {
 			if (!currChlData.mCreateEclipseProject) {
 				locationName += ".apk";
@@ -1557,4 +1565,5 @@ public class ChlData
 		r.isBuildWithLogView = MapEx.getBool (map, "isBuildWithLogView");
 		return r;
 	}
+	
 }

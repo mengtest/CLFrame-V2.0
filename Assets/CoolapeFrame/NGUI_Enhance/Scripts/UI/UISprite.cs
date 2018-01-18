@@ -39,9 +39,9 @@ public class UISprite : UIBasicSprite
 			if (isGrayMode) {
 				mat = grayMaterial;
 			} else {
-				if (mSprite == null)
-					mSprite = GetAtlasSprite ();
 				if (mAtlas != null && mAtlas.isBorrowSpriteMode) {
+					if (mSprite == null)
+						mSprite = GetAtlasSprite ();
 					mat = (mSprite != null) ? mSprite.material : null;//modify by chenbin
 				} else {
 					mat = (mAtlas != null) ? mAtlas.spriteMaterial : null;
@@ -60,7 +60,6 @@ public class UISprite : UIBasicSprite
 	{
 		base.OnEnable ();
 		refresh ();
-		MarkAsChanged ();
 	}
 	
 	new void OnDisable ()
@@ -460,8 +459,37 @@ public class UISprite : UIBasicSprite
 	/// <summary>
 	/// Retrieve the atlas sprite referenced by the spriteName field.
 	/// </summary>
+	public UISpriteData GetAtlasSprite1 ()
+	{
+		if (!mSpriteSet) mSprite = null;
 
-	public UISpriteData GetAtlasSprite ()
+		if (mSprite == null && mAtlas != null)
+		{
+			if (!string.IsNullOrEmpty(mSpriteName))
+			{
+				UISpriteData sp = mAtlas.GetSprite(mSpriteName);
+				if (sp == null) return null;
+				SetAtlasSprite(sp);
+			}
+
+			if (mSprite == null && mAtlas.spriteList.Count > 0)
+			{
+				UISpriteData sp = mAtlas.spriteList[0];
+				if (sp == null) return null;
+				SetAtlasSprite(sp);
+
+				if (mSprite == null)
+				{
+					Debug.LogError(mAtlas.name + " seems to have a null sprite!");
+					return null;
+				}
+				mSpriteName = mSprite.name;
+			}
+		}
+		return mSprite;
+	}
+	
+	public UISpriteData GetAtlasSprite2 ()
 	{
 		if (!mSpriteSet) mSprite = null;
 
@@ -502,12 +530,35 @@ public class UISprite : UIBasicSprite
 		}
 		return mSprite;
 	}
+	
+	public UISpriteData GetAtlasSprite ()
+	{
+		if (mAtlas != null && mAtlas.isBorrowSpriteMode)
+			return GetAtlasSprite2();
+		return GetAtlasSprite1();
+	}
 
 	/// <summary>
 	/// Set the atlas sprite directly.
 	/// </summary>
+	protected void SetAtlasSprite1 (UISpriteData sp)
+	{
+		mChanged = true;
+		mSpriteSet = true;
 
-	protected void SetAtlasSprite (UISpriteData sp)
+		if (sp != null)
+		{
+			mSprite = sp;
+			mSpriteName = sp.name;
+		}
+		else
+		{
+			mSpriteName = (mSprite != null) ? mSprite.name : "";
+			mSprite = sp;
+		}
+	}
+
+	protected void SetAtlasSprite2 (UISpriteData sp)
 	{
 		if (sp != null ) {
 			if (atlas != null && atlas.isBorrowSpriteMode) {
@@ -524,7 +575,16 @@ public class UISprite : UIBasicSprite
 			}
 		}
 	}
-
+	
+	protected void SetAtlasSprite (UISpriteData sp)
+	{
+		if (mAtlas != null && mAtlas.isBorrowSpriteMode) {	
+			SetAtlasSprite2(sp);
+			return;
+		} 
+		SetAtlasSprite1(sp);
+	}
+	
 	/// <summary>
 	/// Adjust the scale of the widget to make it pixel-perfect.
 	/// </summary>

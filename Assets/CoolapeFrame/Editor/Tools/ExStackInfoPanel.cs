@@ -706,8 +706,22 @@ public class ExStackInfoPanel : EditorWindow {
 		string[] arraytext = context.Split(new char[]{'\n'}); // Regex.Split(context, "\n");
 		int cnt = arraytext.Length;
         string luafname;
+        string reg0;
 		for (int i = 0; i <cnt; i++) {
 			string txt = arraytext[i];
+
+            // Example/upgradeRes/priority/lua/CLLMainLua.lua,XLua.LuaException: [string "chunk"]:30: attempt to concatenate a nil value (field 'mode')
+            reg0 = "upgradeRes/priority/lua(.+),XLua\\.LuaException: \\[string \"chunk\"\\]:(\\d+): (.+)$";
+			m = Regex.Match(txt, reg0);
+			if (m.Groups.Count>3) {
+                luafname = FixLuaFilename(m.Groups[1].Value);
+                string msg = GetFileBase(luafname );
+				msg += " | ";
+				msg += m.Groups[2].Value;
+				msg += " " + m.Groups[3].Value;
+                _stackInfos.Add(new SourceEntity(msg, luafname, int.Parse( m.Groups[2].Value), 2));
+				continue;
+			}
 
 			// XLua.LuaException: [string "/CLMainLua.lua"]:89: attempt to index a nil value (global 'CLPanelManager')
 			// string reg2 = "XLua.LuaException: \\[string \"(.+)\"\\]:(\\d.+): (.+)$";

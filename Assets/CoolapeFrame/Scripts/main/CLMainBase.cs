@@ -125,9 +125,9 @@ namespace Coolape
 				destoryLua ();
 //				mainLua.Dispose ();
 //				mainLua = null;
-				mainLua = new LuaEnv ();
+				resetMainLua();
 			} else {
-				mainLua = new LuaEnv ();
+				resetMainLua();
 			}
 			luaTable = null;
 			lua = null;

@@ -64,6 +64,33 @@ namespace Coolape
 #endif
 			}
 		}
+
+		public string runtimePlatform {
+			get {
+				switch (Application.platform)
+				{
+					case RuntimePlatform.WindowsPlayer:
+						return "win|player";
+					case RuntimePlatform.WindowsEditor:
+						return "win|editor";
+					case RuntimePlatform.Android:
+						return "android|player";
+					case RuntimePlatform.IPhonePlayer:
+						return "ios|player";
+					case RuntimePlatform.OSXEditor:
+						return "osx|editor";
+					case RuntimePlatform.OSXPlayer:
+						return "osx|player";
+					case RuntimePlatform.WebGLPlayer:
+						return "web|player";
+					case RuntimePlatform.LinuxPlayer:
+						return "linux|player";
+					case RuntimePlatform.LinuxEditor:
+						return "linux|editor";
+				}
+				return "others";
+			}
+		}
 		//
 		//	[HideInInspector]
 		public string basePath = "xxx";

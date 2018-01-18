@@ -16,8 +16,16 @@ namespace Coolape
 			self = this;
 		}
 
+		public enum NetWorkType
+		{
+			publish,
+			test1,
+			test2,
+		}
+
 		public int _SuccessCodeValue = 0;
 
+		// 成功的返回值
 		public static int SuccessCode {
 			get {
 				return self._SuccessCodeValue;
@@ -77,18 +85,19 @@ namespace Coolape
 			base.setLua ();
 			dispatchGate = getLuaFunction ("dispatchGate");
 			dispatchGame = getLuaFunction ("dispatchGame");
-			dispatchHttp = getLuaFunction ("dispatchHttp");
 			dispatchSend = getLuaFunction ("dispatchSend");
+			packMsgFunc = getLuaFunction ("packMsg");
+			unPackMsgFunc = getLuaFunction ("unpackMsg");
 		}
 
 		LuaFunction dispatchGate;
 		LuaFunction dispatchGame;
 		LuaFunction dispatchSend;
-		LuaFunction dispatchHttp;
+		LuaFunction packMsgFunc;
+		LuaFunction unPackMsgFunc;
 		//===================end=====================
 		public Queue netGateDataQueue = new Queue ();
 		public Queue netGameDataQueue = new Queue ();
-		public Queue netHttpDataQueue = new Queue ();
 
 		public void dispatchGate4Lua (object obj, Tcp tcp)
 		{
@@ -100,23 +109,10 @@ namespace Coolape
 			netGameDataQueue.Enqueue (obj);
 		}
 
-		public void dispatchHttp4Lua (object obj, Tcp tcp)
-		{
-			netHttpDataQueue.Enqueue (obj);
-		}
-
 		object netData = null;
 
 		void LateUpdate ()
 		{
-			if (netHttpDataQueue.Count > 0) {
-				netData = netHttpDataQueue.Dequeue ();
-				if (netData != null) {
-					if (dispatchHttp != null) {
-						dispatchHttp.Call (netData);
-					}
-				}
-			}
 			if (netGateDataQueue.Count > 0) {
 				netData = netGateDataQueue.Dequeue ();
 				if (netData != null) {
@@ -129,9 +125,6 @@ namespace Coolape
 				netData = netGameDataQueue.Dequeue ();
 				if (netData != null) {
 					if (dispatchGame != null) {
-						//                  StringBuilder sb = new StringBuilder();
-						//                  Utl.MapToString((Hashtable)netData,  sb);
-						//                  Debug.Log(sb.ToString());
 						dispatchGame.Call (netData);
 					}
 				}
@@ -148,11 +141,10 @@ namespace Coolape
 		{
 			yield return null;
 			if (gateTcp == null) {
-				gateTcp = new Tcp (dispatchGate4Lua);
+				gateTcp = new Tcp (dispatchGate4Lua, packMsgFunc, unPackMsgFunc);
 			}
 
 			if (!gateTcp.connected) {
-				gateTcp.connected = true;
 				gateTcp.init (gateHost, gatePort);
 				gateTcp.connect ();
 			} else {
@@ -169,12 +161,11 @@ namespace Coolape
 		{
 			yield return null;
 			if (gameTcp == null) {
-				gameTcp = new Tcp (dispatchGame4Lua);
+				gameTcp = new Tcp (dispatchGame4Lua, packMsgFunc, unPackMsgFunc);
 			}
 			this.host = host;
 			this.port = port;
 			if (!gameTcp.connected) {
-				gameTcp.connected = true;
 				gameTcp.init (host, port);
 				gameTcp.connect ();
 			} else {
@@ -182,171 +173,27 @@ namespace Coolape
 			}
 		}
 
-		public void sendGate (Hashtable map)
+		public void sendGate (object data)
 		{
-			//      Hashtable newMap = new Hashtable ();
-			//      chgMapKey (map, newMap);
 			if (gateTcp != null) {
-				gateTcp.send (map);
+				gateTcp.send (data);
 			} else {
 				Debug.LogError ("The gate is not connected!");
 			}
 		}
 
-		public void send (Hashtable map)
+		public void send (object data)
 		{
 			if (isReallyUseNet) {
 				if (gameTcp != null) {
-					gameTcp.send (map);
+					gameTcp.send (data);
 				} else {
 					Debug.LogError ("The server is not connected!");
 				}
 			} else {
-				dispatchSend.Call (map);
+				dispatchSend.Call (data);
 			}
 		}
 
-		string _baseUrl = "";
-
-		public string baseUrl {
-			get {
-				if (string.IsNullOrEmpty (_baseUrl)) {
-					_baseUrl = "http://" + gateHost + ":" + httpPort;
-				}
-				return _baseUrl;
-			}
-		}
-
-		public void sendHttpJson (Hashtable map)
-		{
-			StartCoroutine (doSendHttpJson (httpFunc, map));
-		}
-
-		public IEnumerator doSendHttpJson (string func, Hashtable map)
-		{
-			string url = baseUrl + "/" + func + getParas (map) + "&t_sign_flag=" + DateEx.now;
-			#if UNITY_EDITOR
-			Debug.Log (System.Uri.UnescapeDataString (url));
-			#endif
-			url = System.Uri.EscapeUriString (url);
-//			Debug.Log (url);
-			//        string result = Toolkit.HttpEx.get2str(url);
-			WWW www = new WWW (url);
-			yield return www;
-			Hashtable result = new Hashtable ();
-			if (string.IsNullOrEmpty (www.error)) {
-				#if UNITY_EDITOR
-				Debug.Log ("result==[" + www.text + "]");
-				#endif
-				result = JSON.DecodeMap (www.text.Trim ());
-			} else {
-				Debug.Log (www.error);
-				Debug.Log (www.text);
-				result ["error"] = -99999;
-				result ["message"] = www.error;
-				result ["api"] = MapEx.getString (map, "api");
-			}
-			www.Dispose ();
-			www = null;
-			dispatchHttp4Lua (result, null);
-			//        map.Clear();
-			//        map = null;
-		}
-
-		public string getParas (Hashtable map)
-		{
-			string paras = "";
-			if (map != null && map.Count > 0) {
-				int count = map.Count;
-				int index = 0;
-				foreach (DictionaryEntry cell in map) {
-//					Debug.Log (cell.Key);
-//					Debug.Log (cell.Value);
-					object value = cell.Value;
-					if (index == 0) {
-						paras = PStr.b ().a (paras).a ("?").a (cell.Key).a ("=").a (System.Uri.EscapeDataString (value == null ? "" : value.ToString ())).e ();
-						//                    paras = PStr.b().a(paras).a("?").a(cell.Key).a("=").a(cell.Value).e();
-					} else {
-						paras = PStr.b ().a (paras).a (cell.Key).a ("=").a (System.Uri.EscapeDataString (value == null ? "" : value.ToString ())).e ();
-						//                    paras = PStr.b().a(paras).a(cell.Key).a("=").a(cell.Value).e();
-					}
-					if (index < count - 1) { //last one
-						paras = PStr.b ().a (paras).a ("&").e ();
-					}
-					index++;
-				}
-			}
-			return paras;
-		}
-
-		public void sendHttp (Hashtable map)
-		{
-			StartCoroutine (doSendHttp (baseUrl + "/" + httpFunc, map));
-		}
-
-		public void sendHttp2 (string url, Hashtable map)
-		{
-			StartCoroutine (doSendHttp (url, map));
-		}
-
-		public IEnumerator doSendHttp (string url, Hashtable map)
-		{
-//        Debug.LogError("url==" + url);
-			MemoryStream ms = new MemoryStream ();
-			B2OutputStream.writeMap (ms, map);
-			WWW www = new WWW (url, ms.ToArray ());
-			yield return www;
-			Hashtable result = null;
-			if (!string.IsNullOrEmpty (www.error)) {
-				Debug.Log (www.error + "url==" + url);
-				result = new Hashtable ();
-				result ["retCode"] = -99991;
-				result ["retMsg"] = www.error;
-				result ["func_id"] = MapEx.getString (map, "func_id");
-			} else {
-				byte[] bs = www.bytes;
-				ms.Position = 0;
-				ms.Write (bs, 0, bs.Length);
-				ms.Position = 0;
-				result = (Hashtable)(B2InputStream.readObject (ms));
-			}
-			www.Dispose ();
-			www = null;
-			// Debug.LogError("http result===" + Utl.MapToString(result));
-			dispatchHttp4Lua (result, null);
-		}
-
-		public void chgMapKey (Hashtable inMap, Hashtable outMap)
-		{
-			foreach (DictionaryEntry cell in inMap) {
-				if (cell.Value is Hashtable) {
-					Hashtable map = new Hashtable ();
-					chgMapKey ((Hashtable)(cell.Value), map);
-					outMap [(int)(cell.Key)] = map;
-				} else if (cell.Value is ArrayList) {
-					ArrayList list = (ArrayList)(cell.Value);
-					ArrayList _list = new ArrayList ();
-					for (int i = 0; i < list.Count; i++) {
-						if (list [i] is Hashtable) {
-							Hashtable map = new Hashtable ();
-							chgMapKey ((Hashtable)(list [i]), map);
-							_list.Add (map);
-						} else {
-							_list.Add (list [i]);
-						}
-					}
-					outMap [NumEx.toInt (cell.Key)] = _list;
-				} else {
-					outMap [NumEx.toInt (cell.Key)] = cell.Value;
-				}
-			}
-		}
-
-		public enum NetWorkType
-		{
-			publish,
-			test1,
-			test2,
-		}
 	}
 }

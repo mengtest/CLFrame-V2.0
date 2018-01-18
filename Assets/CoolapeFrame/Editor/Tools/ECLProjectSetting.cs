@@ -86,6 +86,13 @@ public static class ECLProjectSetting
 			//===================================================
 			GUILayout.BeginHorizontal ();
 			{
+				GUILayout.Label ("Project Unique ID:", GUILayout.Width (labWidth));
+				data.id = EditorGUILayout.IntField (data.id);
+			}
+			GUILayout.EndHorizontal ();
+			//===================================================
+			GUILayout.BeginHorizontal ();
+			{
 				GUILayout.Label ("Company Logo Panel Name:", GUILayout.Width (labWidth));
 				data.companyPanelName = GUILayout.TextField (data.companyPanelName);
 			}
@@ -143,6 +150,10 @@ public static class ECLProjectSetting
 				if (isProjectExit (manager)) {
 					if (GUILayout.Button ("Save Project Config", GUILayout.Height (30))) {
 						if (isInputDataValide ()) {
+							if (CLCfgBase.self != null) {
+								CLCfgBase.self.appUniqueID = data.id;
+								EditorUtility.SetDirty (CLCfgBase.self);
+							}
 							ECLProjectManager.saveData ();
 							EditorUtility.DisplayDialog ("success", "Successed!", "Okey");
 						}
@@ -791,6 +802,7 @@ public static class ECLProjectSetting
 			return false;
 		}
 		go.AddComponent (type);
+		go.GetComponent<CLCfgBase> ().appUniqueID = data.id;
 
 		go.AddComponent<CLPathCfg> ();
 		go.AddComponent<CLVerManager> ();

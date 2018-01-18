@@ -273,8 +273,15 @@ public class ECLUpgradeListProc : EditorWindow
 	public string getUpgradePackagePath (string name)
 	{
 		string p = Path.Combine (Application.dataPath, name);
+		if (Application.platform == RuntimePlatform.WindowsEditor)
+		{
+			p = p.Replace ("\\", "/");
+			p = p.Replace ("//", "/");
+			p = p.Replace ("/Assets/", "/Assets4Upgrade/");
+		} else {
+			p = p.Replace ("/Assets/", "/Assets4Upgrade/");
+		}
 //		p = Path.Combine (p, CLPathCfg.self.basePath);
-		p = p.Replace ("/Assets/", "/Assets4Upgrade/");
 		return p;
 	}
 
@@ -299,20 +306,22 @@ public class ECLUpgradeListProc : EditorWindow
 		if (window == null) {
 			window = new ECLUpgradeListProc ();
 		}
-//		Vector2 size = Handles.GetMainGameViewSize ();
+		Vector2 size = Handles.GetMainGameViewSize ();
 		Rect rect = window.position;
 		rect.x = -Screen.width - Screen.width / 4;
 		rect.y = Screen.height / 2 - Screen.height / 4;
 		rect.width = Screen.width;
 		rect.height = Screen.height / 2;
 
-//		rect = new Rect (-size.x/2, size.y / 2 - size.y / 4, size.x / 2, size.y / 2);
+		rect = new Rect (10, 40, size.x, size.y / 2);
 		window.position = rect;
 		window.title = "Upgrade资源包列表";
 		ECLUpgradeListProc.mList = list;
 		window.refreshData ();
 		ECLUpgradeListProc.cfgPath = cfgPath;
-		window.ShowPopup ();
+		// window.ShowPopup ();
+		window.ShowAuxWindow();
+		
 	}
 
 

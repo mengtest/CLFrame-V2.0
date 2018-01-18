@@ -45,7 +45,8 @@ namespace Coolape
 				return;
 			msec = deltaTime * 1000.0f;
 			fps = 1.0f / deltaTime;
-			text = string.Format ("{0:0.0} ms ({1:0.} fps)", msec, fps);
+			text = string.Format ("{0:0.} fps", fps);
+			// text = string.Format ("{0:0.0} ms ({1:0.} fps)", msec, fps);
 			GUI.Label (displayRect, text, style);
 		}
 	}

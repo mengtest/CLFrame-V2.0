@@ -37,7 +37,6 @@ namespace Coolape
 		private int failTimes = 0;
 		public bool isActive = false;
 		public Timer timeoutCheckTimer;
-		public static int __maxLen = 1024 * 1024;
 
 		public USocket (string ihost, int iport)
 		{
@@ -58,14 +57,13 @@ namespace Coolape
 				mSocket.Connect (ipe);
 			} catch (Exception e) {
 				Debug.Log (e);
-				//ErrLog.RecordErr(e, ModuleName, "AsySocket", "");
 			}
 		}
 
 		// 异步模式//////////////////////////////////////////////////////////////////
 		// 异步模式//////////////////////////////////////////////////////////////////
 		public  bool IsConnectionSuccessful = false;
-		public  int timeoutMSec = 5000;
+		public  int timeoutMSec = 10000;	//毫秒
 		public ManualResetEvent TimeoutObject = new ManualResetEvent (false);
 		NetCallback offLineCallback;
 
@@ -151,7 +149,7 @@ namespace Coolape
 //					Debug.Log ("receive len==" + bytesRead);
 						// 有Number据，存储.
 						client.mBuffer.Write (client.mTmpBuffer, 0, bytesRead);
-						client.parseMsg ();
+						OnReceiveCallback (client, client.mBuffer);
 					} else if (bytesRead < 0) {
 						if (client.offLineCallback != null) {
 							client.offLineCallback (client, null);
@@ -191,34 +189,12 @@ namespace Coolape
 			}
 		}
 
-		MemoryStream os = new MemoryStream ();
-		MemoryStream os2 = new MemoryStream ();
-
-		public byte[] createMessage (object obj)
-		{
-			os.Position = 0;
-			os2.Position = 0;
-
-			B2OutputStream.writeObject (os, obj);
-			int len = (int)os.Position;
-			B2OutputStream.writeInt (os2, len);
-//		os2.Write (os.GetBuffer (), 0, len);
-			os2.Write (os.ToArray (), 0, len);
-			int pos = (int)os2.Position;
-			byte[] result = new byte[pos];
-			os2.Position = 0;
-			os2.Read (result, 0, pos);
-			return result;
-		}
-
-		public void SendAsync (object obj)
+		public void SendAsync (byte[] data)
 		{
 			try {
-//				Debug.Log ("send msg ======" + Utl.MapToString ((Hashtable)obj));
-				byte[] data = createMessage (obj);
+				if (data == null)
+					return;
 				// isOpen始发送Number据到远程设备.
-//				mSocket.BeginSend(data, 0, data.Length, 0,
-//					new AsyncCallback(SendCallback), this);
 				if (this.timeoutCheckTimer == null) {
 					this.timeoutCheckTimer = TimerEx.schedule ((TimerCallback)sendTimeOut, null, timeoutMSec);
 				}
@@ -255,46 +231,5 @@ namespace Coolape
 			client.failTimes = 0;
 		}
 
-		private void parseMsg ()
-		{
-			bool isLoop = true;
-			while (isLoop) {
-				long currentPostion = mBuffer.Position;
-				if (currentPostion > 4) {
-					mBuffer.Position = 0;
-					long len = B2InputStream.readInt (mBuffer);
-					if (len <= 0 || len > __maxLen) {
-						// 网络Number据错误。断isOpen网络
-//					Main.self.onOffline ();
-						connectCallbackFunc (this, false);
-						close ();
-						isLoop = false;
-					} else {
-						long cp2 = mBuffer.Position;
-						if (cp2 + len <= currentPostion) {
-							object o = B2InputStream.readObject (mBuffer);
-							//Dispatch.dispatcher ((Hashtable)o);  //回调主处理
-							OnReceiveCallback (this, o);
-							long cp3 = mBuffer.Position;
-							long less = currentPostion - cp3;
-							if (less > 0) {
-								byte[] lessBuff = new byte[less];
-								mBuffer.Read (lessBuff, 0, (int)less);
-								mBuffer.Position = 0;
-								mBuffer.Write (lessBuff, 0, (int)less);
-							} else {
-								mBuffer.Position = 0;
-								isLoop = false;
-							}
-						} else {
-							mBuffer.Position = currentPostion;
-							isLoop = false;
-						}
-					}
-				} else {
-					isLoop = false;
-				}
-			}
-		}
 	}
 }

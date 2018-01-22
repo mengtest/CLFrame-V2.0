@@ -22,8 +22,8 @@ namespace Coolape
 		public static Hashtable wwwMap4Get = new Hashtable ();
 
 		public static void newWWW (MonoBehaviour go, string url, CLAssetType type, 
-		                           float checkProgressSec, float timeOutSec, object finishCallback, 
-		                           object exceptionCallback, object timeOutCallback, object orgs)
+		                          float checkProgressSec, float timeOutSec, object finishCallback, 
+		                          object exceptionCallback, object timeOutCallback, object orgs)
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
@@ -34,10 +34,25 @@ namespace Coolape
 #endif
 		}
 
-		public static void newWWW (MonoBehaviour go, string url, Hashtable mapData,
-		                           CLAssetType type, 
-		                           float checkProgressSec, float timeOutSec, object finishCallback, 
-		                           object exceptionCallback, object timeOutCallback, object orgs)
+		public static void newWWW (MonoBehaviour go, string url, object mapData,
+		                          CLAssetType type, 
+		                          float checkProgressSec, float timeOutSec, object finishCallback, 
+		                          object exceptionCallback, object timeOutCallback, object orgs)
+		{
+			if (string.IsNullOrEmpty (url))
+				return;
+			#if UNITY_4_6 || UNITY_5
+			UnityEngine.Coroutine cor = go.StartCoroutine (doNewWWW (go, url, mapData, type, checkProgressSec, timeOutSec, finishCallback, exceptionCallback, timeOutCallback, orgs));
+			wwwMap4Get [url] = cor;
+			#else
+			#endif
+		}
+
+		// 因为lua里没有bytes类型，所以不能重载，所以只能通方法名来
+		public static void newWWWPostBytes (MonoBehaviour go, string url, byte[] mapData,
+			CLAssetType type, 
+			float checkProgressSec, float timeOutSec, object finishCallback, 
+			object exceptionCallback, object timeOutCallback, object orgs)
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
@@ -49,9 +64,9 @@ namespace Coolape
 		}
 
 		public static void newWWW (MonoBehaviour go, string url, string jsonMap,
-		                           CLAssetType type, 
-		                           float checkProgressSec, float timeOutSec, object finishCallback, 
-		                           object exceptionCallback, object timeOutCallback, object orgs)
+		                          CLAssetType type, 
+		                          float checkProgressSec, float timeOutSec, object finishCallback, 
+		                          object exceptionCallback, object timeOutCallback, object orgs)
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
@@ -63,25 +78,31 @@ namespace Coolape
 			#endif
 		}
 
-		public static IEnumerator doNewWWW (MonoBehaviour go, string url, Hashtable mapData, CLAssetType type, 
-		                                    float checkProgressSec, float timeOutSec, object finishCallback, 
-		                                    object exceptionCallback, object timeOutCallback, object orgs)
+		public static IEnumerator doNewWWW (MonoBehaviour go, string url, object mapData, CLAssetType type, 
+		                                   float checkProgressSec, float timeOutSec, object finishCallback, 
+		                                   object exceptionCallback, object timeOutCallback, object orgs)
 		{
 			WWW www = null;
 			if (mapData != null) {
-				WWWForm wf = new WWWForm ();
-				foreach (DictionaryEntry cell in mapData) {
-					if (cell is string) {
-						wf.AddField (cell.Key.ToString (), cell.Value.ToString ());
-					} else if (cell is int) {
-						wf.AddField (cell.Key.ToString (), int.Parse (cell.Value.ToString ()));
-					} else if (cell is byte[]) {
-						wf.AddBinaryData (cell.Key.ToString (), (byte[])(cell.Value));
-					} else {
-						wf.AddField (cell.Key.ToString (), cell.Value.ToString ());
+				if (mapData is Hashtable) {
+					WWWForm wf = new WWWForm ();
+					foreach (DictionaryEntry cell in (Hashtable)mapData) {
+						if (cell is string) {
+							wf.AddField (cell.Key.ToString (), cell.Value.ToString ());
+						} else if (cell is int) {
+							wf.AddField (cell.Key.ToString (), int.Parse (cell.Value.ToString ()));
+						} else if (cell is byte[]) {
+							wf.AddBinaryData (cell.Key.ToString (), (byte[])(cell.Value));
+						} else {
+							wf.AddField (cell.Key.ToString (), cell.Value.ToString ());
+						}
 					}
+					www = new WWW (url, wf);
+				} else if (mapData is WWWForm) {
+					www = new WWW (url, (mapData as WWWForm));
+				} else if (mapData is byte[]) {
+					www = new WWW (url, (mapData as byte[]));
 				}
-				www = new WWW (url, wf);
 			} else {
 				www = new WWW (url);
 			}
@@ -166,7 +187,7 @@ namespace Coolape
 		}
 
 		public static IEnumerator doCheckWWWTimeout (MonoBehaviour go, WWW www, float checkProgressSec, 
-		                                             float timeOutSec, object timeoutCallback, float oldProgress, float totalCostSec, object orgs)
+		                                            float timeOutSec, object timeoutCallback, float oldProgress, float totalCostSec, object orgs)
 		{
 			yield return new WaitForSeconds (checkProgressSec);
 			totalCostSec = totalCostSec + checkProgressSec;

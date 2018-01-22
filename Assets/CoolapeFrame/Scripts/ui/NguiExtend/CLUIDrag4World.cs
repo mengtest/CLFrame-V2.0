@@ -382,7 +382,11 @@ namespace Coolape
 				}
 			} else {
 				if (!inGroundLeft && !inGroundRight && !inGroundTop && !inGroundBottom) {
-					offset = Vector3.zero;
+					float dis1 = Vector3.Distance (target.position, viewCenter);
+					float dis2 = Vector3.Distance (target.position+offset, viewCenter);
+					if (dis1 < dis2) {
+						offset = Vector3.zero;
+					}
 					return false;
 				} else if (!inGroundLeft && !inGroundRight && !inGroundTop) {
 					offset = Vector3.zero;
@@ -819,7 +823,7 @@ namespace Coolape
 			inGroundBottom = getViewPoint2World (new Vector3 (Screen.width / 2, 0, 0), ref viewBottom);
 			if (!inGroundLeft && !inGroundRight && !inGroundTop && !inGroundBottom) {
 				offset = Vector3.zero;
-				target.position = viewCenter;
+//				target.position = viewCenter;
 				return false;
 			}
 
@@ -890,7 +894,7 @@ namespace Coolape
 			if (disLeft > viewRadius && disRight > viewRadius &&
 			    disTop > viewRadius && disBottom > viewRadius) {
 				offset = Vector3.zero;
-				target.position = viewCenter;
+//				target.position = viewCenter;
 				return false;
 			}
 			if (disLeft > viewRadius && disRight > viewRadius) {

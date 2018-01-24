@@ -34,6 +34,7 @@ namespace Coolape
 		// Use this for initialization
 		public override void Start ()
 		{
+			DateEx.init ();
 			// 显示公司logo页面
 			CLPanelBase panel = CLPanelManager.getPanel (firstPanel);
 			try {

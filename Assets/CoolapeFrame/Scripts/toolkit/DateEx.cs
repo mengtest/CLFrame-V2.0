@@ -34,21 +34,39 @@ namespace Coolape
 		public const long TIME_WEEK = 7 * TIME_DAY;
 		public const long TIME_YEAR = 365 * TIME_DAY;
 
+		public static bool isFinishInit = false;
+		public static long begainTimeMs = 0;
+		public static float offsetSeconds = 0;
+
+		public static void init (long serverTimeMs = 0)
+		{
+			if (serverTimeMs == 0) {
+				begainTimeMs = toJavaDate(DateTime.UtcNow);
+			} else {
+				begainTimeMs = serverTimeMs;
+			}
+			offsetSeconds = Time.realtimeSinceStartup;
+			isFinishInit = true;
+		}
+
 		public static long now {
 			get {
-				return DateTime.Now.ToFileTime ();
+//				return DateTime.Now.ToFileTime ();
+				return nowMS*10000;
 			}
 		}
 
 		public static long nowMS {
 			get {
-				return DateTime.Now.ToFileTime () / 10000;
+//				return DateTime.Now.ToFileTime () / 10000;
+				return begainTimeMs + (long)((Time.realtimeSinceStartup - offsetSeconds)*1000);
 			}
 		}
 
 		public static string format (string fmt)
 		{
-			return format (DateTime.Now, fmt);
+//			return format (DateTime.Now, fmt);
+			return formatByMs (nowMS, fmt);
 		}
 
 		public static string nowString ()
@@ -97,7 +115,7 @@ DateTime dt = new DateTime(time_tricks).AddHours(8);//转化为DateTime
 		// 取得客户端当前时间
 		static public long toJavaNTimeLong ()
 		{
-			return toJavaDate (DateTime.Now);
+			return toJavaDate (DateTime.UtcNow);
 		}
 
 		public static long toJavaDate (DateTime dat)
@@ -126,7 +144,8 @@ DateTime dt = new DateTime(time_tricks).AddHours(8);//转化为DateTime
 
 		public static long nowServerTime {
 			get {
-				return diffTimeWithServer + toJavaNTimeLong ();
+//				return diffTimeWithServer + toJavaNTimeLong ();
+				return nowMS;
 			}
 		}
 
@@ -175,7 +194,7 @@ DateTime dt = new DateTime(time_tricks).AddHours(8);//转化为DateTime
 		public static string toHHMMSS2 (long ms)
 		{
 			int[] ss = getTimeArray (ms);
-			return PStr.b ().a (ss [1]).a (Localization.Get("UIHour")).a (ss [2]).a (Localization.Get("UIMinute")).a (ss [3]).a(Localization.Get("UISecond")).e ();
+			return PStr.b ().a (ss [1]).a (Localization.Get ("UIHour")).a (ss [2]).a (Localization.Get ("UIMinute")).a (ss [3]).a (Localization.Get ("UISecond")).e ();
 		}
 
 		// 时间格式化为:HH:mm:ss;
@@ -187,7 +206,7 @@ DateTime dt = new DateTime(time_tricks).AddHours(8);//转化为DateTime
 			String strMinute = "";
 			String strSecond = "";
 			if (hour > 0) {
-				strHour = hour < 10 ?  "0" + hour : "" + hour;
+				strHour = hour < 10 ? "0" + hour : "" + hour;
 				strHour += ":";
 			}
 			int minute = arr [2];
@@ -414,7 +433,8 @@ DateTime dt = new DateTime(time_tricks).AddHours(8);//转化为DateTime
 				yyMMddHHmmss = yyMMddHHmmss.Replace ("\\\\", "");
 				DateTime dt = DateTime.Parse (yyMMddHHmmss);
 				long jl = toJavaDate (dt);
-				return jl + diffTimeWithServer;
+//				return jl + diffTimeWithServer;
+				return jl;
 			} catch (Exception) {
 
 				return 0;

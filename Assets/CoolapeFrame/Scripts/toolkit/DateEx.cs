@@ -51,6 +51,8 @@ namespace Coolape
 
 		public static long now {
 			get {
+				if (!isFinishInit)
+					init ();
 //				return DateTime.Now.ToFileTime ();
 				return nowMS*10000;
 			}
@@ -58,6 +60,8 @@ namespace Coolape
 
 		public static long nowMS {
 			get {
+				if (!isFinishInit)
+					init ();
 //				return DateTime.Now.ToFileTime () / 10000;
 				return begainTimeMs + (long)((Time.realtimeSinceStartup - offsetSeconds)*1000);
 			}

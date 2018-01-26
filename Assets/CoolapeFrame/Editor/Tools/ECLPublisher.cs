@@ -874,7 +874,7 @@ public class ECLPublisher : EditorWindow
 			}
 		}
 		symbols += (";" + currChlData.mScriptingDefineSymbols);
-//		symbols += (";USE_UNITYIAP");
+		symbols += (";USE_UNITYIAP");
 
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Android, symbols);
 #if UNITY_5
@@ -958,7 +958,7 @@ public class ECLPublisher : EditorWindow
 			}
 		}
 		symbols += (";" + currChlData.mScriptingDefineSymbols);
-//		symbols += (";USE_UNITYIAP");
+		symbols += (";USE_UNITYIAP");
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup, symbols);
 		
 		// subchannel
@@ -1104,10 +1104,10 @@ public class ECLPublisher : EditorWindow
 			levels [0] = EditorApplication.currentScene;
 		}
 		
-		// string locationName = currChlData.mPlatform.ToString () + "_" + currChlData.mChlName + "_" + currChlAlias + "_" + currChlData.mBundleIndentifier + "_v" + currChlData.mBundleVersion + "_" + DateEx.format (DateEx.fmt_yyyy_MM_dd) + "_" + DateEx.nowMS;
-		string locationName = currChlData.mBundleIndentifier;
-		locationName = locationName.Substring(locationName.LastIndexOf(".")+1);
-		locationName += "_v" + currChlData.mBundleVersion + "_" + DateEx.format (DateEx.fmt_yyyy_MM_dd_HH_mm_ss_fname);
+		string locationName = currChlData.mPlatform.ToString () + "_" + currChlData.mChlName + "_" + currChlData.mBundleIndentifier + "_v" + currChlData.mBundleVersion + "_" + DateEx.format (DateEx.fmt_yyyy_MM_dd_HH_mm_ss_fname);
+//		string locationName = currChlData.mBundleIndentifier;
+//		locationName = locationName.Substring(locationName.LastIndexOf(".")+1);
+//		locationName += "_v" + currChlData.mBundleVersion + "_" + DateEx.format (DateEx.fmt_yyyy_MM_dd_HH_mm_ss_fname);
 
 		if (currChlData.mPlatform == ChlPlatform.android) {
 			if (!currChlData.mCreateEclipseProject) {

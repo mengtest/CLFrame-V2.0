@@ -877,7 +877,7 @@ public class ECLPublisher : EditorWindow
 		symbols += (";USE_UNITYIAP");
 
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Android, symbols);
-#if UNITY_5
+#if UNITY_5 || UNITY_5_3_OR_NEWER 
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iOS, symbols);
 #else
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iPhone, symbols);
@@ -914,7 +914,7 @@ public class ECLPublisher : EditorWindow
 			#if USE_UNITYIAP
 			UnityPurchasingEditor.TargetAndroidStore (currChlData.mTargetAndroidStore);
 			#endif
-#if UNITY_5
+#if UNITY_5 || UNITY_5_3_OR_NEWER 
 		} else if (currChlData.buildTarget == BuildTarget.iOS) {
 #else
 		} else if (currChlData.buildTarget == BuildTarget.iPhone) {
@@ -932,6 +932,7 @@ public class ECLPublisher : EditorWindow
 
 		#if UNITY_5_6_OR_NEWER
 		PlayerSettings.applicationIdentifier = currChlData.mBundleIndentifier;
+		PlayerSettings.SetApplicationIdentifier(currChlData.buildTargetGroup, currChlData.mBundleIndentifier);
 		#else
 		PlayerSettings.bundleIdentifier = currChlData.mBundleIndentifier;
 		#endif
@@ -1057,7 +1058,7 @@ public class ECLPublisher : EditorWindow
 		if (currChlData == null) {
 			return;
 		}
-		#if UNITY_5
+		#if UNITY_5 || UNITY_5_3_OR_NEWER 
 		if (currChlData.buildTarget == BuildTarget.iOS) {
 			#else
 		if (currChlData.buildTarget == BuildTarget.iPhone) {
@@ -1115,7 +1116,7 @@ public class ECLPublisher : EditorWindow
 			} else {
 				locationName = dataPath () + currChlData.mBuildLocation;
 			}
-#if UNITY_5
+#if UNITY_5 || UNITY_5_3_OR_NEWER 
 		} else if (currChlData.buildTarget == BuildTarget.iOS) {
 #else
 		} else if (currChlData.buildTarget == BuildTarget.iPhone) {
@@ -1136,7 +1137,7 @@ public class ECLPublisher : EditorWindow
 		if (Reporter.self != null) {
 			Reporter.self.gameObject.SetActive (false);
 		}
-#if UNITY_5
+#if UNITY_5 || UNITY_5_3_OR_NEWER 
 		if (currChlData.buildTarget == BuildTarget.iOS && needApend) {
 #else
 		if (currChlData.buildTarget == BuildTarget.iPhone && needApend) {
@@ -1290,7 +1291,7 @@ public class ChlData
 			case ChlPlatform.android:
 				return BuildTargetGroup.Android;
 			case ChlPlatform.ios:
-#if UNITY_5
+#if UNITY_5 || UNITY_5_3_OR_NEWER 
 				return BuildTargetGroup.iOS;
 #else
 				return BuildTargetGroup.iPhone;
@@ -1306,7 +1307,7 @@ public class ChlData
 			case ChlPlatform.android:
 				return BuildTarget.Android;
 			case ChlPlatform.ios:
-#if UNITY_5
+#if UNITY_5 || UNITY_5_3_OR_NEWER 
 				return BuildTarget.iOS;
 #else
 				return BuildTarget.iPhone;

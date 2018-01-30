@@ -892,8 +892,12 @@ public class UIInput : MonoBehaviour
 
 		bool isMac = (
 			rp == RuntimePlatform.OSXEditor ||
-			rp == RuntimePlatform.OSXPlayer ||
-			rp == RuntimePlatform.OSXWebPlayer);
+			rp == RuntimePlatform.OSXPlayer
+	#if UNITY_2017_1_OR_NEWER
+	#else
+	|| rp == RuntimePlatform.OSXWebPlayer
+	#endif
+	);
 
 		bool ctrl = isMac ?
 			((ev.modifiers & EventModifiers.Command) != 0) :

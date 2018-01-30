@@ -47,8 +47,12 @@ static public class NGUITools
 
 	static public bool fileAccess {
 		get {
+			#if UNITY_2017_1_OR_NEWER
+			return Application.platform != RuntimePlatform.WebGLPlayer;
+			#else
 			return Application.platform != RuntimePlatform.WindowsWebPlayer &&
 			Application.platform != RuntimePlatform.OSXWebPlayer;
+			#endif
 		}
 	}
 

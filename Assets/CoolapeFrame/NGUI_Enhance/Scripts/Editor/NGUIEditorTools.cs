@@ -1328,6 +1328,12 @@ public static class NGUIEditorTools
 		return state;
 	}
 
+	#if UNITY_4_7 || UNITY_5_5 || UNITY_5_6
+	public static string textArea = "AS TextArea";
+	#else
+	public static string textArea = "TextArea";
+	#endif
+
 	/// <summary>
 	/// Begin drawing the content area.
 	/// </summary>
@@ -1346,7 +1352,7 @@ public static class NGUIEditorTools
 		{
 			mEndHorizontal = true;
 			GUILayout.BeginHorizontal();
-			EditorGUILayout.BeginHorizontal("AS TextArea", GUILayout.MinHeight(10f));
+			EditorGUILayout.BeginHorizontal(textArea, GUILayout.MinHeight(10f));
 		}
 		else
 		{

@@ -2015,8 +2015,11 @@ public class Reporter : MonoBehaviour
 				streamingAssetsPath = Application.dataPath + "/StreamingAssets/";
 			url = System.IO.Path.Combine(streamingAssetsPath, prefFile);
 		}
-
+		#if UNITY_2017_1_OR_NEWER
+		if (Application.platform != RuntimePlatform.WebGLPlayer)
+		#else
 		if (Application.platform != RuntimePlatform.OSXWebPlayer && Application.platform != RuntimePlatform.WindowsWebPlayer)
+		#endif
 			if (!url.Contains("://"))
 				url = "file://" + url;
 

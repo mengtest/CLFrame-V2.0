@@ -27,7 +27,7 @@ namespace Coolape
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
-#if UNITY_4_6 || UNITY_5
+#if UNITY_4_6 || UNITY_5  || UNITY_5_6_OR_NEWER
 			UnityEngine.Coroutine cor = go.StartCoroutine (doNewWWW (go, url, null, type, checkProgressSec, timeOutSec, finishCallback, exceptionCallback, timeOutCallback, orgs));
 			wwwMap4Get [url] = cor;
 #else
@@ -41,7 +41,7 @@ namespace Coolape
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
-			#if UNITY_4_6 || UNITY_5
+			#if UNITY_4_6 || UNITY_5  || UNITY_5_6_OR_NEWER
 			UnityEngine.Coroutine cor = go.StartCoroutine (doNewWWW (go, url, mapData, type, checkProgressSec, timeOutSec, finishCallback, exceptionCallback, timeOutCallback, orgs));
 			wwwMap4Get [url] = cor;
 			#else
@@ -56,7 +56,7 @@ namespace Coolape
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
-			#if UNITY_4_6 || UNITY_5
+			#if UNITY_4_6 || UNITY_5 || UNITY_5_6_OR_NEWER
 			UnityEngine.Coroutine cor = go.StartCoroutine (doNewWWW (go, url, mapData, type, checkProgressSec, timeOutSec, finishCallback, exceptionCallback, timeOutCallback, orgs));
 			wwwMap4Get [url] = cor;
 			#else
@@ -71,7 +71,7 @@ namespace Coolape
 			if (string.IsNullOrEmpty (url))
 				return;
 			Hashtable mapData = JSON.DecodeMap (jsonMap);
-			#if UNITY_4_6 || UNITY_5
+			#if UNITY_4_6 || UNITY_5  || UNITY_5_6_OR_NEWER
 			UnityEngine.Coroutine cor = go.StartCoroutine (doNewWWW (go, url, mapData, type, checkProgressSec, timeOutSec, finishCallback, exceptionCallback, timeOutCallback, orgs));
 			wwwMap4Get [url] = cor;
 			#else
@@ -82,6 +82,9 @@ namespace Coolape
 		                                   float checkProgressSec, float timeOutSec, object finishCallback, 
 		                                   object exceptionCallback, object timeOutCallback, object orgs)
 		{
+			#if UNITY_EDITOR
+			Debug.LogWarning(url);
+			#endif
 			WWW www = null;
 			if (mapData != null) {
 				if (mapData is Hashtable) {
@@ -177,7 +180,7 @@ namespace Coolape
 			if (go == null)
 				return;
 			checkProgressSec = checkProgressSec <= 0 ? 2 : checkProgressSec;
-			#if UNITY_4_6 || UNITY_5
+			#if UNITY_4_6 || UNITY_5  || UNITY_5_6_OR_NEWER
 			UnityEngine.Coroutine cor = go.StartCoroutine (doCheckWWWTimeout (go, www, checkProgressSec, timeOutSec, timeoutCallback, 0, 0, orgs));
 			wwwMap4Check [www] = cor;
 			#else
@@ -219,7 +222,7 @@ namespace Coolape
 							www = null;
 							doCallback (timeoutCallback, null, orgs);
 						} else {
-							#if UNITY_4_6 || UNITY_5
+							#if UNITY_4_6 || UNITY_5 || UNITY_5_6_OR_NEWER
 							UnityEngine.Coroutine cor = go.StartCoroutine (doCheckWWWTimeout (go, www, checkProgressSec, timeOutSec, timeoutCallback, www.progress, totalCostSec, orgs));
 							wwwMap4Check [www] = cor;
 							#else
@@ -237,7 +240,7 @@ namespace Coolape
 
 		public static void uncheckWWWTimeout (MonoBehaviour go, WWW www)
 		{
-			#if UNITY_4_6 || UNITY_5
+			#if UNITY_4_6 || UNITY_5 || UNITY_5_6_OR_NEWER
 			UnityEngine.Coroutine cor = (UnityEngine.Coroutine)(wwwMap4Check [www]);
 			if (cor != null) {
 				go.StopCoroutine (cor);

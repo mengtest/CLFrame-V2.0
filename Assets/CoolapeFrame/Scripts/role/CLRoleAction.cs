@@ -128,7 +128,7 @@ namespace Coolape
 			__setAction(actionValue, onCompleteMotion);		//为了做回放，不能用StartCoroutine
 
 			/*
-		#if UNITY_4_6 || UNITY_5
+		#if UNITY_4_6 || UNITY_5  || UNITY_5_6_OR_NEWER
 		if(coroutineAction != null) {
 		    StopCoroutine(coroutineAction);
 			coroutineAction = null;

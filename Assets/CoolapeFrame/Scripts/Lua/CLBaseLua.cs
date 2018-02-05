@@ -273,7 +273,7 @@ namespace Coolape
 		public void cancelInvoke4Lua (object callbakFunc)
 		{
 			if (callbakFunc == null) {
-				#if UNITY_4_6 || UNITY_5
+				#if UNITY_4_6 || UNITY_5 || UNITY_5_6_OR_NEWER
 				Hashtable list = null;
 
 				foreach (DictionaryEntry item in coroutineMap) {

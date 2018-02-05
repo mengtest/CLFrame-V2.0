@@ -61,7 +61,7 @@ public class UISprite : UIBasicSprite
 		base.OnEnable ();
 		refresh ();
 	}
-	
+
 	new void OnDisable ()
 	{
 		base.OnDisable ();
@@ -79,6 +79,23 @@ public class UISprite : UIBasicSprite
 				}
 				mSprite = null;
 			}
+		}
+	}
+
+	void OnApplicationPause(bool pauseStatus)
+	{
+		if (pauseStatus) {
+			if (mAtlas != null) {
+				if (mAtlas.isBorrowSpriteMode) {
+					if (mSprite != null && !string.IsNullOrEmpty (mSprite.name)) {
+						mAtlas.returnSpriteByname (mSprite.name);		// add by chenbin
+					}
+					mSprite = null;
+				}
+			}
+		} else {
+			base.OnEnable ();
+			refresh ();
 		}
 	}
 	

@@ -31,7 +31,9 @@ public static class ECLProjectSetting
 	static bool isProcingNewProject = false;
 
 	static bool haveSetDelegate = false;
-	public static void setDelegate() {
+
+	public static void setDelegate ()
+	{
 		if (haveSetDelegate)
 			return;
 		haveSetDelegate = true;
@@ -39,7 +41,8 @@ public static class ECLProjectSetting
 		EditorApplication.update += OnUpdate;
 	}
 
-	static void OnUpdate() {
+	static void OnUpdate ()
+	{
 		if (isWaitProcing ()) {
 			finishWaitProcing ();
 			createProject2 ();
@@ -178,7 +181,7 @@ public static class ECLProjectSetting
 	public static void showUpgradePackageSettings ()
 	{
 		if (manager == null
-			|| !isProjectExit (manager)) {
+		    || !isProjectExit (manager)) {
 			return;
 		}
 		GUILayout.Space (5);
@@ -244,7 +247,7 @@ public static class ECLProjectSetting
 						GUILayout.BeginHorizontal ();
 						{
 							GUILayout.Label ("URI:", GUILayout.Width (labWidth));
-							GUILayout.Label ("ftp://" + data.host4UploadUpgradePackage+data.RemoteBaseDir);
+							GUILayout.Label ("ftp://" + data.host4UploadUpgradePackage + data.RemoteBaseDir);
 						}
 						GUILayout.EndHorizontal ();
 
@@ -261,6 +264,7 @@ public static class ECLProjectSetting
 		}
 		ECLEditorUtl.EndContents ();
 	}
+
 	public static void showOtherSettings ()
 	{
 		if (manager == null
@@ -619,70 +623,74 @@ public static class ECLProjectSetting
 		font = fontGo.GetComponent<UIFont> ();
 
 		//Copy Lua res
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/TempMainLua.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/CLLMainLua.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
+		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/luaTemplates.zip";
+		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/";
+		ZipEx.UnZip (from, to, 4096);
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/TempMainLua.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/CLLMainLua.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/cfg/TempDBCfg.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/cfg/DBCfg.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/cfg/TempDBCfgTool.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/cfg/DBCfgTool.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/net/TempNetDispatch.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/net/NetDispatch.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/public/TempInclude.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/public/CLLInclude.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/public/TempPrefs.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/public/CLLPrefs.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/toolkit/TempLuaUtl.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/toolkit/LuaUtl.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/toolkit/TempUpdateUpgrader.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/toolkit/CLLUpdateUpgrader.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/toolkit/TempVerManager.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/toolkit/CLLVerManager.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPBackplate.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPBackplate.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPConfirm.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPConfirm.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPHotWheel.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPHotWheel.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPSplash.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPSplash.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPStart.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPStart.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPWWWProgress.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPWWWProgress.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
+//
+//		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/cell/TempCellWWWProgress.lua";
+//		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/cell/CLLCellWWWProgress.lua";
+//		ECLCreateFile.PubCreatNewFile2 (from, to);
 
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/cfg/TempDBCfg.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/cfg/DBCfg.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/cfg/TempDBCfgTool.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/cfg/DBCfgTool.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/net/TempNetDispatch.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/net/NetDispatch.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/public/TempInclude.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/public/CLLInclude.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/public/TempPrefs.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/public/CLLPrefs.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/toolkit/TempLuaUtl.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/toolkit/LuaUtl.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/toolkit/TempUpdateUpgrader.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/toolkit/CLLUpdateUpgrader.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/toolkit/TempVerManager.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/toolkit/CLLVerManager.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPBackplate.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPBackplate.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPConfirm.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPConfirm.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPHotWheel.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPHotWheel.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPSplash.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPSplash.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPStart.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPStart.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/panel/TempPWWWProgress.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/panel/CLLPWWWProgress.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Lua/ui/cell/TempCellWWWProgress.lua";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/lua/ui/cell/CLLCellWWWProgress.lua";
-		ECLCreateFile.PubCreatNewFile2 (from, to);
-
+		//==================================================
 		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/hotUpgradeCfg/tempChannels.json";
 		to = Application.dataPath + "/StreamingAssets/channels.json";
 		ECLCreateFile.PubCreatNewFile2 (from, to);
@@ -723,6 +731,13 @@ public static class ECLProjectSetting
 		panelLua.luaPath = data.name + "/upgradeRes/priority/lua/ui/panel/CLLPSplash.lua";
 		PrefabUtility.CreatePrefab ("Assets/" + data.name + "/upgradeRes4Dev/priority/ui/panel/PanelSplash.prefab", panelGo);
 		//==================================================
+		panelGo = ECLEditorUtl.getObjectByPath (ECLProjectManager.FrameName + "/Templates/prefab/ui/TempLogin.prefab") as GameObject;
+		panelGo = GameObject.Instantiate (panelGo) as GameObject;
+		panelLua = panelGo.GetComponent<CLPanelLua> ();
+		panelLua.luaPath = data.name + "/upgradeRes/priority/lua/ui/panel/CLLPLogin.lua";
+		PrefabUtility.CreatePrefab ("Assets/" + data.name + "/upgradeRes4Dev/priority/ui/panel/PanelLogin.prefab", panelGo);
+		//==================================================
+
 		panelGo = ECLEditorUtl.getObjectByPath (ECLProjectManager.FrameName + "/Templates/prefab/ui/TempPanelStart.prefab") as GameObject;
 		panelGo = GameObject.Instantiate (panelGo) as GameObject;
 		panelLua = panelGo.GetComponent<CLPanelLua> ();
@@ -917,7 +932,7 @@ public static class ECLProjectSetting
 		sound.singletonAudio = mainGo.GetComponent<AudioSource> ();
 
 		Net net = GameObject.Find ("Net").GetComponent<Net> ();
-		net.luaPath = data.name + "/upgradeRes/priority/lua/net/NetDispatch.lua";
+		net.luaPath = data.name + "/upgradeRes/priority/lua/net/CLLNet.lua";
 
 		CLMainBase main = mainGo.GetComponent<CLMainBase> ();
 		main.firstPanel = data.companyPanelName;

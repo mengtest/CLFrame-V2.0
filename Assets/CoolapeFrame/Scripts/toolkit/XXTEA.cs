@@ -29,6 +29,40 @@ namespace Coolape
 			}
 		}
 
+		public static Byte[] encodeStr (string Data, string Key = null)
+		{
+			if (string.IsNullOrEmpty (Data)) {
+				return null;
+			}
+			Byte[] _key = null;
+			if (string.IsNullOrEmpty (Key)) {
+				_key = defaultKey;
+			} else {
+				_key = Encoding.Default.GetBytes (key);
+			}
+			Byte[] databytes = Encoding.UTF8.GetBytes (Data);
+			return Encrypt (databytes, _key);
+		}
+
+		public static string decodeStr (Byte[] Data, string Key = null)
+		{
+			if (Data == null) {
+				return "";
+			}
+			Byte[] _key = null;
+			if (string.IsNullOrEmpty (Key)) {
+				_key = defaultKey;
+			} else {
+				_key = Encoding.Default.GetBytes (key);
+			}
+			Byte[] databytes = Decrypt (Data, _key);
+			if (databytes != null) {
+				return Encoding.UTF8.GetString (databytes);
+			} else {
+				return "";
+			}
+		}
+
 		public static Byte[] Encrypt (Byte[] Data, Byte[] Key)
 		{
 			if (Data.Length == 0) {

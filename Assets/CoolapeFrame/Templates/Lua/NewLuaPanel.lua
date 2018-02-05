@@ -33,7 +33,7 @@ do
   -- 网络请求的回调；cmd：指命，succ：成功失败，msg：消息；paras：服务器下行数据
   function #SCRIPTNAME#.procNetwork (cmd, succ, msg, paras)
     --[[
-    if(succ == 1) then
+    if(succ == NetSuccess) then
       if(cmd == "xxx") then
         -- TODO:
       end

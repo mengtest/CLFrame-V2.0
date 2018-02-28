@@ -26,7 +26,7 @@ public class CLUIFormRoot : MonoBehaviour
 	void setVal (object map, object key, object val)
 	{
 		if (map is LuaTable) {
-			((LuaTable)map) [key] = val;
+			((LuaTable)map).SetInPath(key.ToString(), val);
 		} else if (map is Hashtable) {
 			((Hashtable)map) [key] = val;
 		}
@@ -36,7 +36,7 @@ public class CLUIFormRoot : MonoBehaviour
 	{
 		object ret = "";
 		if (map is LuaTable) {
-			ret = ((LuaTable)map) [key];
+			ret = ((LuaTable)map).GetInPath<object>(key.ToString());
 		} else if (map is Hashtable) {
 			ret = ((Hashtable)map) [key];
 		}
@@ -48,7 +48,7 @@ public class CLUIFormRoot : MonoBehaviour
 		return getValue (null, isLuatable);
 	}
 
-	public object getValue (object map, bool isLuatable = false)
+	public object getValue (object map, bool isLuatable)
 	{
 		object r = getValue (transform, map, isLuatable);
 #if UNITY_EDITOR
@@ -59,7 +59,7 @@ public class CLUIFormRoot : MonoBehaviour
 		return r;
 	}
 
-	public object getValue (Transform tr, object map, bool isLuaTable = false)
+	public object getValue (Transform tr, object map, bool isLuaTable)
 	{
 		if (map == null) {
 			if (isLuaTable) {

@@ -32,6 +32,7 @@ namespace Coolape
 	startActivity(intent);
 	这种方式的特点就是，直接拨打了你所输入的号码，所以这种方式对于用户没有直接的提示效果，Android推荐使用第一种方式，如果是第二种的话，建议在之前加一个提示，是否拨打号码，然后确定后再拨打。
 	*/
+		/*
 		/// </summary>
 		/// <param name="phoneNum">Phone number.</param>
 		public static void callPhone (string phoneNum)
@@ -50,7 +51,7 @@ namespace Coolape
 			AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
 			AndroidJavaObject unityActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
 			unityActivity.Call("startActivity", intentObj);
-		} catch (Exception e) {
+		} catch (System.Exception e) {
 			Debug.LogError(e);
 		}
 			#endif
@@ -77,6 +78,7 @@ namespace Coolape
 			#endif
 		}
 
+		*/
 		/// <summary>
 		/// Identities the code valid.身份证号验证
 		/// </summary>
@@ -295,7 +297,7 @@ namespace Coolape
 			} else
 				return cnChar; 
 		}
-
+		#if USE_LOCATION_SERVER
 		public static void StopGPS ()
 		{
 			Input.location.Stop ();
@@ -367,5 +369,6 @@ namespace Coolape
 			Utl.doCallback (callback, errMsg, Input.location.lastData);
 			//		StopGPS ();
 		}
+		#endif
 	}
 }

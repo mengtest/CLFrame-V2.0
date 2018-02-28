@@ -153,7 +153,8 @@ namespace Coolape
 			isMoveOut = false;
 			if (!gameObject.activeInHierarchy || CLPanelManager.showingPanels [gameObject.name] == null) {
 				NGUITools.SetActive (gameObject, true);
-				CLPanelManager.showingPanels [gameObject.name] = this;
+//				CLPanelManager.showingPanels [gameObject.name] = this;
+				CLPanelManager.onShowPanel (this);
 			}
 			if (!isRefeshContentWhenEffectFinish) {
 				callFinishShowingCallback ();
@@ -269,18 +270,19 @@ namespace Coolape
 		void onFinishHideWithEffect (UITweener tweener = null)
 		{
 			isActive = false;
-			CLPanelManager.showingPanels.Remove (gameObject.name);
+//			CLPanelManager.showingPanels.Remove (gameObject.name);
+			CLPanelManager.onHidePanel (this);
 			finishMoveOut ();
-			if (destroyWhenHide) {
-				CancelInvoke ("destroySelf");
-				Invoke ("destroySelf", destoryDelaySec);
-			}
+//			if (destroyWhenHide) {
+//				CancelInvoke ("destroySelf");
+//				Invoke ("destroySelf", destoryDelaySec);
+//			}
 		}
 
 		void finishMoveOut ()
 		{
 			Vector3 newPos = transform.localPosition;
-			newPos.z = -100;
+			newPos.z = -200;
 			transform.localPosition = newPos;
 			NGUITools.SetActive (gameObject, false);
 		}

@@ -41,8 +41,35 @@ namespace Coolape
 		[NonSerialized]
 		public int depth = 100;
 		public const int Const_RenderQueue = 3000;
+		public int cachePanelSize = 10;
 		//当前
 		public static Hashtable showingPanels = new Hashtable ();
+		public static ArrayList panelCacheQueue = ArrayList.Synchronized(new ArrayList());
+		public static void onShowPanel(CLPanelBase panel)
+		{
+			if (panel == null)
+				return;
+			showingPanels [panel.gameObject.name] = panel;
+			panelCacheQueue.Remove (panel);
+			panelCacheQueue.Insert (0, panel);
+			CLPanelBase bottomPanel = null;
+			if (panelCacheQueue.Count > self.cachePanelSize) {
+				bottomPanel = (panelCacheQueue [panelCacheQueue.Count - 1]) as CLPanelBase;
+				panelCacheQueue.RemoveAt (panelCacheQueue.Count - 1);
+				if (bottomPanel.destroyWhenHide) {
+					if (!bottomPanel.isActive && !CLPanelManager.panelRetainLayer.Contains (bottomPanel)) {
+						//虽然页面是关掉了，但是如果还是在panelRetainLayer里，则不能删除，因为当关掉顶层页面时，这个页面还是会被打开
+						CLPanelManager.destroyPanel (bottomPanel, false);
+					}
+				}
+			}
+		}
+
+		public static void onHidePanel(CLPanelBase panel) {
+			if (panel == null)
+				return;
+			showingPanels.Remove (panel.gameObject.name);
+		}
 	
 		//显示窗体********************************************************************
 		public static Queue<CLPanelBase> seaShowPanel = new Queue<CLPanelBase> ();
@@ -364,9 +391,10 @@ namespace Coolape
 		{
 			panelBuff.Clear ();
 			panelAssetBundle.Clear ();
+			panelCacheQueue.Clear ();
+			showingPanels.Clear ();
 			topPanel = null;
 			isFinishStart = false;
-			showingPanels.Clear ();
 			mask.SetActive (false);
 		}
 

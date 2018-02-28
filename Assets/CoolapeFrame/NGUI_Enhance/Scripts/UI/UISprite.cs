@@ -82,23 +82,6 @@ public class UISprite : UIBasicSprite
 		}
 	}
 
-	void OnApplicationPause(bool pauseStatus)
-	{
-		if (pauseStatus) {
-			if (mAtlas != null) {
-				if (mAtlas.isBorrowSpriteMode) {
-					if (mSprite != null && !string.IsNullOrEmpty (mSprite.name)) {
-						mAtlas.returnSpriteByname (mSprite.name);		// add by chenbin
-					}
-					mSprite = null;
-				}
-			}
-		} else {
-			base.OnEnable ();
-			refresh ();
-		}
-	}
-	
 	public virtual void refresh ()
 	{
 		if (!gameObject.activeInHierarchy || string.IsNullOrEmpty(spriteName))

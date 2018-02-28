@@ -8,7 +8,7 @@ using System.IO;
 using System.Collections.Generic;
 
 
-public static class #SCRIPTNAME#
+public static class XluaGenCodeConfig
 {
 	//lua中要使用到C#库的配置，比如C#标准库，或者Unity API，第三方库等。
 	[LuaCallCSharp]
@@ -18,11 +18,12 @@ public static class #SCRIPTNAME#
 		typeof(Vector2),
 		typeof(Vector3),
 		typeof(Vector4),
+		typeof(Rect),
 		typeof(Quaternion),
 		typeof(Color),
 		typeof(Ray),
-		typeof(Bounds),
 		typeof(Ray2D),
+		typeof(Bounds),
 		typeof(Time),
 		typeof(GameObject),
 		typeof(Component),
@@ -54,7 +55,9 @@ public static class #SCRIPTNAME#
 		typeof(System.IO.Path),
 		typeof(System.IO.MemoryStream),
 		typeof(Screen),
-		
+		typeof(PlayerPrefs),
+		typeof(Shader),
+
 		//NGUI
 		typeof(UICamera),
 		typeof(Localization),
@@ -87,6 +90,7 @@ public static class #SCRIPTNAME#
 
 		//Coolape
 		typeof(CLAssetsManager),
+		typeof(CLAssetsPoolBase<UnityEngine.Object>),
 		typeof(B2InputStream),
 		typeof(B2OutputStream),
 		typeof(CLBulletBase),
@@ -105,6 +109,7 @@ public static class #SCRIPTNAME#
 		typeof(CLUtlLua),
 		typeof(CLMainBase),
 		typeof(Net),
+		typeof(Net.NetWorkType),
 		typeof(CLCfgBase),
 		typeof(CLPathCfg),
 		typeof(CLVerManager),
@@ -165,6 +170,12 @@ public static class #SCRIPTNAME#
 		typeof(EffectNum),
 		typeof(EffectProgress),
 		typeof(B2Int),
+		typeof(AngleEx),
+		typeof(CLMyGrid),
+
+		//==========================
+		typeof(MyMain),
+		typeof(MyCfg),
 	};
 
 	//C#静态调用Lua的配置（包括事件的原型），仅可以配delegate，interface
@@ -318,6 +329,10 @@ public static class #SCRIPTNAME#
 		new List<string>() {
 			"Coolape.CLAssetsManager",
 			"debugKey",
+		},
+		new List<string>() {
+			"MyCfg",
+			"default_UID",
 		},
 	};
 }

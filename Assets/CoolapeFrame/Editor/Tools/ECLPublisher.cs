@@ -95,11 +95,13 @@ public class ECLPublisher : EditorWindow
 		isFinishInit = false;
 	}
 	// 防止在 onGUI 中处理点击事件会出现编辑器报错，从而使用 delayCall 的方式来实现点击处理 - by Ken.
-	void onClickOK() {
+	void onClickOK ()
+	{
 		if (onClickCallbak != null) {
-			onClickCallbak();
+			onClickCallbak ();
 		}
 	}
+
 	void OnGUI ()
 	{
 		if (!isFinishInit) {
@@ -542,6 +544,15 @@ public class ECLPublisher : EditorWindow
 		}
 		GUILayout.EndHorizontal ();
 
+		GUILayout.BeginHorizontal ();
+		{
+			if (currChlData.mPlatform == ChlPlatform.android) {
+				GUILayout.Label ("Md5 of APK Sign Code", GUILayout.Width (width));
+				currChlData.md5SignCode = GUILayout.TextField (currChlData.md5SignCode);
+			}
+		}
+		GUILayout.EndHorizontal ();
+
 		// app store
 		if (currChlData.mPlatform == ChlPlatform.android) {
 			GUILayout.BeginHorizontal ();
@@ -705,18 +716,18 @@ public class ECLPublisher : EditorWindow
 			{
 				GUILayout.Label ("", GUILayout.Width (width));
 				//dir:copy路径, unZip:true
-				UnityEngine.Object obj = EditorGUILayout.ObjectField (getObjByPath(MapEx.getString(m, "dir")), typeof(UnityEngine.Object));
-				if(obj != getObjByPath(MapEx.getString(m, "dir"))) {
+				UnityEngine.Object obj = EditorGUILayout.ObjectField (getObjByPath (MapEx.getString (m, "dir")), typeof(UnityEngine.Object));
+				if (obj != getObjByPath (MapEx.getString (m, "dir"))) {
 					if (obj == null) {
 						m ["dir"] = "";
 					} else {
 						m ["dir"] = AssetDatabase.GetAssetPath (obj.GetInstanceID ());
 					}
 				}
-				m ["unZip"] = GUILayout.Toggle (MapEx.getBool(m, "unZip"), "And UnZip the Zip files");
+				m ["unZip"] = GUILayout.Toggle (MapEx.getBool (m, "unZip"), "And UnZip the Zip files");
 				currChlData.mCopyDirPaths [i] = m;
 				if (GUILayout.Button ("-", GUILayout.Width (50))) {
-					if(EditorUtility.DisplayDialog ("Alert", "Really want to remove it?", "Okay", "Cancel")) {
+					if (EditorUtility.DisplayDialog ("Alert", "Really want to remove it?", "Okay", "Cancel")) {
 						currChlData.mCopyDirPaths.RemoveAt (i);
 						break;
 					}
@@ -922,6 +933,11 @@ public class ECLPublisher : EditorWindow
 		
 			iconNames = IosIconsName;
 		}
+
+		if (CLCfgBase.self != null) {
+			CLCfgBase.self.singinMd5Code = currChlData.md5SignCode;
+		}
+
 		for (int i = 0; i < iconNames.Length; i++) {
 			icons.Add ((Texture2D)(currChlData.mDefaultIcon [iconNames [i]]));
 		}
@@ -932,7 +948,7 @@ public class ECLPublisher : EditorWindow
 
 		#if UNITY_5_6_OR_NEWER
 		PlayerSettings.applicationIdentifier = currChlData.mBundleIndentifier;
-		PlayerSettings.SetApplicationIdentifier(currChlData.buildTargetGroup, currChlData.mBundleIndentifier);
+		PlayerSettings.SetApplicationIdentifier (currChlData.buildTargetGroup, currChlData.mBundleIndentifier);
 		#else
 		PlayerSettings.bundleIdentifier = currChlData.mBundleIndentifier;
 		#endif
@@ -981,9 +997,9 @@ public class ECLPublisher : EditorWindow
 		// copy files
 		if (currChlData.mCopyDirPaths != null) {
 			Hashtable m = null;
-			for(int i=0; i < currChlData.mCopyDirPaths.Count; i++) {
+			for (int i = 0; i < currChlData.mCopyDirPaths.Count; i++) {
 				m = currChlData.mCopyDirPaths [i] as Hashtable;
-				copyFilesToPlugin (MapEx.getString(m, "dir"), MapEx.getBool(m, "unZip"));
+				copyFilesToPlugin (MapEx.getString (m, "dir"), MapEx.getBool (m, "unZip"));
 			}
 		}
 		// special copy
@@ -1455,6 +1471,7 @@ public class ChlData
 	public string mKeystorePass;
 	public string mKeyaliasName;
 	public string mKeyaliasPass;
+	public string md5SignCode = "";
 
 	public Hashtable toMap ()
 	{
@@ -1489,6 +1506,7 @@ public class ChlData
 		r ["isMoreGame"] = isMoreGame;
 		r ["isSwitchAccount"] = isSwitchAccount;
 		r ["isBuildWithLogView"] = isBuildWithLogView;
+		r ["md5SignCode"] = md5SignCode;
 		return r;
 	}
 
@@ -1564,6 +1582,7 @@ public class ChlData
 		r.isMoreGame = MapEx.getBool (map, "isMoreGame");
 		r.isSwitchAccount = MapEx.getBool (map, "isSwitchAccount");
 		r.isBuildWithLogView = MapEx.getBool (map, "isBuildWithLogView");
+		r.md5SignCode = MapEx.getString (map, "md5SignCode");
 		return r;
 	}
 	

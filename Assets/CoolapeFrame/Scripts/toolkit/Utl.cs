@@ -333,7 +333,7 @@ namespace Coolape
 				} else {
 					mr.sharedMaterial.shader = Shader.Find (shName);
 				}
-				foreach (Material m in mr.materials) {
+				foreach (Material m in mr.sharedMaterials) {
 					shName = m.shader.name;
 					if (defaultShader != null) {
 						m.shader = defaultShader;

@@ -52,8 +52,19 @@ public class ECLPublisher : EditorWindow
 		"114x114",
 		"76x76",
 		"72x72",
-		"57x57"
+		"57x57",
+		"120x120(Spotlight)",
+		"80x80(Spotlight)",
+		"40x40(Spotlight)",
+		"87x87(Settings)",
+		"58x58(Settings)",
+		"29x29(Settings)",
+		"60x60(Notification)",
+		"40x40(Notification)",
+		"20x20(Notification)",
+		"1024x1024(App Store)"
 	};
+
 	const string configFile = ECLProjectManager.FrameData + "/cfg/publishChannel.cfg";
 	//渠道列表
 	Hashtable channelMap = new Hashtable ();
@@ -895,6 +906,46 @@ public class ECLPublisher : EditorWindow
 #endif
 		
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Standalone, symbols);
+		applayIcons ();
+	}
+
+	void applayIcons ()
+	{
+		/*
+		 * Most platforms support viewing icons in multiple sizes so Unity lets
+		 * you specify multiple icon textures for each platform. The list will only 
+		 * be assigned if it has the same length as the list of icon sizes returned
+		 * by GetIconSizesForTargetGroup and if the specified platform is supported in this editor.
+		 */
+		List<Texture2D> icons = new List<Texture2D> ();
+		//		int[] iconSize = PlayerSettings.GetIconSizesForTargetGroup(currChlData.buildTargetGroup);
+		//		Debug.Log("iconSize==" + iconSize.Length);
+		//		for (int i = 0; i< iconSize.Length; i++) {
+		//		}
+
+		string[] iconNames = null;
+		if (currChlData.buildTarget == BuildTarget.Android) {
+			iconNames = AndroidIconsName;
+			#if USE_UNITYIAP
+			UnityPurchasingEditor.TargetAndroidStore (currChlData.mTargetAndroidStore);
+			#endif
+			#if UNITY_5 || UNITY_5_3_OR_NEWER 
+		} else if (currChlData.buildTarget == BuildTarget.iOS) {
+			#else
+			} else if (currChlData.buildTarget == BuildTarget.iPhone) {
+			#endif
+
+			iconNames = IosIconsName;
+		}
+
+		if (CLCfgBase.self != null) {
+			CLCfgBase.self.singinMd5Code = currChlData.md5SignCode;
+		}
+
+		for (int i = 0; i < iconNames.Length; i++) {
+			icons.Add ((Texture2D)(currChlData.mDefaultIcon [iconNames [i]]));
+		}
+		PlayerSettings.SetIconsForTargetGroup (currChlData.buildTargetGroup, icons.ToArray ());
 	}
 
 	/// <summary>
@@ -907,41 +958,9 @@ public class ECLPublisher : EditorWindow
 			return;
 		}
 		PlayerSettings.productName = currChlData.mProductName;
-		/*
-		 * Most platforms support viewing icons in multiple sizes so Unity lets
-		 * you specify multiple icon textures for each platform. The list will only 
-		 * be assigned if it has the same length as the list of icon sizes returned
-		 * by GetIconSizesForTargetGroup and if the specified platform is supported in this editor.
-		 */
-		List<Texture2D> icons = new List<Texture2D> ();
-//		int[] iconSize = PlayerSettings.GetIconSizesForTargetGroup(currChlData.buildTargetGroup);
-//		Debug.Log("iconSize==" + iconSize.Length);
-//		for (int i = 0; i< iconSize.Length; i++) {
-		//		}
-		
-		string[] iconNames = null;
-		if (currChlData.buildTarget == BuildTarget.Android) {
-			iconNames = AndroidIconsName;
-			#if USE_UNITYIAP
-			UnityPurchasingEditor.TargetAndroidStore (currChlData.mTargetAndroidStore);
-			#endif
-#if UNITY_5 || UNITY_5_3_OR_NEWER 
-		} else if (currChlData.buildTarget == BuildTarget.iOS) {
-#else
-		} else if (currChlData.buildTarget == BuildTarget.iPhone) {
-#endif
-		
-			iconNames = IosIconsName;
-		}
+		//Icons
+		applayIcons ();
 
-		if (CLCfgBase.self != null) {
-			CLCfgBase.self.singinMd5Code = currChlData.md5SignCode;
-		}
-
-		for (int i = 0; i < iconNames.Length; i++) {
-			icons.Add ((Texture2D)(currChlData.mDefaultIcon [iconNames [i]]));
-		}
-		PlayerSettings.SetIconsForTargetGroup (currChlData.buildTargetGroup, icons.ToArray ());
 		//Splash imgae
 		PlayerSettings.resolutionDialogBanner = currChlData.mSplashImage;
 		//indentifier & version

@@ -107,7 +107,7 @@ public class ECLCreatAssetBundle4Update
 			sharedAsset = ((GameObject)obj).GetComponent<CLSharedAssets> ();
 			avata = ((GameObject)obj).GetComponent<CLRoleAvata> ();
 			if (AssetDatabase.GetAssetPath (obj).Contains ("/other/model/")) {
-				CLSharedAssetsInspector.doSetModelProp (AssetDatabase.GetAssetPath (obj));
+			ECLEditorUtl.cleanModleMaterials (AssetDatabase.GetAssetPath (obj));
 			}
 		} else if (obj is Material) {
 			CLMaterialPool.cleanTexRef (ECLEditorUtl.getAssetName4Upgrade (obj), (Material)obj);

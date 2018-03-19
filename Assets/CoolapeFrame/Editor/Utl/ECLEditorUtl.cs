@@ -302,4 +302,94 @@ public static class ECLEditorUtl
 		return true;  
 	}
 
+	public static void setModelProp (ModelImporter mi, bool isReadable, ModelImporterNormals modelNormals, ModelImporterTangents modelTangents)
+	{
+		if (mi != null) {
+			mi.importMaterials = false;
+			mi.isReadable = isReadable;
+			mi.importNormals = modelNormals;
+			mi.importTangents = modelTangents;
+			AssetDatabase.Refresh ();
+		}
+	}
+
+	public static void setModelProp (string modelName, bool isReadable, ModelImporterNormals modelNormals, ModelImporterTangents modelTangents)
+	{
+		string matPath = PStr.b ().a ("Assets/").a (CLPathCfg.self.basePath).a ("/")
+			.a ("upgradeRes4Dev").a ("/other/model/").a (modelName.Replace (".", "/")).a (".FBX").e ();
+
+		ModelImporter mi = ModelImporter.GetAtPath (matPath) as ModelImporter;
+		setModelProp (mi, isReadable, modelNormals, modelTangents);
+		doCleanModelMaterials (matPath);
+	}
+
+	public static void cleanModleMaterials (ModelImporter mi)
+	{
+		if (mi != null) {
+			mi.importMaterials = false;
+			AssetDatabase.Refresh ();
+		}
+	}
+
+	public static void cleanModleMaterials (string modelName)
+	{
+		string matPath = PStr.b ().a ("Assets/").a (CLPathCfg.self.basePath).a ("/")
+			.a ("upgradeRes4Dev").a ("/other/model/").a (modelName.Replace (".", "/")).a (".FBX").e ();
+		doCleanModelMaterials (matPath);
+	}
+
+	public static void doCleanModelMaterials (string matPath)
+	{
+		checkModleSetting (matPath);
+		ModelImporter mi = ModelImporter.GetAtPath (matPath) as ModelImporter;
+		if (mi != null) {
+			cleanModleMaterials (mi);
+			AssetDatabase.ImportAsset (matPath);
+		}
+
+		GameObject go = ECLEditorUtl.getObjectByPath (matPath) as GameObject;
+		if (go != null) {
+			MeshRenderer mf = go.GetComponentInChildren<MeshRenderer> ();
+			if (mf != null) {
+				mf.sharedMaterial = null;
+				Material[] mats = mf.sharedMaterials;
+				for (int i = 0; i < mats.Length; i++) {
+					mats [i] = null;
+				}
+				mf.sharedMaterials = mats;
+			}
+			SkinnedMeshRenderer smr = go.GetComponentInChildren<SkinnedMeshRenderer> ();
+			if (smr != null) {
+				smr.sharedMaterial = null;
+				Material[] mats = smr.sharedMaterials;
+				for (int i = 0; i < mats.Length; i++) {
+					mats [i] = null;
+				}
+				smr.sharedMaterials = mats;
+			}
+			EditorUtility.SetDirty (go);
+			AssetDatabase.WriteImportSettingsIfDirty (matPath);
+			AssetDatabase.Refresh ();
+		}
+	}
+
+	public static string checkModleSetting (string path)
+	{
+		string ret = "";
+		ModelImporter mi = ModelImporter.GetAtPath (path) as ModelImporter;
+		if (mi != null) {
+			if (mi.isReadable) {
+				ret = PStr.b ().a (ret).a ("can reade write! ").e ();
+			}
+			if (mi.importMaterials) {
+				ret = PStr.b ().a (ret).a ("import Materials! ").e ();
+			}
+			if (mi.importNormals != ModelImporterNormals.None) {
+				ret = PStr.b ().a (ret).a ("import Normals! ").e ();
+			}
+		}
+		Debug.LogError (ret);
+		return ret;
+	}
+	
 }

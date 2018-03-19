@@ -198,7 +198,7 @@ static public class ECLCoolapeMenu
 		ECLLocalizeSelection.open (null);
 	}
 
-	[MenuItem (toolesName + "/setModeProp", false, 17)]
+	[MenuItem (toolesName + "/setModleProp", false, 17)]
 	static public void setModeProp ()
 	{
 		Object[] objs = Selection.objects;
@@ -209,8 +209,14 @@ static public class ECLCoolapeMenu
 		for (int j = 0; j < objs.Length; j++) {
 			path = AssetDatabase.GetAssetPath (objs [j]);
 //			mi = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath (objs[j])) as ModelImporter;
-			CLSharedAssetsInspector.doSetModelProp (path);
+			ECLEditorUtl.setModelProp (path, false, ModelImporterNormals.None, ModelImporterTangents.None);
 		}
+	}
+
+	[MenuItem (toolesName + "/check Modle Setting", false, 17)]
+	static public void checkModleSetting ()
+	{
+		string pathRoot = "Assets/"+ CLPathCfg.self.basePath + "/";
 	}
 
 	[MenuItem (toolesName + "/Close Render shadow", false, 18)]
@@ -270,6 +276,12 @@ static public class ECLCoolapeMenu
 	static public void showSpritePacker ()
 	{
 		EditorWindow.GetWindow<ECLSpritePacker> (false, "Sprite Packer", true);
+	}
+
+	[MenuItem (toolesName + "/Curve 2 Code", false, 21)]
+	static public void curve2Code ()
+	{
+		EditorWindow.GetWindow<ECLCurve2Code> (false, "Curve->Code", true);
 	}
 
 	[MenuItem (toolesName + "/Clean Cache", false, 999)]

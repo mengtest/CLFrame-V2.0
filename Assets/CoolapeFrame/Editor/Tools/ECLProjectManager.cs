@@ -880,6 +880,7 @@ public class ECLProjectManager : EditorWindow
 		}
 		return retVal;
 	}
+
 	/// <summary>
 	/// Refreshs all assetbundles. 根据md5来刷新资源
 	/// </summary>
@@ -887,7 +888,7 @@ public class ECLProjectManager : EditorWindow
 
 	public void onRefreshAllAssetbundles ()
 	{
-		refreshAllAssetbundles();
+		refreshAllAssetbundles ();
 	}
 
 	/// <summary>
@@ -1167,7 +1168,8 @@ public class ECLProjectManager : EditorWindow
 	}
 	
 	// 更新前的准备工作
-	public void onShowPreugradeFiles() {
+	public void onShowPreugradeFiles ()
+	{
 		string path = PStr.b ().a (Application.dataPath).a ("/").a (data.name).a ("/upgradeRes4Publish").e ();
 		ECLGUIResList.show (path, (Callback)onGetFiles4Preupgrade, null);
 	}
@@ -1238,11 +1240,18 @@ public class ECLProjectManager : EditorWindow
 		// get current 
 		string tmpPath = PStr.b ().a (Application.dataPath).a ("/").a (CLPathCfg.self.basePath).a ("/upgradeRes4Ver/").a (mVerPrioriPath).e ();
 		Hashtable verPrioriMap = Utl.fileToMap (tmpPath);
+		if (verPrioriMap == null) {
+			verPrioriMap = new Hashtable ();
+		}
 		
 		tmpPath = PStr.b ().a (Application.dataPath).a ("/").a (CLPathCfg.self.basePath).a ("/upgradeRes4Ver/").a (mVerOtherPath).e ();
 		Hashtable verOtherMap = Utl.fileToMap (tmpPath);
+		if (verOtherMap == null) {
+			verOtherMap = new Hashtable ();
+		}
 		
 		Hashtable verLastUpgradeMap = fileToMap (Application.dataPath + "/" + ver4Upgrade);
+		verLastUpgradeMap = verLastUpgradeMap == null ? new Hashtable () : verLastUpgradeMap;
 		
 		bool isNeedUpgradeOther = false;
 		bool isNeedUpgradePriori = false;
@@ -1338,6 +1347,7 @@ public class ECLProjectManager : EditorWindow
 		//------------------------------------------------------------------------------
 		tmpPath = PStr.b ().a (Application.dataPath).a ("/").a (CLPathCfg.self.basePath).a ("/upgradeRes4Ver/").a (mVerverPath).e ();
 		Hashtable verVerMap = Utl.fileToMap (tmpPath);
+		verVerMap = verVerMap == null ? new Hashtable () : verVerMap;
 		if (isNeedUpgradePriori) {
 			verVerMap [mVerPrioriPath] = md5VerPriori;
 		} else {
@@ -1415,14 +1425,7 @@ public class ECLProjectManager : EditorWindow
 		//		public string hudAlertBackgroundSpriteName = "";
 		public string ingoreResWithExtensionNames = ".meta;.ds_store;.iml;.idea;.project;.buildpath;.git;.vscode";
 		public bool isLuaPackaged = true;
-		public string host4UploadUpgradePackage = "";
-		public int port4UploadUpgradePackage = 21;
-		public string ftpUser = "";
-		public string ftpPassword = "";
-		public string RemoteBaseDir = "";
-		public bool useSFTP = false;
-		public bool upgradeControledbyEachServer = false;
-
+		public ArrayList hotUpgradeServers = new ArrayList ();
 
 		UnityEngine.Object _cfgFolder;
 
@@ -1456,13 +1459,13 @@ public class ECLProjectManager : EditorWindow
 //			r ["hudAlertBackgroundSpriteName"] = hudAlertBackgroundSpriteName;
 			r ["ingoreResWithExtensionNames"] = ingoreResWithExtensionNames;
 			r ["isLuaPackaged"] = isLuaPackaged;
-			r ["host4UploadUpgradePackage"] = host4UploadUpgradePackage;
-			r ["port4UploadUpgradePackage"] = port4UploadUpgradePackage;
-			r ["ftpUser"] = ftpUser;
-			r ["ftpPassword"] = ftpPassword;
-			r ["RemoteBaseDir"] = RemoteBaseDir;
-			r ["useSFTP"] = useSFTP;
-			r ["upgradeControledbyEachServer"] = upgradeControledbyEachServer;
+			HotUpgradeServerInfor s = null;
+			ArrayList _list = new ArrayList ();
+			for (int i = 0; i < hotUpgradeServers.Count; i++) {
+				s = hotUpgradeServers [i] as HotUpgradeServerInfor;
+				_list.Add (s.ToMap ());
+			}
+			r ["hotUpgradeServers"] = _list;
 			return r;
 		}
 
@@ -1481,13 +1484,12 @@ public class ECLProjectManager : EditorWindow
 //			r.hudAlertBackgroundSpriteName = MapEx.getString (map, "hudAlertBackgroundSpriteName");
 			r.ingoreResWithExtensionNames = MapEx.getString (map, "ingoreResWithExtensionNames");
 			r.isLuaPackaged = MapEx.getBool (map, "isLuaPackaged");
-			r.host4UploadUpgradePackage = MapEx.getString (map, "host4UploadUpgradePackage");
-			r.port4UploadUpgradePackage = MapEx.getInt (map, "port4UploadUpgradePackage");
-			r.ftpUser = MapEx.getString (map, "ftpUser");
-			r.ftpPassword = MapEx.getString (map, "ftpPassword");
-			r.RemoteBaseDir = MapEx.getString (map, "RemoteBaseDir");
-			r.useSFTP = MapEx.getBool (map, "useSFTP");
-			r.upgradeControledbyEachServer = MapEx.getBool (map, "upgradeControledbyEachServer");
+
+			r.hotUpgradeServers = new ArrayList ();
+			ArrayList _list = MapEx.getList (map, "hotUpgradeServers");
+			for (int i = 0; i < _list.Count; i++) {
+				r.hotUpgradeServers.Add (HotUpgradeServerInfor.parse ((Hashtable)(_list [i])));
+			}
 			return r;
 		}
 	}

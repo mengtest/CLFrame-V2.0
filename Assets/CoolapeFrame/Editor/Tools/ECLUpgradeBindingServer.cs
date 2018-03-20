@@ -13,6 +13,8 @@ public class ECLUpgradeBindingServer : EditorWindow
 	Vector2 scrollPos = Vector2.zero;
 	ArrayList upgradePkgList;
 	bool isSelectAll = false;
+	static int selectedServerIndex = 0;
+	HotUpgradeServerInfor selectedServer = null;
 
 	void OnGUI ()
 	{
@@ -27,6 +29,54 @@ public class ECLUpgradeBindingServer : EditorWindow
 			Close ();
 			return;
 		}
+
+		if (ECLProjectManager.data.hotUpgradeServers.Count <= 0) {
+			GUI.color = Color.red;
+			GUILayout.Label ("There is no server");
+			GUI.color = Color.white;
+			return;
+		}
+		if (ECLProjectManager.data.hotUpgradeServers.Count > 0) {
+			ECLEditorUtl.BeginContents ();
+			{
+				List<string> toolbarNames = new List<string> ();
+				for (int i = 0; i < ECLProjectManager.data.hotUpgradeServers.Count; i++) {
+					HotUpgradeServerInfor dd = ECLProjectManager.data.hotUpgradeServers [i] as HotUpgradeServerInfor;
+					toolbarNames.Add (dd.name);
+				}
+				int index = GUILayout.Toolbar (selectedServerIndex, toolbarNames.ToArray ());
+				HotUpgradeServerInfor hsi = ECLProjectManager.data.hotUpgradeServers [index] as HotUpgradeServerInfor;
+				selectedServer = hsi;
+
+				if (selectedServerIndex != index) {
+					selectedServerIndex = index;
+					refreshData ();
+				}
+				//===================================================
+				GUILayout.BeginHorizontal ();
+				{
+					GUILayout.Label ("Key:", ECLEditorUtl.width200);
+					GUILayout.TextField (selectedServer.key);
+				}
+				GUILayout.EndHorizontal ();
+				//===================================================
+				GUILayout.BeginHorizontal ();
+				{
+					GUILayout.Label ("URL of get server list:", ECLEditorUtl.width200);
+					GUILayout.TextField (selectedServer.getServerListUrl);
+				}
+				GUILayout.EndHorizontal ();
+				//===================================================
+				GUILayout.BeginHorizontal ();
+				{
+					GUILayout.Label ("URL of set upgrade pkg md5:", ECLEditorUtl.width200);
+					GUILayout.TextField (selectedServer.setServerPkgMd5Url);
+				}
+				GUILayout.EndHorizontal ();
+			}
+			ECLEditorUtl.EndContents ();
+		}
+
 		GUI.color = Color.green;
 		if (GUILayout.Button ("Refresh")) {
 			refreshData ();
@@ -76,7 +126,7 @@ public class ECLUpgradeBindingServer : EditorWindow
 					EditorGUILayout.BeginHorizontal ();
 					{
 						server ["selected"] = EditorGUILayout.Toggle (MapEx.getBool (server, "selected"), GUILayout.Width (30));
-						if(MapEx.getBool(server, "selected")) {
+						if (MapEx.getBool (server, "selected")) {
 							GUI.color = Color.cyan;
 						} else {
 							GUI.color = Color.white;
@@ -94,7 +144,7 @@ public class ECLUpgradeBindingServer : EditorWindow
 						GUI.color = Color.white;
 						#if UNITY_ANDROID
 						if (GUILayout.Button ("Select Md5(Android)")) {
-							ECLUpgradeListProc.popup4Select ((Callback)onGetUpgradePkg, ListEx.builder().Add(cell.Key).Add("Android").ToList());
+							ECLUpgradeListProc.popup4Select ((Callback)onGetUpgradePkg, ListEx.builder ().Add (cell.Key).Add ("Android").ToList ());
 						}
 						#elif  UNITY_IPHONE
 						if (GUILayout.Button ("Select Md5(ios)")) {
@@ -136,11 +186,13 @@ public class ECLUpgradeBindingServer : EditorWindow
 				server ["pkgName"] = MapEx.getString (d, "name");
 				server ["pkgRemark"] = MapEx.getString (d, "remark");
 				servers [key] = server;
-				saveData (MapEx.getString(server, "idx"), newMd5, vetType);
+				saveData (MapEx.getString (server, "idx"), newMd5, vetType);
 			}
 		}
 	}
-	public void setUpgradePkgMutlMode(string platform) {
+
+	public void setUpgradePkgMutlMode (string platform)
+	{
 		bool canSetMd5 = false;
 		foreach (DictionaryEntry cell in servers) {
 			Hashtable server = cell.Value as Hashtable;
@@ -181,7 +233,7 @@ public class ECLUpgradeBindingServer : EditorWindow
 						server [verKey] = newMd5;
 						server ["pkgName"] = MapEx.getString (d, "name");
 						server ["pkgRemark"] = MapEx.getString (d, "remark");
-						saveData (MapEx.getString(server, "idx"), newMd5, vetType);
+						saveData (MapEx.getString (server, "idx"), newMd5, vetType);
 					}
 				}
 			}
@@ -217,8 +269,9 @@ public class ECLUpgradeBindingServer : EditorWindow
 
 	public void saveData (string serverID, string version, string verType)
 	{
-		string __httpBaseUrl = PStr.b ().a ("http://").a (Net.self.gateHost).a (":").a (Net.self.gatePort).e ();
-		string url = PStr.b ().a (__httpBaseUrl).a ("/KokDirServer/UpdateVerServlet").e ();
+//		string __httpBaseUrl = PStr.b ().a ("http://").a (Net.self.gateHost).a (":").a (Net.self.gatePort).e ();
+//		string url = PStr.b ().a (__httpBaseUrl).a ("/KokDirServer/UpdateVerServlet").e ();
+		string url = selectedServer.setServerPkgMd5Url;
 		Dictionary<string,object> paras = new Dictionary<string, object> ();
 		paras ["serverid"] = serverID;
 		paras ["version"] = version;
@@ -233,10 +286,16 @@ public class ECLUpgradeBindingServer : EditorWindow
 	{
 		servers = null;
 		getUpgradePkgListData ();
-		// get server list
-		string __httpBaseUrl = PStr.b ().a ("http://").a (Net.self.gateHost).a (":").a (Net.self.gatePort).e ();
-		string url = PStr.b ().a (__httpBaseUrl).a ("/KokDirServer/ServerServlet").e ();
 
+		if (selectedServer == null) {
+			return;
+		}
+//		string __httpBaseUrl = PStr.b ().a ("http://").a (Net.self.gateHost).a (":").a (Net.self.gatePort).e ();
+//		string url = PStr.b ().a (__httpBaseUrl).a ("/KokDirServer/ServerServlet").e ();
+		string url = selectedServer.getServerListUrl;
+		if (string.IsNullOrEmpty (url)) {
+			return null;
+		}
 		Dictionary<string,object> paras = new Dictionary<string, object> ();
 		paras ["serverType"] = 1;
 		HttpWebResponse response = HttpEx.CreatePostHttpResponse (url, paras, 10000, System.Text.Encoding.UTF8);

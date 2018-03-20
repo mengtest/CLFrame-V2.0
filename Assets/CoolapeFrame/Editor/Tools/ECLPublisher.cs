@@ -774,6 +774,39 @@ public class ECLPublisher : EditorWindow
 //		GUILayout.EndHorizontal ();
 
 		GUI.color = Color.white;
+		//server
+		ECLEditorUtl.BeginContents ();
+		{
+			GUILayout.Label ("Server settings", GUILayout.Width (width));
+			List<string> toolbarNames = new List<string> ();
+			for (int i = 0; i < ECLProjectManager.data.hotUpgradeServers.Count; i++) {
+				HotUpgradeServerInfor dd = ECLProjectManager.data.hotUpgradeServers [i] as HotUpgradeServerInfor;
+				toolbarNames.Add (dd.name);
+			}
+			currChlData.serverIndex = GUILayout.Toolbar (currChlData.serverIndex, toolbarNames.ToArray ());
+			if (ECLProjectManager.data.hotUpgradeServers.Count > 0) {
+				HotUpgradeServerInfor selectedServer = ECLProjectManager.data.hotUpgradeServers [currChlData.serverIndex] as HotUpgradeServerInfor;
+				currChlData.serverKey = selectedServer.key;
+
+				//===================================================
+				GUILayout.BeginHorizontal ();
+				{
+					GUILayout.Label ("Host 4 entry:", GUILayout.Width (width));
+					GUILayout.TextField (selectedServer.host4Entry);
+				}
+				GUILayout.EndHorizontal ();
+				//===================================================
+				GUILayout.BeginHorizontal ();
+				{
+					GUILayout.Label ("Port 4 entry:", GUILayout.Width (width));
+					GUILayout.TextField (selectedServer.port4Entry.ToString ());
+				}
+				GUILayout.EndHorizontal ();
+				//===================================================
+			}
+		}
+		ECLEditorUtl.EndContents ();
+
 		//publishing settings
 		if (currChlData.mPlatform == ChlPlatform.android) {
 			GUILayout.Label ("Publishing settings", GUILayout.Width (width));
@@ -906,10 +939,10 @@ public class ECLPublisher : EditorWindow
 #endif
 		
 		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Standalone, symbols);
-		applayIcons ();
+		applyIcons ();
 	}
 
-	void applayIcons ()
+	void applyIcons ()
 	{
 		/*
 		 * Most platforms support viewing icons in multiple sizes so Unity lets
@@ -959,7 +992,7 @@ public class ECLPublisher : EditorWindow
 		}
 		PlayerSettings.productName = currChlData.mProductName;
 		//Icons
-		applayIcons ();
+		applyIcons ();
 
 		//Splash imgae
 		PlayerSettings.resolutionDialogBanner = currChlData.mSplashImage;
@@ -1047,6 +1080,11 @@ public class ECLPublisher : EditorWindow
 			ReporterEditor.CreateReporter ();
 			ReporterModificationProcessor.BuildInfo.addUpdateDelegate ();
 		}
+
+		HotUpgradeServerInfor serverInfor = ECLProjectManager.data.hotUpgradeServers [currChlData.serverIndex] as HotUpgradeServerInfor;
+		CLVerManager.self.baseUrl = serverInfor.hotUpgradeBaseUrl;
+		Net.self.host4Publish = serverInfor.host4Entry;
+		Net.self.gatePort = serverInfor.port4Entry;
 	}
 
 	[ PostProcessBuildAttribute (1)]
@@ -1412,56 +1450,6 @@ public class ChlData
 	public bool isSwitchAccount = false;
 	public string mAlertDesc = "";
 	public ArrayList mCopyDirPaths = new ArrayList ();
-	//dir:copy路径, unZip:true
-
-	//	UnityEngine.Object _CopyDir;
-	//
-	//	public UnityEngine.Object mCopyDir {
-	//		get {
-	//			if (_CopyDir == null) {
-	//				if (!string.IsNullOrEmpty (mCopyDirPath)) {
-	//					_CopyDir = AssetDatabase.LoadAssetAtPath (
-	//						mCopyDirPath,
-	//						typeof(UnityEngine.Object));
-	//				}
-	//			}
-	//			return _CopyDir;
-	//		}
-	//		set {
-	//			_CopyDir = value;
-	//			if (value == null) {
-	//				mCopyDirPath = "";
-	//			} else {
-	//				mCopyDirPath = AssetDatabase.GetAssetPath (_CopyDir.GetInstanceID ());
-	//			}
-	//		}
-	//	}
-	//
-	//	public bool mUnZip;
-	//	public string mSpecialCopyDirPath = "";
-	//	UnityEngine.Object _SpecialCopyDir;
-	//
-	//	public UnityEngine.Object mSpecialCopyDir {
-	//		get {
-	//			if (_SpecialCopyDir == null) {
-	//				if (!string.IsNullOrEmpty (mSpecialCopyDirPath)) {
-	//					_SpecialCopyDir = AssetDatabase.LoadAssetAtPath (
-	//						mSpecialCopyDirPath,
-	//						typeof(UnityEngine.Object));
-	//				}
-	//			}
-	//			return _SpecialCopyDir;
-	//		}
-	//		set {
-	//			_SpecialCopyDir = value;
-	//			if (value == null) {
-	//				mSpecialCopyDirPath = "";
-	//			} else {
-	//				mSpecialCopyDirPath = AssetDatabase.GetAssetPath (_SpecialCopyDir.GetInstanceID ());
-	//			}
-	//		}
-	//	}
-
 	public bool mLicenseVerification;
 	public string mKeystoreNamePath = "";
 	UnityEngine.Object _KeystoreName;
@@ -1491,6 +1479,9 @@ public class ChlData
 	public string mKeyaliasName;
 	public string mKeyaliasPass;
 	public string md5SignCode = "";
+
+	public string serverKey = "";
+	public int serverIndex = 0;
 
 	public Hashtable toMap ()
 	{
@@ -1526,6 +1517,7 @@ public class ChlData
 		r ["isSwitchAccount"] = isSwitchAccount;
 		r ["isBuildWithLogView"] = isBuildWithLogView;
 		r ["md5SignCode"] = md5SignCode;
+		r ["serverKey"] = serverKey;
 		return r;
 	}
 
@@ -1602,7 +1594,19 @@ public class ChlData
 		r.isSwitchAccount = MapEx.getBool (map, "isSwitchAccount");
 		r.isBuildWithLogView = MapEx.getBool (map, "isBuildWithLogView");
 		r.md5SignCode = MapEx.getString (map, "md5SignCode");
+		r.serverKey = MapEx.getString (map, "serverKey");
+		r.serverIndex = getServerIndex (r.serverKey);
 		return r;
 	}
-	
+
+	static int getServerIndex (string serverKey)
+	{
+		for (int i = 0; i < ECLProjectManager.data.hotUpgradeServers.Count; i++) {
+			HotUpgradeServerInfor dd = ECLProjectManager.data.hotUpgradeServers [i] as HotUpgradeServerInfor;
+			if (dd.key.Equals (serverKey)) {
+				return i;
+			}
+		}
+		return 0;
+	}
 }

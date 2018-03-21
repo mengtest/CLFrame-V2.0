@@ -77,6 +77,8 @@ public class HotUpgradeServerInfor
 		r.useSFTP = MapEx.getBool (map, "useSFTP");
 		r.upgradeControledbyEachServer = MapEx.getBool (map, "upgradeControledbyEachServer");
 		r.hotUpgradeBaseUrl = MapEx.getString (map, "hotUpgradeBaseUrl");
+		r.host4Entry = MapEx.getString (map, "host4Entry");
+		r.port4Entry = MapEx.getInt (map, "port4Entry");
 		r.getServerListUrl = MapEx.getString (map, "getServerListUrl");
 		r.setServerPkgMd5Url = MapEx.getString (map, "setServerPkgMd5Url");
 		return r;

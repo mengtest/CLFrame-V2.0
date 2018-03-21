@@ -294,7 +294,7 @@ public class ECLUpgradeBindingServer : EditorWindow
 //		string url = PStr.b ().a (__httpBaseUrl).a ("/KokDirServer/ServerServlet").e ();
 		string url = selectedServer.getServerListUrl;
 		if (string.IsNullOrEmpty (url)) {
-			return null;
+			return;
 		}
 		Dictionary<string,object> paras = new Dictionary<string, object> ();
 		paras ["serverType"] = 1;

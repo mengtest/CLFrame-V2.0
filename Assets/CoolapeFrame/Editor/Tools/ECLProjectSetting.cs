@@ -328,6 +328,8 @@ public static class ECLProjectSetting
 								if (GUILayout.Button ("Apply")) {
 									if (CLVerManager.self != null) {
 										CLVerManager.self.baseUrl = hsi.hotUpgradeBaseUrl;
+										Net.self.host4Publish = hsi.host4Entry;
+										Net.self.gatePort = hsi.port4Entry;
 									}
 								}
 								if (GUILayout.Button ("Delete")) {

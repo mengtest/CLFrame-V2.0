@@ -312,7 +312,9 @@ public class ECLUpgradeListProc : EditorWindow
 			if (name.Equals (MapEx.getString (item, "name"))) {
 //				item ["upload"] = true;
 				Hashtable m = MapEx.getMap (item, "upload");
+				m = m == null ? new Hashtable () : m;
 				m [selectedServer.key] = true;
+				item ["upload"] = m;
 				break;
 			}
 		}

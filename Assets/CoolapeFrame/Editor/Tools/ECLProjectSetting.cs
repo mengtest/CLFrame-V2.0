@@ -221,6 +221,9 @@ public static class ECLProjectSetting
 //				}
 
 				if (isProjectExit (manager)) {
+					if (GUILayout.Button ("Refresh", GUILayout.Height (30))) {
+						ECLProjectManager.initData ();	
+					}
 					if (GUILayout.Button ("Save Project Config", GUILayout.Height (30))) {
 						if (isInputDataValide ()) {
 							if (CLCfgBase.self != null) {

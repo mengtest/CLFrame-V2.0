@@ -102,7 +102,7 @@ public class CLSharedAssetsInspector : Editor
 							EditorGUILayout.ObjectField ("Avatar", (Object)(getAvatar (instance.meshs [i].modelName)), typeof(Avatar), true);
 						}
 						EditorGUILayout.TextField ("Model Name", instance.meshs [i].modelName);
-						EditorGUILayout.ObjectField ("Mesh", (Object)(getMesh (instance.meshs [i].modelName)), typeof(Mesh), true);
+						EditorGUILayout.ObjectField ("Mesh", (Object)(getMesh (instance.meshs [i].modelName, instance.meshs [i].meshName)), typeof(Mesh), true);
 					}
 					ECLEditorUtl.EndContents ();
 				}
@@ -168,7 +168,7 @@ public class CLSharedAssetsInspector : Editor
 		return null;
 	}
 
-	public Mesh getMesh (string path)
+	public Mesh getMesh (string path, string meshName)
 	{
 		if (MeshMap [path] == null) {
 			string matPath = PStr.b ().a (CLPathCfg.self.basePath).a ("/")
@@ -176,15 +176,25 @@ public class CLSharedAssetsInspector : Editor
 			Debug.Log (matPath);
 			MeshMap [path] = ECLEditorUtl.getObjectByPath (matPath);
 		}
+
+
 		GameObject mi = MeshMap [path] as GameObject;
 		if (mi != null) {
-			MeshFilter mf = mi.GetComponentInChildren<MeshFilter>();
-			if (mf != null) {
-				return mf.sharedMesh;
+			MeshFilter[] mfs = mi.GetComponentsInChildren<MeshFilter>();
+			if (mfs != null && mfs.Length > 0) {
+				for(int i=0;i < mfs.Length; i++) {
+					if (mfs [i].sharedMesh.name == meshName) {
+						return mfs[i].sharedMesh;
+					}
+				}
 			} else {
-				SkinnedMeshRenderer smr = mi.GetComponentInChildren<SkinnedMeshRenderer>();
-				if (smr != null) {
-					return smr.sharedMesh;
+				SkinnedMeshRenderer[] smrs = mi.GetComponentsInChildren<SkinnedMeshRenderer>();
+				if (smrs != null) {
+					for(int i=0;i < smrs.Length; i++) {
+						if (smrs [i].sharedMesh.name == meshName) {
+							return smrs[i].sharedMesh;
+						}
+					}
 				}
 			}
 		}
@@ -315,6 +325,7 @@ public class CLSharedAssetsInspector : Editor
 				string modelName = ECLEditorUtl.getAssetName4Upgrade (mfs [i].sharedMesh);
 				ECLEditorUtl.cleanModleMaterials (modelName);
 				clMesh.modelName = modelName;
+				clMesh.meshName = mesh.name;
 				sharedAsset.meshs.Add (clMesh);
 			}
 		}
@@ -329,6 +340,7 @@ public class CLSharedAssetsInspector : Editor
 				string modelName = ECLEditorUtl.getAssetName4Upgrade (smrs [i].sharedMesh);
 				ECLEditorUtl.cleanModleMaterials (modelName);
 				clMesh.modelName = modelName;
+				clMesh.meshName = mesh.name;
 				sharedAsset.meshs.Add (clMesh);
 			}
 		}

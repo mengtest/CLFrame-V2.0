@@ -154,7 +154,11 @@ namespace Coolape
 
 		public void connectGame (string host, int port)
 		{
-			StartCoroutine (doConnectGame (host, port));
+			try{
+				StartCoroutine (doConnectGame (host, port));
+			} catch(System.Exception e) {
+				Debug.LogError (e);
+			}
 		}
 
 		IEnumerator doConnectGame (string host, int port)

@@ -421,7 +421,8 @@ public class ECLSpritePacker : EditorWindow
 			
 			// Make sure that we don't shrink the textures
 			if (Mathf.RoundToInt (rect.width) != listTexs [i].width) {
-				Debug.LogWarning ("Make sure that we don't shrink the textures");
+				Debug.LogError (rect.width + "====" + listTexs [i].width);
+				Debug.LogWarning ("Make sure that we don't shrink the textures=" + listTexs [i].name);
 				ret = false;
 				break;
 			}

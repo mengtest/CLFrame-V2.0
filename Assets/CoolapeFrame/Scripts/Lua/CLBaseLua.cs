@@ -62,6 +62,19 @@ namespace Coolape
 			}
 		}
 
+		string luaClassname = null;
+		public bool isClassLua {
+			get {
+				if (luaClassname == null) {
+					if (luaTable != null) {
+						luaClassname = luaTable ["__cname"] as string;
+					}
+					luaClassname = luaClassname == null ? "" : luaClassname;
+				}
+				return !string.IsNullOrEmpty (luaClassname);
+			}
+		}
+
 		public object[] doSetLua (bool Independent)
 		{
 			object[] ret = null;
@@ -107,7 +120,11 @@ namespace Coolape
 				lfunc = getLuaFunction ("onNotifyLua");
 			}
 			if (lfunc != null) {
-				lfunc.Call (go, paras);
+				if (isClassLua) {
+					lfunc.Call (luaTable, go, paras);
+				} else {
+					lfunc.Call (go, paras);
+				}
 			}
 		}
 
@@ -309,7 +326,11 @@ namespace Coolape
 				}
 				if (func != null) {
 					if (!isPause) {
-						func.Call (orgs);
+						if(isClassLua) {
+							func.Call (luaTable, orgs);
+						} else {
+							func.Call (orgs);
+						}
 					} else {
 						ArrayList list = new ArrayList ();
 						list.Add (func);
@@ -341,7 +362,11 @@ namespace Coolape
 					invokeList = (ArrayList)(invokeFuncs.Dequeue ());
 					f = (LuaFunction)(invokeList [0]);
 					if (f != null) {
-						f.Call (invokeList [1]);
+						if(isClassLua) {
+							f.Call (luaTable, invokeList [1]);
+						} else {
+							f.Call (invokeList [1]);
+						}
 					}
 					invokeList.Clear ();
 					invokeList = null;

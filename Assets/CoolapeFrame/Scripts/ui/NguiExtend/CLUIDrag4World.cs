@@ -328,7 +328,7 @@ namespace Coolape
 					CancelMovement ();
 				}
 			} else {
-				Utl.doCallback (onDragMoveDelegate);
+				Utl.doCallback (onDragMoveDelegate, worldDelta);
 			}
 		}
 

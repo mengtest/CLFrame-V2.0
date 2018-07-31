@@ -564,6 +564,13 @@ public class ECLPublisher : EditorWindow
 		}
 		GUILayout.EndHorizontal ();
 
+		GUILayout.BeginHorizontal ();
+		{
+			GUILayout.Label ("use Unity IAP plugin", GUILayout.Width (width));
+			currChlData.isUseUnityIAP = GUILayout.Toggle (currChlData.isUseUnityIAP, "");
+		}
+		GUILayout.EndHorizontal ();
+
 		// app store
 		if (currChlData.mPlatform == ChlPlatform.android) {
 			GUILayout.BeginHorizontal ();
@@ -910,35 +917,8 @@ public class ECLPublisher : EditorWindow
 
 	void chgChl4Edit ()
 	{
+		resetScriptingDefineSymbols ();
 
-		string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup);
-		if (!string.IsNullOrEmpty (symbols)) {
-			string[] symbolsList = symbols.Split (';');
-			for (int i = 0; i < symbolsList.Length; i++) {
-				if (symbolsList [i].StartsWith ("CHL_")) {
-					symbolsList [i] = "";
-				} else if (symbolsList [i].StartsWith ("USE_UNITYIAP")) {
-					symbolsList [i] = "";
-				}
-			}
-			symbols = "";
-			for (int i = 0; i < symbolsList.Length; i++) {
-				if (!string.IsNullOrEmpty (symbolsList [i])) {
-					symbols += symbolsList [i] + ";";
-				}
-			}
-		}
-		symbols += (";" + currChlData.mScriptingDefineSymbols);
-		symbols += (";USE_UNITYIAP");
-
-		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Android, symbols);
-#if UNITY_5 || UNITY_5_3_OR_NEWER 
-		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iOS, symbols);
-#else
-		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iPhone, symbols);
-#endif
-		
-		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Standalone, symbols);
 		applyIcons ();
 	}
 
@@ -981,6 +961,40 @@ public class ECLPublisher : EditorWindow
 		PlayerSettings.SetIconsForTargetGroup (currChlData.buildTargetGroup, icons.ToArray ());
 	}
 
+	void resetScriptingDefineSymbols(){
+		string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup);
+		if (!string.IsNullOrEmpty (symbols)) {
+			string[] symbolsList = symbols.Split (';');
+			for (int i = 0; i < symbolsList.Length; i++) {
+				if (symbolsList [i].StartsWith ("CHL_")) {
+					symbolsList [i] = "";
+				} else if (symbolsList [i].StartsWith ("USE_UNITYIAP")) {
+					symbolsList [i] = "";
+				}
+			}
+			symbols = "";
+			for (int i = 0; i < symbolsList.Length; i++) {
+				if (!string.IsNullOrEmpty (symbolsList [i])) {
+					symbols += symbolsList [i] + ";";
+				}
+			}
+		}
+		symbols += (";" + currChlData.mScriptingDefineSymbols);
+		if (currChlData.isUseUnityIAP) {
+			symbols += (";USE_UNITYIAP");
+		}
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup, symbols);
+
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Android, symbols);
+		#if UNITY_5 || UNITY_5_3_OR_NEWER 
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iOS, symbols);
+		#else
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.iPhone, symbols);
+		#endif
+
+		PlayerSettings.SetScriptingDefineSymbolsForGroup (BuildTargetGroup.Standalone, symbols);
+	}
+
 	/// <summary>
 	/// Applies the setting.
 	/// 应用渠道设置
@@ -1009,27 +1023,9 @@ public class ECLPublisher : EditorWindow
 		if (currChlData.buildTargetGroup == BuildTargetGroup.Android) {
 			PlayerSettings.Android.bundleVersionCode = currChlData.mBundleVersionCode;
 		}
-		string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup);
-		if (!string.IsNullOrEmpty (symbols)) {
-			string[] symbolsList = symbols.Split (';');
-			for (int i = 0; i < symbolsList.Length; i++) {
-				if (symbolsList [i].StartsWith ("CHL_")) {
-					symbolsList [i] = "";
-				} else if (symbolsList [i].StartsWith ("USE_UNITYIAP")) {
-					symbolsList [i] = "";
-				}
-			}
-			symbols = "";
-			for (int i = 0; i < symbolsList.Length; i++) {
-				if (!string.IsNullOrEmpty (symbolsList [i])) {
-					symbols += symbolsList [i] + ";";
-				}
-			}
-		}
-		symbols += (";" + currChlData.mScriptingDefineSymbols);
-		symbols += (";USE_UNITYIAP");
-		PlayerSettings.SetScriptingDefineSymbolsForGroup (currChlData.buildTargetGroup, symbols);
-		
+
+		resetScriptingDefineSymbols ();
+
 		// subchannel
 		string chlCfgPath = Application.streamingAssetsPath + "/chnCfg.json";
 		Hashtable chlMap = null;
@@ -1080,11 +1076,13 @@ public class ECLPublisher : EditorWindow
 			ReporterEditor.CreateReporter ();
 			ReporterModificationProcessor.BuildInfo.addUpdateDelegate ();
 		}
-
-		HotUpgradeServerInfor serverInfor = ECLProjectManager.data.hotUpgradeServers [currChlData.serverIndex] as HotUpgradeServerInfor;
-		CLVerManager.self.baseUrl = serverInfor.hotUpgradeBaseUrl;
-		Net.self.host4Publish = serverInfor.host4Entry;
-		Net.self.gatePort = serverInfor.port4Entry;
+		if (ECLProjectManager.data.hotUpgradeServers != null &&
+		    ECLProjectManager.data.hotUpgradeServers.Count > 0) {
+			HotUpgradeServerInfor serverInfor = ECLProjectManager.data.hotUpgradeServers [currChlData.serverIndex] as HotUpgradeServerInfor;
+			CLVerManager.self.baseUrl = serverInfor.hotUpgradeBaseUrl;
+			Net.self.host4Publish = serverInfor.host4Entry;
+			Net.self.gatePort = serverInfor.port4Entry;
+		}
 	}
 
 	[ PostProcessBuildAttribute (1)]
@@ -1354,6 +1352,7 @@ public class ChlData
 	public string mChlName = "";
 	public string mProductName = "";
 	public ChlPlatform mPlatform = ChlPlatform.android;
+	public bool isUseUnityIAP = false;
 	#if USE_UNITYIAP
 	public UnityEngine.Purchasing.AndroidStore mTargetAndroidStore = UnityEngine.Purchasing.AndroidStore.GooglePlay;
 	#endif
@@ -1489,6 +1488,7 @@ public class ChlData
 		r ["mChlNmae"] = mChlName;
 		r ["mProductName"] = mProductName;
 		r ["mPlatform"] = mPlatform.ToString ();
+		r ["isUseUnityIAP"] = isUseUnityIAP;
 		#if USE_UNITYIAP
 		r ["mTargetAndroidStore"] = (int)mTargetAndroidStore; //UnityEngine.Purchasing.AndroidStore
 		#endif
@@ -1571,7 +1571,7 @@ public class ChlData
 			r.mPlatform = ChlPlatform.ios;
 			break;
 		}
-
+		r.isUseUnityIAP = MapEx.getBool (map, "isUseUnityIAP");
 		#if USE_UNITYIAP
 		r.mTargetAndroidStore = (UnityEngine.Purchasing.AndroidStore)(Enum.ToObject (typeof(UnityEngine.Purchasing.AndroidStore), MapEx.getInt (map, "mTargetAndroidStore")));
 		#endif

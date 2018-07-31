@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_IPHONE
 using UnityEngine.SocialPlatforms.GameCenter;
+#endif
 
 namespace Coolape
 {
@@ -15,6 +17,7 @@ namespace Coolape
 		/// </summary>  
 		public static void authenticate (object callback, object orgs)
 		{
+			#if UNITY_IPHONE
 			Social.localUser.Authenticate (success => {
 				if (success) {
 					authenticated = Social.localUser.authenticated;
@@ -33,6 +36,7 @@ namespace Coolape
 					Utl.doCallback (callback, success, userInfo, orgs);
 				}
 			});
+			#endif
 		}
 
 		/// <summary>
@@ -40,11 +44,13 @@ namespace Coolape
 		/// </summary>
 		public static void showAchievementsUI ()
 		{
+			#if UNITY_IPHONE
 			if (Social.localUser.authenticated) {  
 				Social.ShowAchievementsUI ();
 			} else {
 				Debug.LogWarning ("Social.localUser.authenticated==" + Social.localUser.authenticated);
 			}
+			#endif
 		}
 
 		/// <summary>
@@ -52,11 +58,13 @@ namespace Coolape
 		/// </summary>
 		public static void showLeaderboardUI ()
 		{
+			#if UNITY_IPHONE
 			if (Social.localUser.authenticated) {
 				Social.ShowLeaderboardUI ();
 			} else {
 				Debug.LogWarning ("Social.localUser.authenticated==" + Social.localUser.authenticated);
 			}
+			#endif
 		}
 
 		/// <summary>
@@ -68,6 +76,7 @@ namespace Coolape
 		/// <param name="orgs">Orgs.</param>
 		public static void reportScore (long sore, string board, object callback, object orgs)
 		{
+			#if UNITY_IPHONE
 			if (Social.localUser.authenticated) {
 				Social.ReportScore (sore, board, success => {
 					Utl.doCallback (callback, success, orgs);
@@ -76,6 +85,7 @@ namespace Coolape
 				Debug.LogWarning ("Social.localUser.authenticated==" + Social.localUser.authenticated);
 				Utl.doCallback (callback, false, orgs, "Social.localUser.authenticated==" + Social.localUser.authenticated);
 			}
+			#endif
 		}
 
 		/// <summary>
@@ -87,6 +97,7 @@ namespace Coolape
 		/// <param name="orgs">Orgs.</param>
 		public static void reportProgress (string activeId, double progress, object callback, object orgs)
 		{
+			#if UNITY_IPHONE
 			if (Social.localUser.authenticated) {
 				Social.ReportProgress (activeId, progress, success => {
 					Utl.doCallback (callback, success, orgs);
@@ -95,6 +106,7 @@ namespace Coolape
 				Debug.LogWarning ("Social.localUser.authenticated==" + Social.localUser.authenticated);
 				Utl.doCallback (callback, false, orgs, "Social.localUser.authenticated==" + Social.localUser.authenticated);
 			}
+			#endif
 		}
 	}
 }

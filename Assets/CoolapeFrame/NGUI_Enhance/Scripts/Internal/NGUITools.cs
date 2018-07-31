@@ -1765,5 +1765,70 @@ static public class NGUITools
 		}
 	}
 
+	public static bool isIphonex() {
+	#if UNITY_IOS
+		#if UNITY_2017_1_OR_NEWER 
+		var isIphoneX = UnityEngine.iOS.Device.generation;  
+		if (isIphoneX == UnityEngine.iOS.DeviceGeneration.iPhoneX)  
+		{  
+			return true;
+		}
+		#else
+		string mode = SystemInfo.deviceModel;
+		if(mode.Contains("iPhone10,3") || mode.Contains("iPhone10,6")) {
+			return true;
+		}
+		#endif
+	#elif UNITY_EDITOR
+		if((int)(screenSize.x) == 1624) {
+			return true;
+		} else {
+			return false;
+		}
+	#endif
+		return false;
+	}	
+
+	static bool _isFringe = false;
+	public static bool isFringe {		// 刘海屏
+		get {
+			return _isFringe || isIphonex ();
+		}
+		set {
+			_isFringe = value;
+		}
+	}
+
+	static float _rateFringe = 1;
+	public static float rateFringe {
+		get {
+			if (isIphonex ()) {
+				return 734f / 812f;
+			} else {
+				return _rateFringe;
+			}
+		}
+		set {
+			_rateFringe = value;
+		}
+	}
+
+	public static Rect wrapRect4IphoneX(Rect rect) {
+		return wrapRect4Fringe (rect);
+	}
+
+	public static Rect wrapRect4Fringe(Rect rect) {
+		if (isFringe) {
+			if (rect.width > rect.height) {
+				float offsetWidth = rect.width * (1 - rateFringe);
+				return new Rect ((int)(offsetWidth / 2), 0, rect.width - offsetWidth, rect.height);
+			} else {
+				float offsetHight = rect.height * (1 - rateFringe);
+				return new Rect (0, (int)(offsetHight / 2), rect.width, rect.height - offsetHight);
+			}
+		} else {
+			return rect;
+		}
+	}
 	#endregion
 }

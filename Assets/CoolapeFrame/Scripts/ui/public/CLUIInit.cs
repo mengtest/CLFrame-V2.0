@@ -195,6 +195,9 @@ namespace Coolape
 					if (go != null) {
 						UIFont font = go.GetComponent<UIFont> ();
 						fontMap [fontName] = font;
+						if(!string.IsNullOrEmpty(font.atlasName)) {
+							font.atlas = getAtlasByName(font.atlasName);
+						}
 						return font;
 					}
 				}

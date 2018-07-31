@@ -41,6 +41,7 @@ public class ECLUpgradeListProc : EditorWindow
 			if (uploadResult) {
 				// success
 				updateState (selectedPackageName);
+				uploadOss (selectedPackageName);
 				EditorUtility.DisplayDialog ("Success", "Success !", "Okey");
 			} else {
 				EditorUtility.DisplayDialog ("Fail", "Failed !", "Okey");
@@ -74,7 +75,6 @@ public class ECLUpgradeListProc : EditorWindow
 					toolbarNames.Add (dd.name);
 				}
 				selectedServerIndex = GUILayout.Toolbar (selectedServerIndex, toolbarNames.ToArray ());
-
 				HotUpgradeServerInfor hsi = ECLProjectManager.data.hotUpgradeServers [selectedServerIndex] as HotUpgradeServerInfor;
 				selectedServer = hsi;
 //						ECLProjectSetting.cellServerInor (hsi, false);
@@ -111,9 +111,10 @@ public class ECLUpgradeListProc : EditorWindow
 		}
 
 		if (selectedServer == null) {
-			GUILayout.Label ( "Please select a server!");
+			GUILayout.Label ("Please select a server!");
 			return;
 		}
+
 		EditorGUILayout.BeginHorizontal ();
 		{
 			GUI.color = Color.green;
@@ -187,6 +188,11 @@ public class ECLUpgradeListProc : EditorWindow
 									uploadUpgradePackage (MapEx.getString (item, "name"));
 								}	
 							}
+							if(GUILayout.Button("同步OSS", GUILayout.Width (60f))) {
+								if (EditorUtility.DisplayDialog ("Alert", "Really want to upload the upgrade package?", "Okey", "cancel")) {
+									uploadOss (MapEx.getString (item, "name"));
+								}	
+							}
 						}
 
 						GUI.color = Color.white;
@@ -249,7 +255,12 @@ public class ECLUpgradeListProc : EditorWindow
 				                  selectedServer.ftpUser, 
 				                  selectedServer.ftpPassword);
 			if (sftp.Connect ()) {
-				sftp.PutDir (localDir.ToString (), selectedServer.RemoteBaseDir, (Callback)onSftpProgress, (Callback)onftpFinish);
+				if (selectedServer.isUploadOSSTemp) {
+					sftp.PutDir (localDir.ToString (), selectedServer.RemoteBaseDir, (Callback)onSftpProgress, null);
+					sftp.PutDir (localDir.ToString (), selectedServer.RemoteBaseDir + "_OSS", (Callback)onSftpProgress, (Callback)onftpFinish);
+				} else {
+					sftp.PutDir (localDir.ToString (), selectedServer.RemoteBaseDir, (Callback)onSftpProgress, (Callback)onftpFinish);
+				}
 				sftp.Exit ();
 				sftp = null;
 			} else {
@@ -261,8 +272,41 @@ public class ECLUpgradeListProc : EditorWindow
 				           selectedServer.ftpUser, 
 				           selectedServer.ftpPassword, 
 				           selectedServer.RemoteBaseDir, false);
+			if (selectedServer.isUploadOSSTemp && ret) {
+				ret = FTP.UploadDir (localDir.ToString (), 
+					selectedServer.host4UploadUpgradePackage, 
+					selectedServer.ftpUser, 
+					selectedServer.ftpPassword, 
+					selectedServer.RemoteBaseDir + "_OSS", false);
+			}
 			Utl.doCallback ((Callback)onftpFinish, ret);
 		}
+	}
+
+	void uploadOss (string name = null)
+	{
+		if (string.IsNullOrEmpty (selectedServer.ossCmd)) {
+			Debug.LogError ("请先设置同步脚本！");
+			return;
+		}
+		if (string.IsNullOrEmpty (name)) {
+			name = selectedPackageName;
+		}
+		string localDir = getUpgradePackagePath (name);
+		string shell = Path.Combine(Application.dataPath,  ECLEditorUtl.getPathByObject( selectedServer.ossShell));
+		string arg1 = Path.GetDirectoryName(shell);
+		string arg2 = localDir.ToString ();
+		string argss = shell + " " + arg1 + " " + arg2;
+//		Debug.LogError (argss);
+		System.Diagnostics.Process process = System.Diagnostics.Process.Start ("/bin/bash", argss);
+		//重新定向标准输入，输入，错误输出
+//		process.StartInfo.RedirectStandardInput = true;
+//		process.StartInfo.RedirectStandardOutput = true;
+//		process.StartInfo.RedirectStandardError = true;
+//
+//		string ret = process.StandardOutput.ReadToEnd ();
+//		Debug.Log (ret);
+		Debug.LogWarning("Finished===" + name);
 	}
 
 	public void setData ()

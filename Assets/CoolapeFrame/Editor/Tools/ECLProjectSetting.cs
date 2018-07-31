@@ -24,8 +24,8 @@ using UnityEditorHelper;
 
 public class HotUpgradeServerInfor
 {
-	public string name = "";
-	public string key = "";
+	public string name="";
+	public string key="";
 	public string host4UploadUpgradePackage = "";
 	public int port4UploadUpgradePackage = 21;
 	public string ftpUser = "";
@@ -38,6 +38,28 @@ public class HotUpgradeServerInfor
 	public int port4Entry = 80;
 	public string getServerListUrl = "";
 	public string setServerPkgMd5Url = "";
+	public string ossCmd = "";
+	public bool isUploadOSSTemp = false;
+
+	UnityEngine.Object _ossShell;
+
+	public UnityEngine.Object ossShell {
+		get {
+			if (_ossShell == null && !string.IsNullOrEmpty (ossCmd)) {
+				_ossShell = AssetDatabase.LoadAssetAtPath (ossCmd, 
+					typeof(UnityEngine.Object));
+			}
+			return _ossShell;
+		}
+		set {
+			_ossShell = value;
+			if (_ossShell != null) {
+				ossCmd = AssetDatabase.GetAssetPath (_ossShell.GetInstanceID ());
+			} else {
+				ossCmd = "";
+			}
+		}
+	}
 
 	public Hashtable ToMap ()
 	{
@@ -56,7 +78,8 @@ public class HotUpgradeServerInfor
 		r ["port4Entry"] = port4Entry;
 		r ["getServerListUrl"] = getServerListUrl;
 		r ["setServerPkgMd5Url"] = setServerPkgMd5Url;
-
+		r ["ossCmd"] = ossCmd;
+		r ["isUploadOSSTemp"] = isUploadOSSTemp;
 		return r;
 	}
 
@@ -77,10 +100,12 @@ public class HotUpgradeServerInfor
 		r.useSFTP = MapEx.getBool (map, "useSFTP");
 		r.upgradeControledbyEachServer = MapEx.getBool (map, "upgradeControledbyEachServer");
 		r.hotUpgradeBaseUrl = MapEx.getString (map, "hotUpgradeBaseUrl");
-		r.host4Entry = MapEx.getString (map, "host4Entry");
-		r.port4Entry = MapEx.getInt (map, "port4Entry");
+		r .host4Entry = MapEx.getString(map, "host4Entry");
+		r .port4Entry = MapEx.getInt(map, "port4Entry");
 		r.getServerListUrl = MapEx.getString (map, "getServerListUrl");
 		r.setServerPkgMd5Url = MapEx.getString (map, "setServerPkgMd5Url");
+		r.ossCmd = MapEx.getString (map, "ossCmd");
+		r.isUploadOSSTemp = MapEx.getBool (map, "isUploadOSSTemp");
 		return r;
 	}
 }
@@ -224,6 +249,7 @@ public static class ECLProjectSetting
 					if (GUILayout.Button ("Refresh", GUILayout.Height (30))) {
 						ECLProjectManager.initData ();	
 					}
+
 					if (GUILayout.Button ("Save Project Config", GUILayout.Height (30))) {
 						if (isInputDataValide ()) {
 							if (CLCfgBase.self != null) {
@@ -437,6 +463,21 @@ public static class ECLProjectSetting
 			}
 			GUILayout.EndHorizontal ();
 		}
+
+		GUILayout.BeginHorizontal ();
+		{
+			GUILayout.Label ("同步对像存储脚本:", GUILayout.Width (labWidth));
+			data.ossShell = EditorGUILayout.ObjectField (data.ossShell, 
+				typeof(UnityEngine.Object));
+		}
+		GUILayout.EndHorizontal ();
+
+		GUILayout.BeginHorizontal ();
+		{
+			GUILayout.Label ("同步对像存储临时目录:", GUILayout.Width (labWidth));
+			data.isUploadOSSTemp = EditorGUILayout.Toggle (data.isUploadOSSTemp);
+		}
+		GUILayout.EndHorizontal ();
 
 		GUILayout.Label ("入口--------------------------");
 		//===================================================

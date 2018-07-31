@@ -715,6 +715,10 @@ namespace Coolape
 			return MD5Encrypt (bytes);
 		}
 
+		public static byte[] getUtf8bytes(string str) {
+			return Encoding.UTF8.GetBytes (str);    //tbPass为输入密码的文本框
+		}
+
 		public static string MD5Encrypt (byte[] bytes)
 		{
 			MD5 md5 = new MD5CryptoServiceProvider ();
@@ -776,22 +780,25 @@ namespace Coolape
 		/// Gets the sing in code android.取得签名值
 		/// </summary>
 		/// <returns>The sing in code android.</returns>
-		public static  int getSingInCodeAndroid ()
+		public static  string getSingInCodeAndroid ()
 		{
 			try {
 #if UNITY_ANDROID && !UNITY_EDITOR
-        AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-        AndroidJavaClass jcPackageManager = new AndroidJavaClass("android.content.pm.PackageManager");
-        AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity");
-        AndroidJavaObject joPackageManager = jo.Call<AndroidJavaObject>("getPackageManager");
-        string joPackageName = jo.Call<string>("getPackageName");
-        int GET_SIGNATURES = jcPackageManager.GetStatic<int>("GET_SIGNATURES");
-        AndroidJavaObject packageInfo = joPackageManager.Call<AndroidJavaObject>("getPackageInfo", joPackageName, GET_SIGNATURES);
-        AndroidJavaObject[] signs = packageInfo.Get<AndroidJavaObject[]>("signatures");
-        if(signs.Length > 0) {
-            AndroidJavaObject sign = signs[0];
-            return sign.Call<int>("hashCode");
-        }
+				AndroidJavaClass jc = new AndroidJavaClass ("com.unity3d.player.UnityPlayer");
+				AndroidJavaClass jcPackageManager = new AndroidJavaClass ("android.content.pm.PackageManager");
+				AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject> ("currentActivity");
+				AndroidJavaObject joPackageManager = jo.Call<AndroidJavaObject> ("getPackageManager");
+				string joPackageName = jo.Call<string> ("getPackageName");
+				int GET_SIGNATURES = jcPackageManager.GetStatic<int> ("GET_SIGNATURES");
+				AndroidJavaObject packageInfo = joPackageManager.Call<AndroidJavaObject> ("getPackageInfo", joPackageName, GET_SIGNATURES);
+				AndroidJavaObject[] signs = packageInfo.Get<AndroidJavaObject[]> ("signatures");
+				if (signs.Length > 0) {
+					AndroidJavaObject sign = signs [0];
+					string signStr = sign.Call<string> ("toCharsString");
+					if (!string.IsNullOrEmpty (signStr)) {
+						return MD5Encrypt (signStr);
+					}
+				}
 //        PackageInfo packageInfo = _self.getPackageManager().getPackageInfo(_self.getPackageName(), PackageManager.GET_SIGNATURES);
 //        Signature[] signs = packageInfo.signatures;
 //        Signature sign = signs[0];
@@ -802,7 +809,7 @@ namespace Coolape
 			} catch (System.Exception e) {
 				Debug.LogError (e);
 			}
-			return 0;
+			return "";
 		}
 
 		public static LayerMask getLayer (string layerName)
@@ -1041,9 +1048,9 @@ namespace Coolape
 			return v3;
 		}
 
-		public static byte[] read4MemoryStream(MemoryStream ms, int offset, int len)
+		public static byte[] read4MemoryStream (MemoryStream ms, int offset, int len)
 		{
-			if(ms == null || len <= 0 ) {
+			if (ms == null || len <= 0) {
 				return null;
 			}
 
@@ -1053,4 +1060,20 @@ namespace Coolape
 		}
 	}
 
+	/*
+	 * 有的Unity对象，在C#为null，在lua为啥不为nil呢？比如一个已经Destroy的GameObject
+	 * 其实那C#对象并不为null，是UnityEngine.Object重载的==操作符，
+	 * 当一个对象被Destroy，未初始化等情况，obj == null返回true，
+	 * 但这C#对象并不为null，可以通过System.Object.ReferenceEquals(null, obj)来验证下。
+	 * 对应这种情况，可以为UnityEngine.Object写一个扩展方法：
+	 */
+	[LuaCallCSharp]
+	[ReflectionUse]
+	public static class UnityEngineObjectExtention
+	{
+		public static bool IsNull(this UnityEngine.Object o) // 或者名字叫IsDestroyed等等
+		{
+			return o == null;
+		}
+	}
 }

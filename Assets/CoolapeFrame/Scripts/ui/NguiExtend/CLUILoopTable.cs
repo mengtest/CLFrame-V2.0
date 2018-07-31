@@ -614,7 +614,9 @@ namespace Coolape
 				//说明已经到最后了
 				if (isCanCallOnEndList) {
 					isCanCallOnEndList = false;
+					#if UNITY_EDITOR
 					Debug.Log ("说明已经到最后了");
+					#endif
 					Utl.doCallback (this.onEndListCallback);
 				}
 			} else {

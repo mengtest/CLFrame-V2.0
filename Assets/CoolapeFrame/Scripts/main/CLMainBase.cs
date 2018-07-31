@@ -56,7 +56,7 @@ namespace Coolape
 		public virtual void setLanguage(string language) {
 			string languageFile = PStr.b (
 				CLPathCfg.self.localizationPath, 
-				Localization.language, ".txt").e ();
+				language, ".txt").e ();
 			byte[] buff = null;
 			#if UNITY_EDITOR
 			if (CLCfgBase.self.isEditMode) {
@@ -69,7 +69,7 @@ namespace Coolape
 			#else
 			buff = FileEx.readNewAllBytes(languageFile);
 			#endif
-			Localization.Load (Localization.language, buff);
+			Localization.Load (language, buff);
 		}
 
 		public virtual void init ()
@@ -91,6 +91,7 @@ namespace Coolape
 //				SCfg.self.fps.enabled = false;
 //			}
 			//初始化streamingAssetsPackge,把包里的资源释放出来
+
 			CLVerManager.self.initStreamingAssetsPackge ((Callback)onGetStreamingAssets);
 		}
 
@@ -120,6 +121,7 @@ namespace Coolape
 			FileEx.cleanCache ();
 			CLUtlLua.cleanFileBytesCacheMap ();
 			CLUtlLua.isFinishAddLoader = false;
+			CLUIInit.self.clean ();
 			//重新把配置清空
 			CLMaterialPool.materialTexRefCfg = null;
 			if (mainLua != null) {

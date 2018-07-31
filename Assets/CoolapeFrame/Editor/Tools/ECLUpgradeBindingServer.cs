@@ -286,7 +286,6 @@ public class ECLUpgradeBindingServer : EditorWindow
 	{
 		servers = null;
 		getUpgradePkgListData ();
-
 		if (selectedServer == null) {
 			return;
 		}

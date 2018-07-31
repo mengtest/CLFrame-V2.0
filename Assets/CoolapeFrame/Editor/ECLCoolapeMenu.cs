@@ -15,6 +15,7 @@ using UnityEditor;
 using System.Collections;
 using Coolape;
 using System.IO;
+using System.Collections.Generic;
 
 static public class ECLCoolapeMenu
 {
@@ -240,7 +241,7 @@ static public class ECLCoolapeMenu
 
 			EditorUtility.SetDirty (go);
 		}
-		AssetDatabase.SaveAssets();
+		AssetDatabase.SaveAssets ();
 	}
 
 	[MenuItem (toolesName + "/CleanMainCityText", false, 18)]
@@ -282,6 +283,111 @@ static public class ECLCoolapeMenu
 	static public void curve2Code ()
 	{
 		EditorWindow.GetWindow<ECLCurve2Code> (false, "Curve->Code", true);
+	}
+
+	[MenuItem (toolesName + "/Retain one Material", false, 22)]
+	static public void retainOneMaterial ()
+	{
+		GameObject go = Selection.activeObject as GameObject;
+		if (go == null)
+			return;
+
+		Renderer[] mrs = go.GetComponentsInChildren<Renderer> ();
+		for (int i = 0; i < mrs.Length; i++) {
+			if (mrs [i].sharedMaterials != null && mrs [i].sharedMaterials.Length > 1) {
+				Material[] mrs2 = new Material[1];
+				mrs2 [0] = mrs [i].sharedMaterial;
+				mrs [i].sharedMaterials = mrs2;
+			}
+		}
+		EditorUtility.SetDirty (go);
+	}
+
+	[MenuItem (toolesName + "/Get Atlas And Lable", false, 23)]
+	static public void getAtlasAndLable ()
+	{
+		Hashtable texs = new Hashtable ();
+		Hashtable labs = new Hashtable ();
+		GameObject[] gos = Selection.gameObjects;
+		for (int i = 0; i < gos.Length; i++) {
+			GameObject go = gos [i];
+			Debug.LogError (go.name);
+			dogetAtlasAndLable (go.transform, texs, labs);
+		}
+		string strs = "";
+		foreach (DictionaryEntry cell in texs) {
+			strs = strs + cell.Key + ",";
+		}
+		strs = strs + "\n";
+		strs = strs + "\n";
+		foreach (DictionaryEntry cell in labs) {
+			strs = strs + cell.Key + ",";
+		}
+		Debug.LogError (strs);
+	}
+
+	static void dogetAtlasAndLable (Transform tr, Hashtable texs, Hashtable labs)
+	{
+		for (int i = 0; i < tr.childCount; i++) {
+			UISprite sp = tr.GetChild (i).GetComponent<UISprite> ();
+			if (sp != null) {
+				texs [sp.spriteName] = 1;
+			}
+			UILabel lb = tr.GetChild (i).GetComponent<UILabel> ();
+			if (lb != null) {
+				labs [lb.text] = 1;
+			}
+
+			dogetAtlasAndLable (tr.GetChild (i), texs, labs);
+		}
+	}
+
+
+	[MenuItem (toolesName + "/chg Atlas And Lable", false, 24)]
+	static public void chgAtlasAndLable ()
+	{
+		GameObject go = Selection.activeGameObject;
+		dochgAtlasAndLable (go.transform, "atlasMainUI", "fontMainUI");
+	}
+
+	static void dochgAtlasAndLable (Transform tr, string atlasName, string fontName)
+	{
+		for (int i = 0; i < tr.childCount; i++) {
+			UISprite sp = tr.GetChild (i).GetComponent<UISprite> ();
+			if (sp != null) {
+				sp.atlasName = atlasName;
+				sp.atlas = CLUIInit.self.getAtlasByName (atlasName);
+			}
+			UILabel lb = tr.GetChild (i).GetComponent<UILabel> ();
+			if (lb != null) {
+				lb.fontName = fontName;
+				lb.bitmapFont = CLUIInit.self.getFontByName (fontName);
+			}
+
+			dochgAtlasAndLable (tr.GetChild (i), atlasName, fontName);
+		}
+	}
+
+
+	[MenuItem (toolesName + "/texture setting", false, 25)]
+	static public void setTexturesetting ()
+	{
+		Object[] gos = Selection.objects;	
+		string path = "";
+		List<string> refreshFiles = new List<string> ();
+		for (int i = 0; i < gos.Length; i++) {
+			path = AssetDatabase.GetAssetPath (gos [i]);
+			if (ECLTextureSetting.setTexture (path)) {
+				// 说明有重新设置
+				refreshFiles.Add (path);
+			}
+		}
+
+		for (int i = 0; i < refreshFiles.Count; i++) {
+			ECLCreatAssetBundle4Update.createAssets4Upgrade (refreshFiles [i], true);
+		}
+
+		EditorUtility.DisplayDialog ("success", "Finished", "Okay");
 	}
 
 	[MenuItem (toolesName + "/Clean Cache", false, 999)]

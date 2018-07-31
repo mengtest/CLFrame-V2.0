@@ -230,7 +230,9 @@ namespace Coolape
 			int index = 0;
 			LuaFunction func = null;
 			while (index < invokeByUpdateList.Count) {
-				list = (NewList)(invokeByUpdateList [index]);
+				list = (invokeByUpdateList [index]) as NewList;
+				if (list == null)
+					continue;
 				callbakFunc = list [0];
 				orgs = list [1];
 				sec = (float)(list [2]);

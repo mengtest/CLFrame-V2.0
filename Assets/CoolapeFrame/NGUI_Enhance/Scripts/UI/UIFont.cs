@@ -26,6 +26,7 @@ public class UIFont : MonoBehaviour
 	[HideInInspector][SerializeField] Rect mUVRect = new Rect(0f, 0f, 1f, 1f);
 	[HideInInspector][SerializeField] BMFont mFont = new BMFont();
 	[HideInInspector][SerializeField] UIAtlas mAtlas;
+	[SerializeField] public string atlasName; // add by chenbin
 	[HideInInspector][SerializeField] UIFont mReplacement;
 
 	// List of symbols, such as emoticons like ":)", ":(", etc
@@ -126,10 +127,11 @@ public class UIFont : MonoBehaviour
 				mPMA = -1;
 				mAtlas = value;
 
-				if (mAtlas != null)
-				{
+				if (mAtlas != null) {
+					atlasName = mAtlas.name;
 					mMat = mAtlas.spriteMaterial;
-					if (sprite != null) mUVRect = uvRect;
+					if (sprite != null)
+						mUVRect = uvRect;
 				}
 				MarkAsChanged();
 			}

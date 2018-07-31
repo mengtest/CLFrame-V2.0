@@ -22,8 +22,8 @@ namespace Coolape
 		public static Hashtable wwwMap4Get = new Hashtable ();
 
 		public static void newWWW (MonoBehaviour go, string url, CLAssetType type, 
-		                          float checkProgressSec, float timeOutSec, object finishCallback, 
-		                          object exceptionCallback, object timeOutCallback, object orgs)
+		                           float checkProgressSec, float timeOutSec, object finishCallback, 
+		                           object exceptionCallback, object timeOutCallback, object orgs)
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
@@ -35,9 +35,9 @@ namespace Coolape
 		}
 
 		public static void newWWW (MonoBehaviour go, string url, object mapData,
-		                          CLAssetType type, 
-		                          float checkProgressSec, float timeOutSec, object finishCallback, 
-		                          object exceptionCallback, object timeOutCallback, object orgs)
+		                           CLAssetType type, 
+		                           float checkProgressSec, float timeOutSec, object finishCallback, 
+		                           object exceptionCallback, object timeOutCallback, object orgs)
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
@@ -50,9 +50,9 @@ namespace Coolape
 
 		// 因为lua里没有bytes类型，所以不能重载，所以只能通方法名来
 		public static void newWWWPostBytes (MonoBehaviour go, string url, byte[] mapData,
-			CLAssetType type, 
-			float checkProgressSec, float timeOutSec, object finishCallback, 
-			object exceptionCallback, object timeOutCallback, object orgs)
+		                                    CLAssetType type, 
+		                                    float checkProgressSec, float timeOutSec, object finishCallback, 
+		                                    object exceptionCallback, object timeOutCallback, object orgs)
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
@@ -64,9 +64,9 @@ namespace Coolape
 		}
 
 		public static void newWWW (MonoBehaviour go, string url, string jsonMap,
-		                          CLAssetType type, 
-		                          float checkProgressSec, float timeOutSec, object finishCallback, 
-		                          object exceptionCallback, object timeOutCallback, object orgs)
+		                           CLAssetType type, 
+		                           float checkProgressSec, float timeOutSec, object finishCallback, 
+		                           object exceptionCallback, object timeOutCallback, object orgs)
 		{
 			if (string.IsNullOrEmpty (url))
 				return;
@@ -79,11 +79,11 @@ namespace Coolape
 		}
 
 		public static IEnumerator doNewWWW (MonoBehaviour go, string url, object mapData, CLAssetType type, 
-		                                   float checkProgressSec, float timeOutSec, object finishCallback, 
-		                                   object exceptionCallback, object timeOutCallback, object orgs)
+		                                    float checkProgressSec, float timeOutSec, object finishCallback, 
+		                                    object exceptionCallback, object timeOutCallback, object orgs)
 		{
 			#if UNITY_EDITOR
-			Debug.LogWarning(url);
+			Debug.LogWarning ("cb:" + url);
 			#endif
 			WWW www = null;
 			if (mapData != null) {
@@ -133,6 +133,7 @@ namespace Coolape
 					}
 					doCallback (finishCallback, content, orgs);
 				} else {
+					Debug.LogError (www.error + "," + url);
 					int retCode = getResponseCode (www);
 					if (retCode == 300 || retCode == 301 || retCode == 302) {
 						// 重定向处理
@@ -190,7 +191,7 @@ namespace Coolape
 		}
 
 		public static IEnumerator doCheckWWWTimeout (MonoBehaviour go, WWW www, float checkProgressSec, 
-		                                            float timeOutSec, object timeoutCallback, float oldProgress, float totalCostSec, object orgs)
+		                                             float timeOutSec, object timeoutCallback, float oldProgress, float totalCostSec, object orgs)
 		{
 			yield return new WaitForSeconds (checkProgressSec);
 			totalCostSec = totalCostSec + checkProgressSec;
@@ -210,7 +211,7 @@ namespace Coolape
 							www.Dispose ();
 							www = null;
 							doCallback (timeoutCallback, null, orgs);
-						} else if (timeOutSec > 0 && totalCostSec >= timeOutSec) {
+						} else if (timeOutSec > 0.001f && totalCostSec >= timeOutSec) {
 							wwwMap4Check.Remove (www);
 							string url = www.url;
 							UnityEngine.Coroutine corout = (UnityEngine.Coroutine)(wwwMap4Get [url]);
@@ -240,16 +241,18 @@ namespace Coolape
 
 		public static void uncheckWWWTimeout (MonoBehaviour go, WWW www)
 		{
-			#if UNITY_4_6 || UNITY_5 || UNITY_5_6_OR_NEWER
-			UnityEngine.Coroutine cor = (UnityEngine.Coroutine)(wwwMap4Check [www]);
-			if (cor != null) {
-				go.StopCoroutine (cor);
+			try {
+				if (www != null && !ReferenceEquals(www, null)) {
+					wwwMap4Get.Remove (www.url);
+					UnityEngine.Coroutine cor = (UnityEngine.Coroutine)(wwwMap4Check [www]);
+					wwwMap4Check.Remove (www);
+					if (cor != null) {
+						go.StopCoroutine (cor);
+					}
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
-			#else
-			go.StopCoroutine ("doCheckWWWTimeout");
-			#endif
-			wwwMap4Check.Remove (www);
-			wwwMap4Get.Remove (www.url);
 		}
 
 		public static void doCallback (object callback, object obj, object orgs)
@@ -269,14 +272,18 @@ namespace Coolape
 		public static int getResponseCode (WWW request)
 		{
 			int ret = 0;
-			if (request.responseHeaders == null) {
-				Debug.LogError ("no response headers.");
-			} else {
-				if (!request.responseHeaders.ContainsKey ("STATUS")) {
-					Debug.LogError ("response headers has no STATUS.");
+			try {
+				if (request.responseHeaders == null) {
+					Debug.LogError ("no response headers.");
 				} else {
-					ret = parseResponseCode (request.responseHeaders ["STATUS"]);
+					if (!request.responseHeaders.ContainsKey ("STATUS")) {
+						Debug.LogError ("response headers has no STATUS.");
+					} else {
+						ret = parseResponseCode (request.responseHeaders ["STATUS"]);
+					}
 				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 
 			return ret;

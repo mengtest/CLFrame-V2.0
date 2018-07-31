@@ -174,6 +174,10 @@ public class UIAnchor : MonoBehaviour
 		}
 		else return;
 
+		#region add by chenbin
+		mRect = NGUITools.wrapRect4Fringe(mRect);
+		#endregion
+
 		float cx = (mRect.xMin + mRect.xMax) * 0.5f;
 		float cy = (mRect.yMin + mRect.yMax) * 0.5f;
 		Vector3 v = new Vector3(cx, cy, 0f);

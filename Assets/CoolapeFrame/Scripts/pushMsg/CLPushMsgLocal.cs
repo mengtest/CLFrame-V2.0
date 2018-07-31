@@ -41,15 +41,41 @@ namespace Coolape
 
 		public static void cancelAll ()
 		{
-#if UNITY_IOS
-			if (Application.platform == RuntimePlatform.IPhonePlayer) {
-				UnityEngine.iOS.NotificationServices.CancelAllLocalNotifications ();
-			}
-#elif UNITY_ANDROID  && !UNITY_EDITOR
-		if (Application.platform == RuntimePlatform.Android) {
-			jpushClass.CallStatic("cleanAllMsg");
+			#if UNITY_IOS
+				if (Application.platform == RuntimePlatform.IPhonePlayer) {
+					UnityEngine.iOS.NotificationServices.CancelAllLocalNotifications ();
+				}
+			#elif UNITY_ANDROID  && !UNITY_EDITOR
+				if (Application.platform == RuntimePlatform.Android) {
+					jpushClass.CallStatic("cleanAllMsg");
+				}
+			#endif
 		}
-#endif
+
+		public static void clearLocal ()
+		{
+			#if UNITY_IOS
+			if (Application.platform == RuntimePlatform.IPhonePlayer) {
+				UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
+			}
+			#elif UNITY_ANDROID  && !UNITY_EDITOR
+			if (Application.platform == RuntimePlatform.Android) {
+			jpushClass.CallStatic("cleanAllMsg");
+			}
+			#endif
+
+		}
+		public static void clearRemote ()
+		{
+			#if UNITY_IOS
+			if (Application.platform == RuntimePlatform.IPhonePlayer) {
+				UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
+			}
+			#elif UNITY_ANDROID  && !UNITY_EDITOR
+			if (Application.platform == RuntimePlatform.Android) {
+			jpushClass.CallStatic("cleanAllMsg");
+			}
+			#endif
 		}
 
 		public static void cancelNotifyByMsg (string msg)

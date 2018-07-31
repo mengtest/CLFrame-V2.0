@@ -61,7 +61,7 @@ public class UISprite : UIBasicSprite
 		base.OnEnable ();
 		refresh ();
 	}
-
+	
 	new void OnDisable ()
 	{
 		base.OnDisable ();

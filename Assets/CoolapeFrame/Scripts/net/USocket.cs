@@ -42,9 +42,35 @@ namespace Coolape
 		{
 			host = ihost;
 			port = iport;
-			mSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			IPAddress ip = IPAddress.Parse (host);
+			IPAddress ip = null;
+			try {
+				// is ip xx.xx.xx.xx
+				ip = IPAddress.Parse (host);
+			} catch (Exception e) {
+				// may be is dns
+				try {
+					IPAddress[] address = Dns.GetHostAddresses (host);
+					if (address.Length > 0) {
+						ip = address [0];
+					}
+				} catch (Exception e2) {
+					Debug.LogError (e2);
+					return;
+				}
+			}
+			if (ip == null) {
+				Debug.LogError ("Get ip is null");
+				return;
+			}
 			ipe = new IPEndPoint (ip, port);
+
+			if (ip.AddressFamily == AddressFamily.InterNetworkV6) {
+				Debug.LogWarning ("is ipv6");
+				mSocket = new Socket (AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
+			} else {
+				Debug.LogWarning ("is ipv4");
+				mSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			}
 
 			mTmpBufferSize = 1024;
 			mTmpBuffer = new byte[mTmpBufferSize];
@@ -63,28 +89,35 @@ namespace Coolape
 		// 异步模式//////////////////////////////////////////////////////////////////
 		// 异步模式//////////////////////////////////////////////////////////////////
 		public  bool IsConnectionSuccessful = false;
-		public  int timeoutMSec = 10000;	//毫秒
-		public ManualResetEvent TimeoutObject = new ManualResetEvent (false);
+		public  int timeoutMSec = 10000;
+		//毫秒
+		public ManualResetEvent TimeoutObject = null;
 		NetCallback offLineCallback;
 
 		public void connectAsync (NetCallback callback, NetCallback offLineCallback)
 		{
+			if (ipe == null) {
+				callback (this, false);
+				return;
+			}
 			this.offLineCallback = offLineCallback;
 			IsConnectionSuccessful = false;
 			connectCallbackFunc = callback;
 			mSocket.BeginConnect (ipe, (AsyncCallback)connectCallback, this);
-		
+
+			/*
+			if (TimeoutObject != null) {
+				TimeoutObject.Close ();
+				TimeoutObject = null;
+			}
+			TimeoutObject = new ManualResetEvent (false);
 			if (TimeoutObject.WaitOne (timeoutMSec, false)) {
 				if (IsConnectionSuccessful) {
-					//return tcpclient;
-					//callback (true);
 				} else {
-					//mSocket.Close ();
 					callback (this, false);
 				}
-			} else {
-				callback (this, false);
 			}
+			*/
 		}
 
 		public void close ()
@@ -122,7 +155,10 @@ namespace Coolape
 				client.connectCallbackFunc (client, false);
 				client.close ();
 			} finally {
-				client.TimeoutObject.Set ();
+				if (client.TimeoutObject != null) {
+					client.TimeoutObject.Close ();
+					client.TimeoutObject = null;
+				}
 			}
 		}
 

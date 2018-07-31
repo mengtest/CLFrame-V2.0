@@ -14,10 +14,16 @@ using System.Collections;
 using System.IO;
 using System.Collections.Generic;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace Coolape
 {
 	public class CLVerManager : CLBaseLua
 	{
+		public bool isPrintDownload = false;
+		public int downLoadTimes4Failed = 3;
 		//服务器
 		public string baseUrl = "http://your hot fix url";
 		[HideInInspector]
@@ -53,7 +59,7 @@ namespace Coolape
 
 		static string clientVersionPath {
 			get {
-				return CLPathCfg.persistentDataPath + "/ver.v";       //客户端版本
+				return Path.Combine (CLPathCfg.persistentDataPath, "ver.v");       //客户端版本
 			}
 		}
 
@@ -74,15 +80,19 @@ namespace Coolape
 				}
 			}
 			set {
-				Directory.CreateDirectory (Path.GetDirectoryName (clientVersionPath));
-				File.WriteAllText (clientVersionPath, value);
+				try {
+					Directory.CreateDirectory (Path.GetDirectoryName (clientVersionPath));
+					File.WriteAllText (clientVersionPath, value);
+				} catch (System.Exception e) {
+					Debug.LogError (e);
+				}
 			}
 		}
     
 		// 用文件来表示是否已经处理完资源从包里释放出来的状态
 		static string hadPoc {
 			get {
-				return CLPathCfg.persistentDataPath + "/resPoced";
+				return Path.Combine (CLPathCfg.persistentDataPath, "resPoced");
 			}
 		}
 
@@ -102,29 +112,34 @@ namespace Coolape
 				onFinisInitStreaming ();
 				return;
 			}
-#endif
-			// 当版本不同时, clean cache
-			if (string.Compare (Application.version, clientVersion) != 0) {
-				string path = Application.persistentDataPath;
-				// 先删掉目录下的文件
-				string[] fEntries = Directory.GetFiles (path);
-				foreach (string f in fEntries) {
-					File.Delete (f);
+			#endif
+			try {
+				// 当版本不同时, clean cache
+				if (string.Compare (Application.version, clientVersion) != 0) {
+					string path = Application.persistentDataPath;
+					// 先删掉目录下的文件
+					string[] fEntries = Directory.GetFiles (path);
+					foreach (string f in fEntries) {
+						File.Delete (f);
+					}
+					// 再删掉所有文件夹
+					string[] dirEntries = Directory.GetDirectories (path);
+					foreach (string dir in dirEntries) {
+						Directory.Delete (dir, true);
+					}
+					clientVersion = Application.version;
 				}
-				// 再删掉所有文件夹
-				string[] dirEntries = Directory.GetDirectories (path);
-				foreach (string dir in dirEntries) {
-					Directory.Delete (dir, true);
-				}
-				clientVersion = Application.version;
-			}
 
-			// 处理资源释放
-			if (!File.Exists (hadPoc)) {
-				string path = "priority.r";
-				Callback cb = onGetStreamingAssets;
-				StartCoroutine (FileEx.readNewAllBytesAsyn (path, cb));
-			} else {
+				// 处理资源释放
+				if (!File.Exists (hadPoc)) {
+					string path = "priority.r";
+					Callback cb = onGetStreamingAssets;
+					StartCoroutine (FileEx.readNewAllBytesAsyn (path, cb));
+				} else {
+					onFinisInitStreaming ();
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 				onFinisInitStreaming ();
 			}
 		}
@@ -153,11 +168,11 @@ namespace Coolape
 						}
 						// 处理完包的资源释放，弄个标志
 						Directory.CreateDirectory (Path.GetDirectoryName (hadPoc));
-						File.WriteAllText (hadPoc, " ");
+						File.WriteAllText (hadPoc, "ok");
 					}
 				}
 			}
-			onFinisInitStreaming ();
+			Utl.doCallback (onFinisInitStreaming);
 		}
 
 		public  Hashtable toMap (byte[] buffer)
@@ -180,6 +195,7 @@ namespace Coolape
 		}
 
 		public static Hashtable wwwMap = Hashtable.Synchronized (new Hashtable ());
+		public static Hashtable wwwTimesMap = new Hashtable ();
 
 		/// <summary>
 		/// Gets the newest res.取得最新的资源
@@ -209,6 +225,7 @@ namespace Coolape
 			if (string.IsNullOrEmpty (path)) {
 				return;
 			}
+
 			string verVal = "";
 			if (!MapEx.getBool (wwwMap, path)) {
 				bool needSave = false;
@@ -222,7 +239,7 @@ namespace Coolape
 						verVal = MapEx.getString (otherResVerNew, path);
 						needSave = true;
 					} else if (obj1 != null && obj2 != null) {
-						if (obj1.ToString ().Equals(obj2.ToString ())) {//本地是最新的
+						if (obj1.ToString ().Equals (obj2.ToString ())) {//本地是最新的
 							needSave = false;
 						} else {    //本地不是最新的
 							verVal = MapEx.getString (otherResVerNew, path);
@@ -239,10 +256,13 @@ namespace Coolape
 				}
 				string url = "";
 				if (needSave) {
-					if (!string.IsNullOrEmpty(verVal)) {
+					if (!string.IsNullOrEmpty (verVal)) {
 						url = PStr.begin ().a (baseUrl).a ("/").a (path).a (".").a (verVal).end ();
 					} else {
 						url = PStr.begin ().a (baseUrl).a ("/").a (path).end ();
+					}
+					if (isPrintDownload) {
+						Debug.LogWarning (url);
 					}
 				} else {
 					url = PStr.begin ().a (CLPathCfg.persistentDataPath).a ("/").a (path).end ();
@@ -281,6 +301,12 @@ namespace Coolape
 		public IEnumerator doGetContent (string path, string url, bool needSave, 
 		                                 CLAssetType type, object onGetAsset, params object[] originals)
 		{
+			#if UNITY_EDITOR
+			getedResMap [path] = true;
+			#endif
+			if (url.StartsWith ("http")) {
+				url = url.Replace ("+", "%2B");
+			}
 			WWW www = new WWW (url);
 			wwwMap [path] = true;
 			if (needSave) {
@@ -289,53 +315,82 @@ namespace Coolape
 				list.Add (onGetAsset);
 				list.Add (originals);
 				list.Add (url);
+				list.Add (type);
+				list.Add (www);
 				//监听进度是否超时
-				WWWEx.checkWWWTimeout (self, www, 4, 0, (Callback)onGetNewstResTimeOut, list);
+				WWWEx.checkWWWTimeout (self, www, 5, -1, (Callback)onGetNewstResTimeOut, list);
 				addWWW (www, path, url);
 			}
 
 			yield return www;
-			WWWEx.uncheckWWWTimeout (self, www);
-			object content = null;
-			if (string.IsNullOrEmpty (www.error)) {
-				switch (type) {
-				case CLAssetType.text:
-					content = www.text;
-					break;
-				case CLAssetType.bytes:
-					content = www.bytes;
-					break;
-				case CLAssetType.texture:
-					content = www.texture;
-					break;
-				case CLAssetType.assetBundle:
-					content = www.assetBundle;
-					break;
-				}
-            
-				if (needSave && www.bytes != null) {
-					saveNewRes (path, www.bytes);
-				}
-			} else {
-//#if UNITY_EDITOR
-				Debug.LogError ("Get content failed=" + path + "\n" + url);
-//#endif
-				content = null;
-			}
-            
 			if (needSave) {
-				rmWWW (url);
+				WWWEx.uncheckWWWTimeout (self, www);
+			}
+			object content = null;
+			try {
+				if (string.IsNullOrEmpty (www.error)) {
+					switch (type) {
+					case CLAssetType.text:
+						content = www.text;
+						break;
+					case CLAssetType.bytes:
+						content = www.bytes;
+						break;
+					case CLAssetType.texture:
+						content = www.texture;
+						break;
+					case CLAssetType.assetBundle:
+						content = www.assetBundle;
+						break;
+					}
+	            
+					if (needSave && www.bytes != null) {
+						saveNewRes (path, www.bytes);
+					}
+				} else {
+					//#if UNITY_EDITOR
+					Debug.LogError ("Get content failed=" + path + "\n" + url);
+					//#endif
+					content = null;
+				}
+			} catch (System.Exception e) {
+				Debug.LogError (e);
+			}
+			onGetNewstRes (www, url, path, type, content, needSave, onGetAsset, originals);
+		}
+
+		public void onGetNewstRes (WWW www, string url, string path, CLAssetType type, object content, bool needSave, object onGetAsset, params object[] originals)
+		{
+			try {
+				if (needSave) {
+					//说明是需要下载的资源
+					if (www != null && content == null && (MapEx.getInt (wwwTimesMap, path) + 1) < downLoadTimes4Failed) {
+						//需要下载资源时，如查下载失败，且少于失败次数，则再次下载
+						www.Dispose ();
+						www = null;
+
+						wwwTimesMap [path] = MapEx.getInt (wwwTimesMap, path) + 1;
+						StartCoroutine (doGetContent (path, url, needSave, type, onGetAsset, originals));
+						return;
+					}
+					rmWWW (url);
+				}
+				if(content == null) {
+					Debug.LogError("get newstRes is null. url==" + url);
+				}
+				Utl.doCallback (onGetAsset, path, content, originals);
+				if (www.assetBundle != null) {
+					www.assetBundle.Unload (false);
+				}
+
+				www.Dispose ();
+				www = null;
+			} catch (System.Exception e) {
+				Debug.LogError (e);
 			}
 
-			Utl.doCallback (onGetAsset, path, content, originals);
-			if (www.assetBundle != null) {
-				www.assetBundle.Unload (false);
-			}
-
-			www.Dispose ();
-			www = null;
-        
 			wwwMap [path] = false;
+			wwwTimesMap [path] = 0;
 		}
 
 		public void onGetNewstResTimeOut (params object[] args)
@@ -350,14 +405,13 @@ namespace Coolape
 			object onGetAsset = origs [1];
 			object[] originals = (object[])(origs [2]);
 			string url = origs [3].ToString ();
+			CLAssetType type = (CLAssetType)(origs [4]);
+			WWW www = origs [5] as WWW;
+			bool needSave = true;
             
 //			NAlertTxt.add ("Get Res Time out : " + path, Color.red, 1, 1, false);
 			Debug.LogWarning ("Get Res Time out : " + path);
-
-			Utl.doCallback (onGetAsset, path, null, originals);
-
-			rmWWW (url);
-			wwwMap [path] = false;
+			onGetNewstRes (www, url, path, type, null, needSave, onGetAsset, originals);
 			origs.Clear ();
 		}
 
@@ -475,6 +529,24 @@ namespace Coolape
 				}
 				return true;
 			}
+		}
+
+		Hashtable getedResMap = new Hashtable ();
+
+		[ContextMenu ("save loaded assets(with out priority assets)")]
+		public void getCurrentRes ()
+		{
+			#if UNITY_EDITOR
+			string str = "";
+			foreach (DictionaryEntry cell in getedResMap) {
+				str += cell.Key + "," + "true" + "\n";
+			}
+			Debug.LogError (str);
+			string path = EditorUtility.SaveFilePanelInProject ("save loaded assets(with out priority assets)", "newAssetsInfor", "v", "");
+			if (!string.IsNullOrEmpty (path)) {
+				File.WriteAllText (path, str);
+			}
+			#endif
 		}
 	}
 

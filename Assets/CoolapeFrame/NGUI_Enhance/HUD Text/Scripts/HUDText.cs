@@ -49,7 +49,8 @@ public class HUDText : MonoBehaviour
 	/// </summary>
 
 	public UILabel.Effect effect = UILabel.Effect.None;
-	
+
+	public bool inactiveWhenFinish = false;
 	public bool gradient = false;
 	public FontStyle fontStyle = FontStyle.Normal;
 	public int spacingX = 0;
@@ -71,7 +72,7 @@ public class HUDText : MonoBehaviour
 	/// Curve used to fade out entries with time.
 	/// </summary>
 
-	public AnimationCurve alphaCurve = new AnimationCurve(new Keyframe[] { new Keyframe(1f, 1f), new Keyframe(3f, 0f) });
+	public AnimationCurve alphaCurve = new AnimationCurve(new Keyframe[] { new Keyframe(1f, 1f), new Keyframe(3f, 0.001f) });
 
 	List<Entry> mList = new List<Entry>();
 	List<Entry> mUnused = new List<Entry>();
@@ -140,7 +141,11 @@ public class HUDText : MonoBehaviour
 	void Delete (Entry ent)
 	{
 		ent.label.enabled = false;
-		ent.label.gameObject.SetActive(false);
+		if (inactiveWhenFinish) {
+			ent.label.gameObject.SetActive (false);
+		} else {
+			ent.label.transform.localPosition = new Vector3 (0,10000, 0);
+		}
 		mList.Remove(ent);
 		mUnused.Add(ent);
 	}

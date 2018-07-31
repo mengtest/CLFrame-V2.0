@@ -168,7 +168,7 @@ namespace Coolape
 			}
 			object ret = packMessage (obj);
 
-			if (ret == null) {
+			if (ret == null || isStopping || !connected) {
 				return;
 			}
 			socket.SendAsync (ret as byte[]);

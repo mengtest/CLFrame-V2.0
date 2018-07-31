@@ -439,8 +439,9 @@ public class ECLProjectManager : EditorWindow
 			if (filePath.Contains (PStr.b ().a (basePath).a ("/ui/panel").e ())
 			    || filePath.Contains (PStr.b ().a (basePath).a ("/ui/cell").e ())
 			    || filePath.Contains (PStr.b ().a (basePath).a ("/ui/other").e ())
-			    || filePath.Contains (PStr.b ().a (basePath).a ("/atlas").e ())
-			    || filePath.Contains (PStr.b ().a (basePath).a ("/font").e ())
+				|| filePath.Contains (PStr.b ().a (basePath).a ("/atlas").e ())
+				|| filePath.Contains (PStr.b ().a (basePath).a ("/font").e ())
+				|| filePath.Contains (PStr.b ().a (basePath).a ("/AnimationTexture").e ())
 			    || filePath.Contains (PStr.b ().a (basePath).a ("/localization").e ())
 			    || (!data.isLuaPackaged && filePath.Contains (PStr.b ().a (basePath).a ("/lua").e ()))) { 
 				key = filter (filePath); 
@@ -474,8 +475,9 @@ public class ECLProjectManager : EditorWindow
 			    || filePath.Contains (PStr.b ().a (basePath).a ("/ui/cell").e ())
 			    || filePath.Contains (PStr.b ().a (basePath).a ("/ui/other").e ())
 			    || filePath.Contains (PStr.b ().a (basePath).a ("/atlas").e ())
-			    || filePath.Contains (PStr.b ().a (basePath).a ("/font").e ())
-			    || filePath.Contains (PStr.b ().a (basePath).a ("/localization").e ())
+				|| filePath.Contains (PStr.b ().a (basePath).a ("/font").e ())
+				|| filePath.Contains (PStr.b ().a (basePath).a ("/localization").e ())
+				|| filePath.Contains (PStr.b ().a (basePath).a ("/AnimationTexture").e ())
 			    || (!data.isLuaPackaged && filePath.Contains (PStr.b ().a (basePath).a ("/lua").e ()))) {
 				continue;
 			}
@@ -972,6 +974,15 @@ public class ECLProjectManager : EditorWindow
 					resultPstr.a (path).a ("\n");
 					if (callCustomPublish (path)) {
 						ECLCreatAssetBundle4Update.createAssets4Upgrade ("Assets/" + path, true);
+					}
+				}
+			} else if (path.Contains ("/priority/AnimationTexture/")) {
+				if (lastPriorityVer == null || lastPriorityVer [path] == null || lastPriorityVer [path].ToString () != md5str) {
+					//do refresh asset
+					Debug.Log ("Assets/" + path);
+					resultPstr.a (path).a ("\n");
+					if (callCustomPublish (path)) {
+						ECLCreatAssetBundle4Update.createAssets4Upgrade ("Assets/" + path);
 					}
 				}
 			} else if (path.Contains ("/priority/lua/")) {

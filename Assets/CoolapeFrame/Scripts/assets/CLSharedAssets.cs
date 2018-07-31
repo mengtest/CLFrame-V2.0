@@ -103,6 +103,7 @@ namespace Coolape
 			#if UNITY_EDITOR
 			foreach (var matInfor in materials) {
 				string matPath = "Assets/" + CLPathCfg.self.basePath + "/upgradeRes4Dev/other/Materials/" + matInfor.materialName.Replace (".", "/") + ".mat";
+				Debug.Log("matPath==" + matPath);
 				Material mat = AssetDatabase.LoadAssetAtPath (matPath, typeof(Material)) as Material;
 				if (mat == null) {
 					continue; 

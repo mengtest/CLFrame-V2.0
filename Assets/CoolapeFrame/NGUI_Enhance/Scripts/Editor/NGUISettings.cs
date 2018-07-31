@@ -400,6 +400,14 @@ public class NGUISettings
 		set { SetBool("NGUI 4096", value); }
 	}
 
+	#region add by chenbin
+	static public bool addFolder2SpriteName
+	{
+		get { return GetBool("addFolder2SpriteName", true); }
+		set { SetBool("addFolder2SpriteName", value); }
+	}
+	#endregion
+
 	static public bool showAllDCs
 	{
 		get { return GetBool("NGUI DCs", true); }

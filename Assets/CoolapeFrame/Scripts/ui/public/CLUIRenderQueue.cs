@@ -118,7 +118,7 @@ namespace Coolape
 			if (mWidget != null && NGUITools.GetActive (mWidget)) {
 				if (mWidget.drawCall == null) {
 					#if UNITY_EDITOR
-					Debug.LogWarning ("widget.drawCall == null");
+//					Debug.LogWarning ("widget.drawCall == null");
 					#endif
 					mWidget.depth = depth;
 				} else {

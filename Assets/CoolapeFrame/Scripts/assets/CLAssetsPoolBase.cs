@@ -152,6 +152,7 @@ namespace Coolape
 					object progressCB = org [3];
 
 					if (asset == null) {
+						Debug.LogError("get asset is null. path =" + path);
 						Utl.doCallback (cb, null, args);
 						return;
 					}

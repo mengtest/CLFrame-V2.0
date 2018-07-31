@@ -254,7 +254,11 @@ public class UIAtlasMaker : EditorWindow
 				if (NGUISettings.atlas != null && NGUISettings.atlas.isBorrowSpriteMode) {
 					texNames.Add(getTextureName(tex));//add by chenbin
 				} else {
-					texNames.Add(tex.name);
+					if(NGUISettings.addFolder2SpriteName) {
+						texNames.Add(getTextureName(tex));
+					} else {
+						texNames.Add(tex.name);
+					}
 				}
 			}
 			#endregion 
@@ -323,7 +327,13 @@ public class UIAtlasMaker : EditorWindow
 				SpriteEntry sprite = new SpriteEntry();
 				sprite.SetRect(0, 0, oldTex.width, oldTex.height);
 				sprite.tex = oldTex;
-				sprite.name = oldTex.name;
+				#region modify chenbin
+				if (NGUISettings.addFolder2SpriteName) {
+					sprite.name = getTextureName (oldTex);
+				} else {
+					sprite.name = oldTex.name;
+				}
+				#endregion
 				sprite.temporaryTexture = false;
 				list.Add(sprite);
 				continue;
@@ -377,7 +387,14 @@ public class UIAtlasMaker : EditorWindow
 				// If the dimensions match, then nothing was actually trimmed
 				if (!NGUISettings.atlasPMA && (newWidth == oldWidth && newHeight == oldHeight)) {
 					sprite.tex = oldTex;
-					sprite.name = oldTex.name;
+//					sprite.name = oldTex.name;
+					#region modify chenbin
+					if (NGUISettings.addFolder2SpriteName) {
+						sprite.name = getTextureName (oldTex);
+					} else {
+						sprite.name = oldTex.name;
+					}
+					#endregion
 					sprite.temporaryTexture = false;
 				} else {
 					// Copy the non-trimmed texture data into a temporary buffer
@@ -395,7 +412,14 @@ public class UIAtlasMaker : EditorWindow
 					}
 
 					// Create a new texture
-					sprite.name = oldTex.name;
+//					sprite.name = oldTex.name;
+					#region modify chenbin
+					if (NGUISettings.addFolder2SpriteName) {
+						sprite.name = getTextureName (oldTex);
+					} else {
+						sprite.name = oldTex.name;
+					}
+					#endregion
 					sprite.SetTexture(newPixels, newWidth, newHeight);
 
 					// Remember the padding offset
@@ -945,6 +969,14 @@ public class UIAtlasMaker : EditorWindow
 		GUILayout.Label("if off, limit atlases to 2048x2048");
 		GUILayout.EndHorizontal();
 #endif
+
+		#region add by chenbin
+		GUILayout.BeginHorizontal();
+		NGUISettings.addFolder2SpriteName = EditorGUILayout.Toggle("Folder add SpriteName", NGUISettings.addFolder2SpriteName, GUILayout.Width(100f));
+		GUILayout.Label("Add folder name to SpriteName");
+		GUILayout.EndHorizontal();
+		#endregion
+
 		NGUIEditorTools.EndContents();
 
 		if (NGUISettings.atlas != null) {

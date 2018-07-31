@@ -61,6 +61,7 @@ public class UIFontInspector : Editor
 		{
 			NGUIEditorTools.RegisterUndo("Font Atlas", mFont);
 			mFont.atlas = obj as UIAtlas;
+			mFont.atlasName = mFont.atlas.name; // add by chenbin
 			MarkAsChanged();
 		}
 	}
@@ -199,7 +200,7 @@ public class UIFontInspector : Editor
 
 			// For updating the font's data when importing from an external source, such as the texture packer
 			bool resetWidthHeight = false;
-
+			EditorGUILayout.LabelField("Atlas Name", mFont.atlasName);
 			if (mFont.atlas != null || mFont.material != null)
 			{
 				TextAsset data = EditorGUILayout.ObjectField("Import Data", null, typeof(TextAsset), false) as TextAsset;

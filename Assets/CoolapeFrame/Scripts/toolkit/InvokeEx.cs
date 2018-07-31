@@ -7,7 +7,8 @@ namespace Coolape
 {
 	public class InvokeEx : MonoBehaviour
 	{
-
+		public bool canFixedUpdate = true;
+		public bool canUpdate = true;
 		public static InvokeEx self;
 
 		public InvokeEx ()
@@ -210,7 +211,22 @@ namespace Coolape
 		//================================================
 		// Fixed invoke 4 lua
 		//================================================
-		public long frameCounter = 0;
+		long _frameCounter = 0;
+		object locker=new object();
+
+		public long frameCounter {
+			get {
+				lock (locker) {
+					return _frameCounter;
+				}
+			}
+			set {
+				lock (locker) {
+					_frameCounter = value;
+				}
+			}
+		}
+
 		Hashtable _fixedInvokeMap = new Hashtable ();
 
 		public Hashtable fixedInvokeMap {
@@ -309,6 +325,8 @@ namespace Coolape
 		{
 			if (fixedInvokeMap == null && fixedInvokeMap.Count <= 0)
 				return;
+			if (fixedInvokeMap [key] == null)
+				return;
 			object[] content = null;
 			List<object[]> funcList = (List<object[]>)(fixedInvokeMap [key]);
 			object callback = null;
@@ -330,6 +348,8 @@ namespace Coolape
 		//帧统计
 		public virtual void FixedUpdate ()
 		{
+			if (!canFixedUpdate)
+				return;
 			frameCounter++;
 			if (fixedInvokeMap != null && fixedInvokeMap.Count > 0) {
 				doFixedInvoke (frameCounter);
@@ -447,6 +467,8 @@ namespace Coolape
 
 		public virtual void Update ()
 		{
+			if (!canUpdate)
+				return;
 			if (invokeByUpdateList.Count > 0) {
 				doInvokeByUpdate ();
 			}

@@ -31,7 +31,11 @@ namespace Coolape
 		{
 			self = this;
 		}
-
+		public override void init ()
+		{
+			tweenAlpha.ResetToBeginning ();
+			base.init ();
+		}
 		public void _show(object callback, List<string> list)
 		{
 			NGUITools.SetActive(gameObject, true);
@@ -70,6 +74,11 @@ namespace Coolape
 				NGUITools.SetActive(gameObject, false);
 			}
 
+			Invoke ("doCallback", 0.1f);
+		}
+
+		public void doCallback()
+		{
 			Utl.doCallback(finishCallback, this);
 		}
 

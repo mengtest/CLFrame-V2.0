@@ -336,7 +336,9 @@ namespace Coolape
 				r = pool.borrowObject (name);
 				poolMap [name] = pool;
 			}
-			CLAssetsManager.self.useAsset (getAssetPath (name));
+			if (_havePrefab (name)) {
+				CLAssetsManager.self.useAsset (getAssetPath (name));
+			}
 			return r;
 		}
 

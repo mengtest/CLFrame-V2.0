@@ -187,7 +187,7 @@ public class UIAtlas : MonoBehaviour
 			if (Coolape.CLAssetsManager.self != null
 			    && !string.IsNullOrEmpty (Coolape.CLAssetsManager.self.debugKey)
 			    && s.path.Contains (Coolape.CLAssetsManager.self.debugKey)) {
-				Debug.LogError ("returnSpriteByname====" + s.path + "===" + rc);
+				Debug.LogError ("returnSpriteByname====" + s.path + "===" + name + "=====" + rc);
 			}
 			#endif
 			retainCounter [s.path] = rc < 0 ? 0 : rc;
@@ -541,7 +541,7 @@ public class UIAtlas : MonoBehaviour
 		if (Coolape.CLAssetsManager.self != null
 		    && !string.IsNullOrEmpty (Coolape.CLAssetsManager.self.debugKey)
 		    && ret.path.Contains (Coolape.CLAssetsManager.self.debugKey)) {
-			Debug.LogError ("borrow Sprite==" + ret.path + "==" + rc);
+			Debug.LogError ("borrow Sprite==" + ret.path + "==" + name + "====" + rc);
 		}
 		#endif
 		Coolape.Utl.doCallback (callback, uisp, ret.name, args);

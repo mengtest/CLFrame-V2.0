@@ -203,9 +203,13 @@ public class UISprite : UIBasicSprite
 				{
 					if (mAtlas != null && mAtlas.spriteList.Count > 0)
 					{
-						SetAtlasSprite(mAtlas.spriteList[0]);
-						if (mSprite != null) { // add by chenbin
-							mSpriteName = mSprite.name;
+						if(mAtlas.isBorrowSpriteMode) {		//add by chenbin
+							spriteName = mAtlas.spriteList [0].name;		//add by chenbin
+						} else {
+							SetAtlasSprite(mAtlas.spriteList[0]);
+							if (mSprite != null) { // add by chenbin
+								mSpriteName = mSprite.name;
+							}
 						}
 					}
 				}
@@ -562,7 +566,7 @@ public class UISprite : UIBasicSprite
 	{
 		if (sp != null ) {
 			if (atlas != null && atlas.isBorrowSpriteMode) {
-				if (spriteName == sp.name && NGUITools.GetActive (gameObject)) { // modify by chenbin
+				if ((string.IsNullOrEmpty(spriteName) || spriteName == sp.name) && NGUITools.GetActive (gameObject)) { // modify by chenbin
 					mSprite = sp;
 					mSpriteSet = true;		// add by chenbin
 					mChanged = true;		// add by chenbin

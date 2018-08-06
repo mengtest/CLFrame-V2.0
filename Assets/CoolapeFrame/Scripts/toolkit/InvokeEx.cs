@@ -7,8 +7,8 @@ namespace Coolape
 {
 	public class InvokeEx : MonoBehaviour
 	{
-		public bool canFixedUpdate = true;
-		public bool canUpdate = true;
+		public bool canFixedUpdate = false;
+		public bool canUpdate = false;
 		public static InvokeEx self;
 
 		public InvokeEx ()
@@ -281,6 +281,9 @@ namespace Coolape
 			content [1] = paras;
 			funcList.Add (content);
 			fixedInvokeMap [key] = funcList;
+			if(!canFixedUpdate) {
+				canFixedUpdate = true;
+			}
 		}
 
 		public static void cancelInvokeByFixedUpdate ()
@@ -318,6 +321,10 @@ namespace Coolape
 						list.RemoveAt (i);
 					}
 				}
+
+				if(list.Count == 0) {
+					fixedInvokeMap.Remove (item);
+				}
 			}
 		}
 
@@ -353,6 +360,9 @@ namespace Coolape
 			frameCounter++;
 			if (fixedInvokeMap != null && fixedInvokeMap.Count > 0) {
 				doFixedInvoke (frameCounter);
+			} else {
+				canFixedUpdate = false;
+				frameCounter = 0;
 			}
 		}
 
@@ -400,6 +410,7 @@ namespace Coolape
 			list.add (orgs);
 			list.add (Time.unscaledTime + sec);
 			invokeByUpdateList.Add (list);
+			canUpdate = true;
 		}
 
 		public static void cancelInvokeByUpdate ()
@@ -471,6 +482,8 @@ namespace Coolape
 				return;
 			if (invokeByUpdateList.Count > 0) {
 				doInvokeByUpdate ();
+			} else {
+				canUpdate = false;
 			}
 		}
 	}

@@ -7,6 +7,8 @@ namespace Coolape
 {
 	public class CLBehaviourWithUpdate4Lua : CLBehaviour4Lua
 	{
+		public bool canUpdate = false;
+
 		public LuaFunction flUpdate = null;
 		public LuaFunction flLateUpdate = null;
 		public LuaFunction flFixedUpdate = null;
@@ -84,6 +86,7 @@ namespace Coolape
 			content [1] = paras;
 			funcList.Add (content);
 			fixedInvokeMap [key] = funcList;
+			canFixedInvoke = true;
 		}
 
 		public void cancelFixedInvoke4Lua ()
@@ -110,6 +113,9 @@ namespace Coolape
 					if (func.Equals (content [0])) {
 						list.RemoveAt (i);
 					}
+				}
+				if(list.Count == 0) {
+					fixedInvokeMap.Remove (item);
 				}
 			}
 		}
@@ -152,7 +158,11 @@ namespace Coolape
 			}
 			if (canFixedInvoke) {
 				frameCounter++;
-				doFixedInvoke (frameCounter);
+				if (fixedInvokeMap.Count > 0) {
+					doFixedInvoke (frameCounter);
+				} else {
+					canFixedInvoke = false;
+				}
 			}
 		}
 
@@ -190,6 +200,7 @@ namespace Coolape
 			list.add (orgs);
 			list.add (Time.unscaledTime + sec);
 			invokeByUpdateList.Add (list);
+			canUpdate = true;
 		}
 
 		public void cancelInvokeByUpdate ()
@@ -260,8 +271,12 @@ namespace Coolape
 			if (flUpdate != null) {
 				flUpdate.Call (gameObject);
 			}
-			if (invokeByUpdateList.Count > 0) {
-				doInvokeByUpdate ();
+			if (canUpdate) {
+				if (invokeByUpdateList.Count > 0) {
+					doInvokeByUpdate ();
+				} else {
+					canUpdate = false;
+				}
 			}
 		}
 	}

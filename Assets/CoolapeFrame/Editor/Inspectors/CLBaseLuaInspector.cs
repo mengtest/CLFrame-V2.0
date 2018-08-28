@@ -17,28 +17,33 @@ public class CLBaseLuaInspector :Editor
 		DrawDefaultInspector ();
 		if (instance != null) {
 			init ();
-			NGUIEditorTools.BeginContents ();
-			{
-				GUILayout.BeginHorizontal ();
-				{
-					EditorGUILayout.LabelField ("Lua Text", GUILayout.Width (100));
-					luaAsset = EditorGUILayout.ObjectField (luaAsset, typeof(UnityEngine.Object), GUILayout.Width (125));
-				}
-				GUILayout.EndHorizontal ();
-				string luaPath = AssetDatabase.GetAssetPath (luaAsset);
-//				if(!string.IsNullOrEmpty(luaPath)) {
-					instance.luaPath = Utl.filterPath (luaPath);
-//				}
-				EditorUtility.SetDirty (instance);
-				
-				GUI.contentColor = Color.yellow;
-				EditorGUILayout.LabelField ("注意：绑定的lua要求返回luatable");
-				GUI.contentColor = Color.white;
-			}
-			NGUIEditorTools.EndContents ();
-
-		}
+            drawLuaInfor();
+        }
 	}
+
+    public void drawLuaInfor()
+    {
+        instance = target as CLBaseLua;
+        ECLEditorUtl.BeginContents();
+        {
+            GUILayout.BeginHorizontal();
+            {
+                EditorGUILayout.LabelField("Lua Text", GUILayout.Width(100));
+                luaAsset = EditorGUILayout.ObjectField(luaAsset, typeof(UnityEngine.Object), GUILayout.Width(125));
+            }
+            GUILayout.EndHorizontal();
+            string luaPath = AssetDatabase.GetAssetPath(luaAsset);
+            //              if(!string.IsNullOrEmpty(luaPath)) {
+            instance.luaPath = Utl.filterPath(luaPath);
+            //              }
+            EditorUtility.SetDirty(instance);
+
+            GUI.contentColor = Color.yellow;
+            EditorGUILayout.LabelField("注意：绑定的lua要求返回luatable");
+            GUI.contentColor = Color.white;
+        }
+        ECLEditorUtl.EndContents();
+    }
 
 	bool isFinishInit = false;
 

@@ -58,6 +58,9 @@ namespace Coolape
 				return _luaTable;
 			}
 			set {
+                if(_luaTable != value && _luaTable != null) {
+                    destoryLua();
+                }
 				_luaTable = value;
 			}
 		}

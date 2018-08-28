@@ -436,7 +436,7 @@ namespace Coolape
 
 			void onGetMat (params object[] paras)
 			{
-				string name = paras [0].ToString ();
+                string name = paras [0].ToString ();
 				Material mat = paras [1] as Material;
 				if (index == 0) {
 					render.sharedMaterial = mat;

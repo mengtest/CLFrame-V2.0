@@ -84,6 +84,7 @@ namespace Coolape
 						((Callback)onClickCallback) (this);
 					}
 				}
+                base.OnClick();
 			} catch (System.Exception e) {
 				Debug.LogError (e);
 			}

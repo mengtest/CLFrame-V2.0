@@ -4,6 +4,7 @@ using UnityEditor;
 using System.IO;
 using Coolape;
 using System.Collections.Generic;
+using UnityEditorInternal;
 
 public static class ECLEditorUtl
 {
@@ -391,5 +392,16 @@ public static class ECLEditorUtl
 		Debug.LogError (ret);
 		return ret;
 	}
-	
+
+    public static LayerMask drawMaskField(string text, LayerMask mask)
+    {
+        return drawMaskField(new GUIContent(text, ""), mask);
+    }
+
+    public static LayerMask drawMaskField(GUIContent uIContent, LayerMask mask) {
+        int tempMask = EditorGUILayout.MaskField(uIContent,
+                                                      InternalEditorUtility.LayerMaskToConcatenatedLayersMask(mask),
+                                                      InternalEditorUtility.layers);
+        return InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(tempMask);
+    }
 }

@@ -7,7 +7,7 @@ namespace Coolape
 {
 	public class CLBehaviourWithUpdate4Lua : CLBehaviour4Lua
 	{
-		public bool canUpdate = false;
+		public bool canUpdateInvoke = false;
 
 		public LuaFunction flUpdate = null;
 		public LuaFunction flLateUpdate = null;
@@ -200,7 +200,7 @@ namespace Coolape
 			list.add (orgs);
 			list.add (Time.unscaledTime + sec);
 			invokeByUpdateList.Add (list);
-			canUpdate = true;
+			canUpdateInvoke = true;
 		}
 
 		public void cancelInvokeByUpdate ()
@@ -271,11 +271,11 @@ namespace Coolape
 			if (flUpdate != null) {
 				flUpdate.Call (gameObject);
 			}
-			if (canUpdate) {
+			if (canUpdateInvoke) {
 				if (invokeByUpdateList.Count > 0) {
 					doInvokeByUpdate ();
 				} else {
-					canUpdate = false;
+					canUpdateInvoke = false;
 				}
 			}
 		}

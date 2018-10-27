@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-#if UNITY_IPHONE
+#if UNITY_IPHONE || UNITY_IOS
 using UnityEngine.SocialPlatforms.GameCenter;
 #endif
 
@@ -17,7 +17,7 @@ namespace Coolape
 		/// </summary>  
 		public static void authenticate (object callback, object orgs)
 		{
-			#if UNITY_IPHONE
+			#if UNITY_IPHONE|| UNITY_IOS
 			Social.localUser.Authenticate (success => {
 				if (success) {
 					authenticated = Social.localUser.authenticated;
@@ -44,7 +44,7 @@ namespace Coolape
 		/// </summary>
 		public static void showAchievementsUI ()
 		{
-			#if UNITY_IPHONE
+			#if UNITY_IPHONE|| UNITY_IOS
 			if (Social.localUser.authenticated) {  
 				Social.ShowAchievementsUI ();
 			} else {
@@ -58,7 +58,7 @@ namespace Coolape
 		/// </summary>
 		public static void showLeaderboardUI ()
 		{
-			#if UNITY_IPHONE
+			#if UNITY_IPHONE|| UNITY_IOS
 			if (Social.localUser.authenticated) {
 				Social.ShowLeaderboardUI ();
 			} else {
@@ -76,7 +76,7 @@ namespace Coolape
 		/// <param name="orgs">Orgs.</param>
 		public static void reportScore (long sore, string board, object callback, object orgs)
 		{
-			#if UNITY_IPHONE
+			#if UNITY_IPHONE|| UNITY_IOS
 			if (Social.localUser.authenticated) {
 				Social.ReportScore (sore, board, success => {
 					Utl.doCallback (callback, success, orgs);
@@ -97,7 +97,7 @@ namespace Coolape
 		/// <param name="orgs">Orgs.</param>
 		public static void reportProgress (string activeId, double progress, object callback, object orgs)
 		{
-			#if UNITY_IPHONE
+			#if UNITY_IPHONE|| UNITY_IOS
 			if (Social.localUser.authenticated) {
 				Social.ReportProgress (activeId, progress, success => {
 					Utl.doCallback (callback, success, orgs);

@@ -97,25 +97,37 @@ public class ECLUpgradeBindingServer : EditorWindow
 			EditorGUILayout.LabelField ("SID", GUILayout.Width (80));
 			EditorGUILayout.LabelField ("SName", GUILayout.Width (100));
 			GUI.color = Color.yellow;
-			#if UNITY_ANDROID
+#if UNITY_ANDROID
 			EditorGUILayout.LabelField ("UpgradeMd5Ver(Android)", GUILayout.Width (250));
-			#elif UNITY_IPHONE
+#elif UNITY_IPHONE || UNITY_IOS
 			EditorGUILayout.LabelField ("UpgradeMd5Ver(ios)", GUILayout.Width (250));
-			#endif
-			EditorGUILayout.LabelField ("UpgradePkg Name", GUILayout.Width (160));
+#elif UNITY_STANDALONE_WIN
+            EditorGUILayout.LabelField ("UpgradeMd5Ver(win)", GUILayout.Width (250));
+#elif UNITY_STANDALONE_OSX
+            EditorGUILayout.LabelField ("UpgradeMd5Ver(osx)", GUILayout.Width (250));
+#endif
+            EditorGUILayout.LabelField ("UpgradePkg Name", GUILayout.Width (160));
 			EditorGUILayout.LabelField ("UpgradePkg Mark", GUILayout.Width (250));
 			GUI.color = Color.white;
-			#if UNITY_ANDROID
+#if UNITY_ANDROID
 			if (GUILayout.Button ("Select Md5(Android)")) {
 				setUpgradePkgMutlMode ("Android");
-			}
-			#elif UNITY_IPHONE
-			if (GUILayout.Button ("Select Md5(ios)")) {
-				setUpgradePkgMutlMode ("ios");
-			}
-			#endif
-		}
-		EditorGUILayout.EndHorizontal ();
+            }
+#elif UNITY_IPHONE || UNITY_IOS
+            if (GUILayout.Button ("Select Md5(ios)")) {
+                setUpgradePkgMutlMode ("ios");
+            }
+#elif UNITY_STANDALONE_WIN
+            if (GUILayout.Button ("Select Md5(win)")) {
+                setUpgradePkgMutlMode ("win");
+            }
+#elif UNITY_STANDALONE_OSX
+            if (GUILayout.Button ("Select Md5(osx)")) {
+                setUpgradePkgMutlMode ("osx");
+            }
+#endif
+        }
+        EditorGUILayout.EndHorizontal ();
 		GUILayout.Space (5);
 		ECLEditorUtl.BeginContents ();
 		{
@@ -134,25 +146,37 @@ public class ECLUpgradeBindingServer : EditorWindow
 						EditorGUILayout.TextField (MapEx.getString (server, "idx"), GUILayout.Width (80));
 						EditorGUILayout.TextField (MapEx.getString (server, "servername"), GUILayout.Width (100));
 						GUI.color = Color.yellow;
-						#if UNITY_ANDROID
+#if UNITY_ANDROID
 						EditorGUILayout.TextField (MapEx.getString (server, "androidversion"), GUILayout.Width (250));
-						#elif  UNITY_IPHONE
-						EditorGUILayout.TextField (MapEx.getString (server, "iosversion"), GUILayout.Width (250));
-						#endif
-						EditorGUILayout.TextField (MapEx.getString (server, "pkgName"), GUILayout.Width (160));
+#elif UNITY_IPHONE || UNITY_IOS
+                        EditorGUILayout.TextField (MapEx.getString (server, "iosversion"), GUILayout.Width (250));
+#elif UNITY_STANDALONE_WIN
+                        EditorGUILayout.TextField (MapEx.getString (server, "winversion"), GUILayout.Width (250));
+#elif UNITY_STANDALONE_OSX
+                        EditorGUILayout.TextField (MapEx.getString (server, "osxversion"), GUILayout.Width (250));
+#endif
+                        EditorGUILayout.TextField (MapEx.getString (server, "pkgName"), GUILayout.Width (160));
 						EditorGUILayout.TextArea (MapEx.getString (server, "pkgRemark"), GUILayout.Width (250));
 						GUI.color = Color.white;
-						#if UNITY_ANDROID
+#if UNITY_ANDROID
 						if (GUILayout.Button ("Select Md5(Android)")) {
 							ECLUpgradeListProc.popup4Select ((Callback)onGetUpgradePkg, ListEx.builder ().Add (cell.Key).Add ("Android").ToList ());
-						}
-						#elif  UNITY_IPHONE
-						if (GUILayout.Button ("Select Md5(ios)")) {
-							ECLUpgradeListProc.popup4Select ((Callback)onGetUpgradePkg, ListEx.builder().Add(cell.Key).Add("ios").ToList());
-						}
-						#endif
-					}
-					EditorGUILayout.EndHorizontal ();
+                        }
+#elif UNITY_IPHONE || UNITY_IOS
+                        if (GUILayout.Button ("Select Md5(ios)")) {
+                            ECLUpgradeListProc.popup4Select ((Callback)onGetUpgradePkg, ListEx.builder().Add(cell.Key).Add("ios").ToList());
+                        }
+#elif UNITY_STANDALONE_WIN
+                        if (GUILayout.Button ("Select Md5(win)")) {
+                            ECLUpgradeListProc.popup4Select ((Callback)onGetUpgradePkg, ListEx.builder().Add(cell.Key).Add("win").ToList());
+                        }
+#elif UNITY_STANDALONE_OSX
+                        if (GUILayout.Button ("Select Md5(osx)")) {
+                            ECLUpgradeListProc.popup4Select ((Callback)onGetUpgradePkg, ListEx.builder().Add(cell.Key).Add("osx").ToList());
+                        }
+#endif
+                    }
+                    EditorGUILayout.EndHorizontal ();
 				}
 			}
 			EditorGUILayout.EndScrollView ();
@@ -174,10 +198,21 @@ public class ECLUpgradeBindingServer : EditorWindow
 		if (platform.Equals ("ios")) {
 			verKey = "iosversion";
 			vetType = "1";
-		} else {
-			verKey = "androidversion";
-			vetType = "2";
-		}
+        } else if(platform.Equals("Android"))
+        {
+            verKey = "androidversion";
+            vetType = "2";
+        }
+        else if (platform.Equals("win"))
+        {
+            verKey = "winversion";
+            vetType = "3";
+        }
+        else if (platform.Equals("osx"))
+        {
+            verKey = "osxversion";
+            vetType = "4";
+        }
 		oldMd5 = MapEx.getString (server, verKey);
 		string newMd5 = MapEx.getString (d, "md5");
 		if (!newMd5.Equals (oldMd5)) {
@@ -223,10 +258,22 @@ public class ECLUpgradeBindingServer : EditorWindow
 					if (platform.Equals ("ios")) {
 						verKey = "iosversion";
 						vetType = "1";
-					} else {
-						verKey = "androidversion";
-						vetType = "2";
-					}
+                    }
+                    else if (platform.Equals("Android"))
+                    {
+                        verKey = "androidversion";
+                        vetType = "2";
+                    }
+                    else if (platform.Equals("win"))
+                    {
+                        verKey = "winversion";
+                        vetType = "3";
+                    }
+                    else if (platform.Equals("osx"))
+                    {
+                        verKey = "osxversion";
+                        vetType = "4";
+                    }
 					oldMd5 = MapEx.getString (server, verKey);
 					string newMd5 = MapEx.getString (d, "md5");
 					if (!newMd5.Equals (oldMd5)) {

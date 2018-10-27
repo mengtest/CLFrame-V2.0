@@ -227,44 +227,66 @@ namespace Coolape
 
 		public void unpackMsg (USocket s, MemoryStream buffer, TcpDispatchCallback dispatcher)
 		{
-			bool isLoop = true;
-			while (isLoop) {
-				long totalLen = buffer.Position;
-				if (totalLen > 2) {
-					buffer.SetLength (totalLen);
-					object o = null;
-					buffer.Position = 0;
-					if (msgUnpackFunc != null) {
-						object[] objs = Utl.doCallback (msgUnpackFunc, s, buffer);
-						if (objs != null && objs.Length > 0) {
-							o = objs [0];
-						}
-					} else {
-						o = defaultUnpackMsg (s, buffer);
-					}
-					if (o != null && dispatcher != null) {
-						dispatcher (o, this);
-					}
-					long usedLen = buffer.Position;
-					if (usedLen > 0) {
-						long leftLen = totalLen - usedLen;
-						if (leftLen > 0) {
-							byte[] lessBuff = new byte[leftLen];
-							buffer.Read (lessBuff, 0, (int)leftLen);
-							buffer.Position = 0;
-							buffer.Write (lessBuff, 0, (int)leftLen);
-						} else {
-							buffer.Position = 0;
-							isLoop = false;
-						}
-					} else {
-						buffer.Position = totalLen;
-						isLoop = false;
-					}
-				} else {
-					isLoop = false;
-				}
-			}
+            try
+            {
+                bool isLoop = true;
+                while (isLoop)
+                {
+                    long totalLen = buffer.Position;
+                    if (totalLen > 2)
+                    {
+                        buffer.SetLength(totalLen);
+                        object o = null;
+                        buffer.Position = 0;
+                        if (msgUnpackFunc != null)
+                        {
+                            object[] objs = Utl.doCallback(msgUnpackFunc, s, buffer);
+                            if (objs != null && objs.Length > 0)
+                            {
+                                o = objs[0];
+                            }
+                        }
+                        else
+                        {
+                            o = defaultUnpackMsg(s, buffer);
+                        }
+                        if (o != null && dispatcher != null)
+                        {
+                            dispatcher(o, this);
+                        }
+                        long usedLen = buffer.Position;
+                        if (usedLen > 0)
+                        {
+                            long leftLen = totalLen - usedLen;
+                            if (leftLen > 0)
+                            {
+                                byte[] lessBuff = new byte[leftLen];
+                                buffer.Read(lessBuff, 0, (int)leftLen);
+                                buffer.Position = 0;
+                                buffer.Write(lessBuff, 0, (int)leftLen);
+                                buffer.SetLength((int)leftLen);
+                            }
+                            else
+                            {
+                                buffer.Position = 0;
+                                buffer.SetLength(0);
+                                isLoop = false;
+                            }
+                        }
+                        else
+                        {
+                            buffer.Position = totalLen;
+                            isLoop = false;
+                        }
+                    }
+                    else
+                    {
+                        isLoop = false;
+                    }
+                }
+            } catch(System.Exception e) {
+                Debug.LogError(e);
+            }
 		}
 
 		private object defaultUnpackMsg (USocket s, MemoryStream buffer)

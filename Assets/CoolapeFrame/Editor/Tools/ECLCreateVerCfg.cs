@@ -97,19 +97,23 @@ public static class ECLCreateVerCfg
 		foreach (string dir in dirEntries) {
 			//跳过不同平台的资源
 			#if UNITY_ANDROID
-			if (Path.GetFileName (dir).Equals ("IOS") || Path.GetFileName (dir).Equals ("Standalone")) {
+			if (Path.GetFileName (dir).Equals ("IOS") || Path.GetFileName(dir).Equals("Standalone") || Path.GetFileName(dir).Equals("StandaloneOSX")) {
 				continue;
 			}
-			#elif UNITY_IOS
-			if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("Standalone")) {
+#elif UNITY_IOS
+			if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("Standalone") || Path.GetFileName(dir).Equals("StandaloneOSX")) {
 				continue;
 			}
-			#else
-			if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("IOS")) {
-			continue;
-			}
+#elif UNITY_STANDALONE_WIN
+            if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("IOS") || Path.GetFileName(dir).Equals("StandaloneOSX")) {
+                continue;
+            }
+#elif UNITY_STANDALONE_OSX
+            if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("IOS") || Path.GetFileName(dir).Equals("Standalone")) {
+                continue;
+            }
 #endif
-			doCreate (dir, lastOtherVer, lastPriorityVer, lastCfgdataVer, ref outMap);
+            doCreate(dir, lastOtherVer, lastPriorityVer, lastCfgdataVer, ref outMap);
 		}
 	}
 

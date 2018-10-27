@@ -138,8 +138,8 @@ public class UIAnchor : MonoBehaviour
 		{
 			if (pc.clipping == UIDrawCall.Clipping.None)
 			{
-				// Panel has no clipping -- just use the screen's dimensions
-				float ratio = (mRoot != null) ? (float)mRoot.activeHeight / Screen.height * 0.5f : 0.5f;
+                // Panel has no clipping -- just use the screen's dimensions
+                float ratio = (mRoot != null) ? (float)mRoot.activeHeight / Screen.height * 0.5f : 0.5f;
 				mRect.xMin = -Screen.width * ratio;
 				mRect.yMin = -Screen.height * ratio;
 				mRect.xMax = -mRect.xMin;
@@ -240,11 +240,84 @@ public class UIAnchor : MonoBehaviour
 	}
 
     #region add by chenbin
-//    void OnApplicationPause (bool isPause)
-//    {
-//        if(!isPause) {
-//            enabled = true;
-//        }
-//    }
+    //    void OnApplicationPause (bool isPause)
+    //    {
+    //        if(!isPause) {
+    //            enabled = true;
+    //        }
+    //    }
+    static bool isSetScreenRect = false;
+
+    static Rect _screenRect = new Rect();
+    public static Rect screenRect {
+        get {
+            if (!isSetScreenRect)
+            {
+                if (UIRoot.list.Count <= 0) return _screenRect;
+                UIRoot uiRoot = UIRoot.list[0];
+                float ratio = (uiRoot != null) ? (float)uiRoot.activeHeight / Screen.height * 0.5f : 0.5f;
+                _screenRect.xMin = -Screen.width * ratio;
+                _screenRect.yMin = -Screen.height * ratio;
+                _screenRect.xMax = -_screenRect.xMin;
+                _screenRect.yMax = -_screenRect.yMin;
+                isSetScreenRect = true;
+            }
+            return _screenRect;
+        }
+    }
+
+    public static Vector3 top()
+    {
+        float cx = (screenRect.xMin + screenRect.xMax) * 0.5f;
+        //float cy = (screenRect.yMin + screenRect.yMax) * 0.5f;
+        return new Vector3(cx, screenRect.yMax, 0);
+    }
+
+    public static Vector3 bottom()
+    {
+        float cx = (screenRect.xMin + screenRect.xMax) * 0.5f;
+        //float cy = (screenRect.yMin + screenRect.yMax) * 0.5f;
+        return new Vector3(cx, screenRect.yMin, 0);
+    }
+
+    public static Vector3 left()
+    {
+        //float cx = (screenRect.xMin + screenRect.xMax) * 0.5f;
+        float cy = (screenRect.yMin + screenRect.yMax) * 0.5f;
+        return new Vector3(screenRect.xMin, cy, 0);
+    }
+
+    public static Vector3 right()
+    {
+        //float cx = (screenRect.xMin + screenRect.xMax) * 0.5f;
+        float cy = (screenRect.yMin + screenRect.yMax) * 0.5f;
+        return new Vector3(screenRect.xMax, cy, 0);
+    }
+
+    public static Vector3 topLeft()
+    {
+        //float cx = (screenRect.xMin + screenRect.xMax) * 0.5f;
+        //float cy = (screenRect.yMin + screenRect.yMax) * 0.5f;
+        return new Vector3(screenRect.xMin, screenRect.yMax, 0);
+    }
+    public static Vector3 topRight()
+    {
+        //float cx = (screenRect.xMin + screenRect.xMax) * 0.5f;
+        //float cy = (screenRect.yMin + screenRect.yMax) * 0.5f;
+        return new Vector3(screenRect.xMax, screenRect.yMax, 0);
+    }
+
+    public static Vector3 bottomLeft()
+    {
+        //float cx = (screenRect.xMin + screenRect.xMax) * 0.5f;
+        //float cy = (screenRect.yMin + screenRect.yMax) * 0.5f;
+        return new Vector3(screenRect.xMin, screenRect.yMin, 0);
+    }
+    public static Vector3 bottomRight()
+    {
+        //float cx = (screenRect.xMin + screenRect.xMax) * 0.5f;
+        //float cy = (screenRect.yMin + screenRect.yMax) * 0.5f;
+        return new Vector3(screenRect.xMax, screenRect.yMin, 0);
+    }
     #endregion
 }

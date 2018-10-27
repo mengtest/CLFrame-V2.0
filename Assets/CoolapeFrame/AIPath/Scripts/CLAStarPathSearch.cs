@@ -1,9 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 #if UNITY_EDITOR
-using UnityEngine;
+using UnityEditor;
 #endif
+using UnityEngine;
 
 namespace Coolape
 {
@@ -19,8 +19,12 @@ namespace Coolape
         public float cellSize = 1;
         //寻路是4方向还是8方向
         public NumNeighbours numNeighbours = NumNeighbours.Eight;
+        //扫描类型
+        public ScanType scanType = ScanType.ObstructNode;
         //障碍
         public LayerMask obstructMask;
+        //可以通行的layer
+        public LayerMask passableMask;
         //检测障碍时用
         public float rayDis4Scan = 1;
         //检测障碍时用
@@ -40,7 +44,9 @@ namespace Coolape
         //节点map
         public Dictionary<int, CLAStarNode> nodesMap = new Dictionary<int, CLAStarNode>();
         public bool showGrid = true;
-        bool isIninted = false;
+        public bool showObstruct = true;
+        public bool isIninted = false;
+        public ArrayList OnGridStateChgCallbacks = new ArrayList();
         //当ray检测后，再检测一次Sphere以保当节点在障碍内部时也可能检测成功
         float radius4CheckSphere = 1;
 
@@ -115,31 +121,45 @@ namespace Coolape
             {
                 scanOne(i);
             }
+            onGridStateChg();
         }
 
         void scanOne(int index)
         {
             Vector3 position = nodesMap[index].position;
-            bool isobs = false;
-            if (rayDirection == RayDirection.Both)
+            if (scanType == ScanType.ObstructNode)
             {
-                isobs = Physics.Raycast(position, Vector3.up, rayDis4Scan, obstructMask) || Physics.Raycast(position, -Vector3.up, rayDis4Scan, obstructMask);
-            }
-            else if (rayDirection == RayDirection.Up)
-            {
-                isobs = Physics.Raycast(position, Vector3.up, rayDis4Scan, obstructMask);
+                nodesMap[index].isObstruct = raycastCheckCell(position, obstructMask);
             }
             else
             {
-                isobs = Physics.Raycast(position, -Vector3.up, rayDis4Scan, obstructMask);
+                bool ispass = raycastCheckCell(position, passableMask);
+                bool ishit = raycastCheckCell(position, obstructMask);
+                nodesMap[index].isObstruct = ishit || !ispass;
             }
+        }
 
-            if (!isobs)
+        bool raycastCheckCell(Vector3 cellPos, LayerMask mask) {
+            bool ishit = false;
+            if(rayDirection == RayDirection.Both)
             {
-                isobs = Physics.CheckSphere(position, radius4CheckSphere, obstructMask);
+                ishit = Physics.Raycast(cellPos, Vector3.up, rayDis4Scan, mask) 
+                              || Physics.Raycast(cellPos, -Vector3.up, rayDis4Scan, mask);
+            }
+            else if (rayDirection == RayDirection.Up)
+            {
+                ishit = Physics.Raycast(cellPos, Vector3.up, rayDis4Scan, mask);
+            }
+            else
+            {
+                ishit = Physics.Raycast(cellPos, -Vector3.up, rayDis4Scan, mask);
             }
 
-            nodesMap[index].isObstruct = isobs;
+            if (!ishit)
+            {
+                ishit = Physics.CheckSphere(cellPos, radius4CheckSphere, mask);
+            }
+            return ishit;
         }
 
         /// <summary>
@@ -150,10 +170,45 @@ namespace Coolape
         public void scanRange(Vector3 center, int r)
         {
             int centerIndex = grid.GetCellIndex(center);
+            scanRange(centerIndex, r);
+        }
+
+        public void scanRange(int centerIndex, int r)
+        {
             List<int> cells = grid.getCells(centerIndex, r * 2);
             for (int i = 0; i < cells.Count; i++)
             {
                 scanOne(cells[i]);
+            }
+            onGridStateChg();
+        }
+
+        /// <summary>
+        /// Adds the grid state callback. 添加当网格有变化时的回调
+        /// </summary>
+        /// <param name="callback">Callback.</param>
+        public void addGridStateChgCallback(object callback)
+        {
+            if (!OnGridStateChgCallbacks.Contains(callback))
+            {
+                OnGridStateChgCallbacks.Add(callback);
+            }
+        }
+
+        /// <summary>
+        /// Removes the grid state callback.移除当网格有变化时的回调
+        /// </summary>
+        /// <param name="callback">Callback.</param>
+        public void removeGridStateChgCallback(object callback)
+        {
+            OnGridStateChgCallbacks.Remove(callback);
+        }
+
+        void onGridStateChg()
+        {
+            for (int i = 0; i < OnGridStateChgCallbacks.Count; i++)
+            {
+                Utl.doCallback(OnGridStateChgCallbacks[i]);
             }
         }
 
@@ -162,18 +217,22 @@ namespace Coolape
         /// </summary>
         /// <returns>The from node.</returns>
         /// <param name="orgFromNode">Org from node.</param>
-        CLAStarNode reviseFromNode(Vector3 fromPos, CLAStarNode orgFromNode){
+        CLAStarNode reviseFromNode(Vector3 fromPos, CLAStarNode orgFromNode)
+        {
             if (!orgFromNode.isObstruct) return orgFromNode;
             int count = orgFromNode.aroundList.Count;
             CLAStarNode node = null;
             CLAStarNode fromNode = null;
             float dis = -1;
             float tmpDis = 0;
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++)
+            {
                 node = orgFromNode.aroundList[i];
-                if (node != null && !node.isObstruct) {
+                if (node != null && !node.isObstruct)
+                {
                     tmpDis = Vector3.Distance(node.position, fromPos);
-                    if(dis < 0 || tmpDis < dis) {
+                    if (dis < 0 || tmpDis < dis)
+                    {
                         dis = tmpDis;
                         fromNode = orgFromNode.aroundList[i];
                     }
@@ -189,14 +248,19 @@ namespace Coolape
         /// <param name="from">From.出发点坐标</param>
         /// <param name="to">To.目标点坐标</param>
         /// <param name="vectorList">Vector list.路径点坐标列表</param>
-        public bool searchPath(Vector3 from, Vector3 to, out List<Vector3> vectorList)
+        public bool searchPath(Vector3 from, Vector3 to, ref List<Vector3> vectorList)
         {
             if (!isIninted)
             {
                 init();
             }
 
-            vectorList = new List<Vector3>();
+            if (vectorList == null)
+            {
+                vectorList = new List<Vector3>();
+            } else {
+                vectorList.Clear();
+            }
             int fromIndex = grid.GetCellIndex(from);
             int toIndex = grid.GetCellIndex(to);
             if (fromIndex < 0 || toIndex < 0)
@@ -213,9 +277,11 @@ namespace Coolape
             }
 
             CLAStarNode fromNode = nodesMap[fromIndex];
-            if(fromNode.isObstruct) {
+            if (fromNode.isObstruct)
+            {
                 fromNode = reviseFromNode(from, fromNode);
-                if(fromNode == null) {
+                if (fromNode == null)
+                {
                     Debug.LogWarning("无法到达");
                     //无法到达
                     return false;
@@ -285,10 +351,12 @@ namespace Coolape
                 parentNode = parentNode.getParentNode(key);
             }
             vectorList.Insert(0, from);
-            if(isFilterPathByRay) {
+            if (isFilterPathByRay)
+            {
                 filterPath(ref vectorList);
             }
-            if(isSoftenPath) {
+            if (isSoftenPath)
+            {
                 CLAIPathUtl.softenPath(ref vectorList, softenPathType, softenFactor, cellSize);
             }
 
@@ -301,7 +369,8 @@ namespace Coolape
         /// <param name="list">List.</param>
         public void filterPath(ref List<Vector3> list)
         {
-            if(list == null || list.Count < 4) {
+            if (list == null || list.Count < 4)
+            {
                 return;
             }
             Vector3 from = list[0];
@@ -316,14 +385,16 @@ namespace Coolape
             }
 
             float dis = 0;
-            while(i < list.Count)
+            while (i < list.Count)
             {
                 dis = Vector3.Distance(from, list[i]);
-                if(Physics.Raycast(from, list[i]-from, dis, obstructMask))
+                if (Physics.Raycast(from, list[i] - from, dis, obstructMask))
                 {
                     from = list[i - 1];
                     i++;
-                } else {
+                }
+                else
+                {
                     list.RemoveAt(i - 1);
                 }
             }
@@ -448,18 +519,20 @@ namespace Coolape
             {
                 GridBase.DebugDraw(transform.position, numRows, numCols, cellSize, Color.white);
             }
-
-            Vector3 pos;
-            for (int i = 0; i < grid.NumberOfCells; i++)
+            if (showObstruct)
             {
-                CLAStarNode node = nodesMap[i];
-                if (node.isObstruct)
+                Vector3 pos;
+                for (int i = 0; i < grid.NumberOfCells; i++)
                 {
-                    //显示障碍格子
-                    pos = node.position;
-                    Gizmos.color = Color.red;
-                    Gizmos.DrawCube(pos, Vector3.one * cellSize);
-                    Gizmos.color = Color.white;
+                    CLAStarNode node = nodesMap[i];
+                    if (node.isObstruct)
+                    {
+                        //显示障碍格子
+                        pos = node.position;
+                        Gizmos.color = Color.red;
+                        Gizmos.DrawCube(pos, Vector3.one * cellSize);
+                        Gizmos.color = Color.white;
+                    }
                 }
             }
 
@@ -492,19 +565,25 @@ namespace Coolape
             //===========================================
         }
 #endif
-    }
 
-    //==============================================
-    //==============================================
-    public enum RayDirection
-    {
-        Up,     /**< Casts the ray from the bottom upwards */
-        Down,   /**< Casts the ray from the top downwards */
-        Both    /**< Casts two rays in either direction */
-    }
-    public enum NumNeighbours
-    {
-        Four,
-        Eight
+
+        //==============================================
+        //==============================================
+        public enum RayDirection
+        {
+            Up,     /**< Casts the ray from the bottom upwards */
+            Down,   /**< Casts the ray from the top downwards */
+            Both    /**< Casts two rays in either direction */
+        }
+        public enum NumNeighbours
+        {
+            Four,
+            Eight
+        }
+        public enum ScanType
+        {
+            ObstructNode,
+            PassableNode
+        }
     }
 }

@@ -6,7 +6,7 @@ using Coolape;
 
 [CanEditMultipleObjects]
 [CustomEditor(typeof(CLSeeker), true)]
-public class ECLSeekerInspector : CLBaseLuaInspector
+public class ECLSeekerInspector : Editor
 {
     CLSeeker instance;
     public override void OnInspectorGUI()
@@ -55,8 +55,6 @@ public class ECLSeekerInspector : CLBaseLuaInspector
             instance.showPath = EditorGUILayout.Toggle(uicontnt, instance.showPath);
         }
         ECLEditorUtl.EndContents();
-
-        base.drawLuaInfor();
 
         ECLEditorUtl.BeginContents();
         {

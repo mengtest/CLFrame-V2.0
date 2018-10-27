@@ -108,7 +108,7 @@ public class UIFollowTarget : MonoBehaviour
 			mTrans.localPosition = pos;
 			//Debug.Log("mTrans.localPosition============" + mTrans.localPosition);
 		} else {
-			mTrans.localPosition = new Vector3(2*Screen.width, 0, 0);
+			mTrans.localPosition = new Vector3(20000, 20000, 0);
 			
 		}
 	}

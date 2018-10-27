@@ -1,6 +1,6 @@
 -- xx界面
 do
-  #SCRIPTNAME# = {}
+  local #SCRIPTNAME# = {}
 
   local csSelf = nil;
   local transform = nil;

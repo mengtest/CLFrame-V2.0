@@ -29,6 +29,14 @@ namespace Coolape
 			return base._borrowObj (name, true);
 		}
 
+        public override bool isAutoReleaseAssetBundle
+        {
+            get
+            {
+                return false;
+            }
+        }
+
 		public static bool havePrefab (string name)
 		{
 			return pool._havePrefab (name);
@@ -46,7 +54,7 @@ namespace Coolape
 
 		public static void setPrefab (string name, object finishCallback, object orgs)
 		{
-			pool._setPrefab (name, finishCallback, orgs, null);
+            pool._setPrefab (name, finishCallback, orgs, null);
 		}
 
 		public static void setPrefab (string name, object finishCallback, object orgs, object progressCB)

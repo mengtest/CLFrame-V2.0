@@ -15,11 +15,9 @@ using System.IO;
 [AddComponentMenu ("NGUI/UI/Atlas")]
 public class UIAtlas : MonoBehaviour
 {
-	#region add by chenbin
-	public static Hashtable retainCounter = new Hashtable ();
-	//引用计数器
-	public static Hashtable assetBundleMap = new Hashtable ();
-	//引用AssetBundle
+    #region add by chenbin
+	public static Hashtable retainCounter = new Hashtable (); //引用计数器
+	public static Hashtable assetBundleMap = new Hashtable (); //引用AssetBundle
 	static Hashtable notifySprites = new Hashtable ();
 
 	public static Hashtable materailPool = new Hashtable ();
@@ -112,9 +110,9 @@ public class UIAtlas : MonoBehaviour
 	bool
 		_isBorrowSpriteMode;
 	Hashtable mspritesMap = new Hashtable ();
-	//add by chenbin
-	
-	public void init ()
+    //add by chenbin
+
+    public void init ()
 	{
 		foreach (DictionaryEntry item in mspritesMap) {
 			returnSpriteByname (item.Key.ToString ());
@@ -213,7 +211,7 @@ public class UIAtlas : MonoBehaviour
 		string name = releaseTex.Dequeue ();
 		doReleaseTexture (name);
 		CancelInvoke ("ReleaseTexture");
-		Invoke ("ReleaseTexture", 0.5f);
+		Invoke ("ReleaseTexture", 0.2f);
 	}
 
 	/// <summary>
@@ -280,10 +278,9 @@ public class UIAtlas : MonoBehaviour
 						Debug.LogError ("doReleaseTexture====" + sp.path);
 					}
 					#endif
-					assetBundleMap [sp.path] = null;
-					if(!string.IsNullOrEmpty(mat.mainTexture.name)) {
-						UnityEngine.Resources.UnloadAsset (mat.mainTexture);
-					}
+					//if(!string.IsNullOrEmpty(mat.mainTexture.name)) {
+					//	Resources.UnloadAsset (mat.mainTexture);
+					//}
 					
 					// 其它引用了该图的都要释放
 					for (int j = 0; j < mSprites.Count; j++) {
@@ -293,12 +290,20 @@ public class UIAtlas : MonoBehaviour
 						}
 					}
 					sp.material = null;
-					GameObject.DestroyImmediate (mat.mainTexture, true);
+                    materailPool[sp.path] = null;
+
 					mat.mainTexture = null;
-					GameObject.DestroyImmediate (mat, true);
+                    //DestroyImmediate (mat.mainTexture, true);
+                    DestroyImmediate (mat, true);
 					mat = null;
-					//=================================================
-				} catch (System.Exception e) {
+                    AssetBundle ab = assetBundleMap[sp.path] as AssetBundle;
+                    if (ab != null)
+                    {
+                        ab.Unload(true);
+                    }
+                    assetBundleMap[sp.path] = null;
+                    //=================================================
+                } catch (System.Exception e) {
 					Debug.LogError (sp.name + " err:" + e);
 				}
 			} 
@@ -480,7 +485,6 @@ public class UIAtlas : MonoBehaviour
 						string path = ret.path;
 						path = path.Replace ("/upgradeRes/", "/upgradeRes4Publish/");
 						path = path.Replace ("/upgradeRes4Publish/", "/upgradeRes4Dev/");
-						//                            Debug.Log("get Texture==" + path);
 						assetBundleMap [ret.path] = Coolape.CLVerManager.self.getAtalsTexture4Edit (path);
 					}
 					#else
@@ -502,7 +506,13 @@ public class UIAtlas : MonoBehaviour
 			
 			#if UNITY_EDITOR
 			if (Application.isPlaying) {
-				tt = (Texture)(assetBundleMap [ret.path]);
+                if(assetBundleMap[ret.path] is AssetBundle) {
+                    tt = (assetBundleMap[ret.path] as AssetBundle).mainAsset as Texture;
+                } else {
+                    getTuxture(ret, uisp, callback, args);
+                    isBorrowSprite = false;
+                    return null;
+                }
 			} else {
 				if (assetBundleMap [ret.path].GetType () != typeof(Texture) &&
 				    assetBundleMap [ret.path].GetType () != typeof(Texture2D)) {
@@ -512,16 +522,12 @@ public class UIAtlas : MonoBehaviour
 				tt = (Texture)(assetBundleMap [ret.path]);
 			}
 			#else
-			tt = (Texture)(assetBundleMap [ret.path]);
+			//tt = (Texture)(assetBundleMap [ret.path]);
+            tt = (assetBundleMap [ret.path] as AssetBundle).mainAsset as Texture;
 			#endif
 			if (tt != null) {
 				if (ret.material == null) {
-//					Shader shader = Shader.Find ("Unlit/Transparent Colored");
-//					ret.material = new Material (shader);
-//					ret.material.mainTexture = tt;
 					ret.material = getMaterail(tt, ret.path);
-//					tt = null;
-//					shader = null;
 				} else {
 					ret.material.mainTexture = tt;
 				}
@@ -577,14 +583,16 @@ public class UIAtlas : MonoBehaviour
 				path = path.Replace ("/upgradeRes4Publish/", "/upgradeRes/");
 			}
 			
-			#if UNITY_ANDROID
+#if UNITY_ANDROID
 			path = Path.GetDirectoryName (path) + "/Android/" + Path.GetFileNameWithoutExtension (path) + ".unity3d";
-			#elif UNITY_IOS
+#elif UNITY_IOS
 			path = Path.GetDirectoryName(path) + "/IOS/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
-			#else
-			path = Path.GetDirectoryName(path) + "/Standalone/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
-			#endif
-			Coolape.CLVerManager.self.getNewestRes (path, Coolape.CLAssetType.assetBundle, cb, ret.path, callback, uisp, ret.name);
+#elif UNITY_STANDALONE_WIN
+            path = Path.GetDirectoryName(path) + "/Standalone/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
+#elif UNITY_STANDALONE_OSX
+            path = Path.GetDirectoryName(path) + "/StandaloneOSX/" + Path.GetFileNameWithoutExtension(path) + ".unity3d";
+#endif
+            Coolape.CLVerManager.self.getNewestRes (path, Coolape.CLAssetType.assetBundle, cb, false, ret.path, callback, uisp, ret.name);
 		} catch (System.Exception e) {
 			Debug.LogError (e);
 		}
@@ -593,21 +601,19 @@ public class UIAtlas : MonoBehaviour
 	void onGetTuxture (params object[] paras)
 	{
 		try {
-			AssetBundle tt = null;
+            AssetBundle tt = null;
 			string tPath = "";
 			if (paras != null && paras.Length > 1) {
 				tPath = (string)(paras [0]); 
-				tt = (AssetBundle)(paras [1]);
+                tt = (paras [1]) as AssetBundle;
 				object[] org = (object[])(paras [2]);
 				string spritePth = (string)(org [0]);
 				if (tt != null) {
-					assetBundleMap [spritePth] = tt.mainAsset as Texture;
-					tt.Unload (false);
-					doNotifySprite (spritePth, assetBundleMap [spritePth] as Texture);
-					tt = null;
+                    assetBundleMap[spritePth] = tt;// tt.mainAsset as Texture;
+					doNotifySprite (spritePth, tt.mainAsset as Texture);
 				} else {
+                    Debug.LogWarning ("can't find Texture in Resource path :[" + tPath + "]");
 					doNotifySprite (spritePth, null);
-					Debug.LogWarning ("can't find Texture in Resource path :[" + tPath + "]");
 				}
 			} else {
 				Debug.LogWarning ("can't find Texture in Resource path :[" + (paras.Length > 0 ? paras [0] : "") + "]");

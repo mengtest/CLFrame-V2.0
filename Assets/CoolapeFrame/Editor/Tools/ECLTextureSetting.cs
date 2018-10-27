@@ -12,7 +12,7 @@ public class ECLTextureSetting
 		get {
 			#if UNITY_ANDROID
 			return "Android";
-			#elif UNITY_IPHONE
+			#elif UNITY_IPHONE || UNITY_IOS
 			return "iPhone";
 			#endif
 			return "Standalone";
@@ -101,7 +101,7 @@ public class ECLTextureSetting
 		case TextureImporterFormat.RGB24:
 			return doSetTexture (path, ti, tips, tex);
 		case  TextureImporterFormat.Automatic:
-			#if UNITY_IPHONE
+			#if UNITY_IPHONE || UNITY_IOS
 			if(isPot(tex)) {
 				return false;
 			} else {
@@ -128,13 +128,13 @@ public class ECLTextureSetting
 		Debug.Log ("doSetTexture==" + path);
 		if (isPot (tex)) {
 			if (alphaIsTransparency (ti)) {
-				#if UNITY_IPHONE
+				#if UNITY_IPHONE || UNITY_IOS
 				tips.format = TextureImporterFormat.PVRTC_RGBA4;
 				#else
 				tips.format = TextureImporterFormat.ETC2_RGBA8;
 				#endif
 			} else {
-				#if UNITY_IPHONE
+				#if UNITY_IPHONE || UNITY_IOS
 				tips.format = TextureImporterFormat.PVRTC_RGB4;
 				#else
 				tips.format = TextureImporterFormat.ETC_RGB4;
@@ -142,13 +142,13 @@ public class ECLTextureSetting
 			}
 		} else if (multipleOf4 (tex)) {
 			if (alphaIsTransparency (ti)) {
-				#if UNITY_IPHONE
+				#if UNITY_IPHONE || UNITY_IOS
 				tips.format = TextureImporterFormat.ASTC_RGBA_4x4;
 				#else
 				tips.format = TextureImporterFormat.ETC2_RGBA8;
 				#endif
 			} else {
-				#if UNITY_IPHONE
+				#if UNITY_IPHONE || UNITY_IOS
 				tips.format = TextureImporterFormat.ASTC_RGB_4x4;
 				#else
 				tips.format = TextureImporterFormat.ETC2_RGB4;
@@ -156,13 +156,13 @@ public class ECLTextureSetting
 			}
 		} else {
 			if (alphaIsTransparency (ti)) {
-				#if UNITY_IPHONE
+				#if UNITY_IPHONE || UNITY_IOS
 				tips.format = TextureImporterFormat.ASTC_RGBA_4x4;
 				#else
 				tips.format = TextureImporterFormat.RGBA16;
 				#endif
 			} else {
-				#if UNITY_IPHONE
+				#if UNITY_IPHONE || UNITY_IOS
 				tips.format = TextureImporterFormat.ASTC_RGB_4x4;
 				#else
 				tips.format = TextureImporterFormat.RGB16;

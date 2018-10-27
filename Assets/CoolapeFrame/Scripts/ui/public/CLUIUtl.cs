@@ -451,12 +451,12 @@ namespace Coolape
 
 		public static void showConfirm (string msg, object callback)
 		{
-			showConfirm (msg, true, Localization.Get ("Ok"), callback, "", null);
+			showConfirm (msg, true, Localization.Get ("Okay"), callback, "", null);
 		}
 
 		public static void showConfirm (string msg, object callback1, object callback2)
 		{
-			showConfirm (msg, false, Localization.Get ("Ok"), callback1, Localization.Get ("Cancel"), callback2);
+			showConfirm (msg, false, Localization.Get ("Okay"), callback1, Localization.Get ("Cancel"), callback2);
 		}
 
 		public static void showConfirm (string msg, bool isShowOneButton, string button1, 
@@ -489,42 +489,25 @@ namespace Coolape
 		/// </param>
 		public static void setSpriteFit (UISprite sprite, string sprName)
 		{
-			if (sprite.atlas.isBorrowSpriteMode) {
-				Callback cb = onGetSprite;
-				sprite.atlas.borrowSpriteByname (sprName, sprite, cb);
-			} else {
-				sprite.spriteName = sprName;
-				UISpriteData sd = sprite.GetAtlasSprite ();
-				if (sd == null) {
-					return;
-				}
-				sprite.SetDimensions (sd.width, sd.height);
-//				sprite.MakePixelPerfect ();
-			}
-		}
-
-		public static void onGetSprite (params object[] paras)
-		{
-			UISprite sprite = (UISprite)(paras [0]);
-			if (sprite == null || sprite.atlas == null) {
-				return;
-			}
-			string sprName = paras [1].ToString ();
-			sprite.spriteName = sprName;
-			sprite.refresh ();
-			UISpriteData sd = sprite.atlas.getSpriteBorrowMode (sprite.spriteName);
-			if (sd == null) {
-				return;
-			}
-//			sprite.MakePixelPerfect ();
-			sprite.SetDimensions (sd.width, sd.height);
+            setSpriteFit(sprite, sprName, -1);
 		}
 
 		public static void setSpriteFit (UISprite sprite, string sprName, int maxSize)
 		{
+            if(sprite == null || sprite.atlas == null || string.IsNullOrEmpty(sprName)) {
+                Debug.LogError("setSpriteFit is error!");
+                return;
+            }
 			if (sprite.atlas.isBorrowSpriteMode) {
-				Callback cb = onGetSprite2;
-				sprite.atlas.borrowSpriteByname (sprName, sprite, cb, maxSize);
+                if (sprite.atlas.getSpriteBorrowMode(sprName) != null)
+                {
+                    onGetSprite(sprite, sprName, maxSize, false);
+                }
+                else
+                {
+                    Callback cb = onGetSprite;
+                    sprite.atlas.borrowSpriteByname(sprName, sprite, cb, maxSize);
+                }
 			} else {
 				sprite.spriteName = sprName;
 				UISpriteData sd = sprite.GetAtlasSprite ();
@@ -543,29 +526,37 @@ namespace Coolape
 			}
 		}
 
-		public static void onGetSprite2 (params object[] paras)
+		public static void onGetSprite (params object[] paras)
 		{
 			UISprite sprite = (UISprite)(paras [0]);
 			if (sprite == null || sprite.atlas == null) {
 				return;
 			}
-			string sprName = paras [1].ToString ();
-			int maxSize = NumEx.stringToInt (paras [2].ToString ());
-			sprite.spriteName = sprName;
-			sprite.refresh ();
-			UISpriteData sd = sprite.atlas.getSpriteBorrowMode (sprite.spriteName);
-			if (sd == null) {
-				return;
-			}
-			float x = (float)(sd.width);
-			float y = (float)(sd.height);
-			float size = x > y ? x : y;
-			float rate = 1;
-			if (size > maxSize) {
-				rate = maxSize / size;
-			}
-//		sprite.MakePixelPerfect();
-			sprite.SetDimensions ((int)(sd.width * rate), (int)(sd.height * rate));
+
+            string sprName = paras [1].ToString ();
+            sprite.spriteName = sprName;
+            UISpriteData sd = sprite.atlas.getSpriteBorrowMode(sprite.spriteName);
+            if (sd == null) return;
+            int maxSize = NumEx.stringToInt (paras [2].ToString ());
+            if (maxSize > 0)
+            {
+                if (sd == null)
+                {
+                    return;
+                }
+                float x = (float)(sd.width);
+                float y = (float)(sd.height);
+                float size = x > y ? x : y;
+                float rate = 1;
+                if (size > maxSize)
+                {
+                    rate = maxSize / size;
+                }
+                //		sprite.MakePixelPerfect();
+                sprite.SetDimensions((int)(sd.width * rate), (int)(sd.height * rate));
+            } else {
+                sprite.SetDimensions(sd.width, sd.height);
+            }
 		}
 
 		//设置所有图片是否灰色

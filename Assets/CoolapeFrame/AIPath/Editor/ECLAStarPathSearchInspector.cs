@@ -45,11 +45,27 @@ public class ECLAStarPathSearchInspector : Editor
             uicontnt = new GUIContent("Cell Size", "网格单元的大小");
             instance.cellSize = EditorGUILayout.FloatField(uicontnt, instance.cellSize);
             uicontnt = new GUIContent("Neighbours", "一个单元格的寻路方向数量。(4方向/8方向)");
-            instance.numNeighbours = (NumNeighbours)(EditorGUILayout.EnumPopup(uicontnt, instance.numNeighbours));
+            instance.numNeighbours = (CLAStarPathSearch.NumNeighbours)(EditorGUILayout.EnumPopup(uicontnt, instance.numNeighbours));
+            uicontnt = new GUIContent("Scan Type", "扫描类型.ObstructNode：扫描障碍层设置不可通行的格子；PassableNode:扫描设置可通行的节点；");
+            instance.scanType = (CLAStarPathSearch.ScanType)EditorGUILayout.EnumPopup(uicontnt, instance.scanType);
+            //if (instance.scanType == CLAStarPathSearch.ScanType.PassableNode)
+            //{
+            //    GUI.enabled = false;
+            //}
             uicontnt = new GUIContent("Obstruct Mask", "障碍物的layer");
-            instance.obstructMask= ECLEditorUtl.drawMaskField(uicontnt, instance.obstructMask);
+            instance.obstructMask = ECLEditorUtl.drawMaskField(uicontnt, instance.obstructMask);
+
+            GUI.enabled = true;
+            if (instance.scanType == CLAStarPathSearch.ScanType.ObstructNode)
+            {
+                GUI.enabled = false;
+            }
+            uicontnt = new GUIContent("Passable Mask", "可通行节点的layer");
+            instance.passableMask = ECLEditorUtl.drawMaskField(uicontnt, instance.passableMask);
+            GUI.enabled = true;
+
             uicontnt = new GUIContent("Scan Ray Direction", "射线检测障碍的发射方向");
-            instance.rayDirection = (RayDirection)(EditorGUILayout.EnumPopup(uicontnt, instance.rayDirection));
+            instance.rayDirection = (CLAStarPathSearch.RayDirection)(EditorGUILayout.EnumPopup(uicontnt, instance.rayDirection));
             uicontnt = new GUIContent("Scan Ray Distance", "射线检测障碍的和射线长度");
             instance.rayDis4Scan = EditorGUILayout.FloatField(uicontnt, instance.rayDis4Scan);
             uicontnt = new GUIContent("Auto Scan", "自动扫描网格的障碍，其实就是在Start方法中自动调用init和Scan方法");
@@ -75,6 +91,8 @@ public class ECLAStarPathSearchInspector : Editor
             ECLEditorUtl.EndContents();
             uicontnt = new GUIContent("Debug Show Grid", "显示网格");
             instance.showGrid = EditorGUILayout.Toggle(uicontnt, instance.showGrid);
+            uicontnt = new GUIContent("Debug Show Obstruct", "显示网格障碍");
+            instance.showObstruct = EditorGUILayout.Toggle(uicontnt, instance.showObstruct);
         }
         ECLEditorUtl.EndContents();
 

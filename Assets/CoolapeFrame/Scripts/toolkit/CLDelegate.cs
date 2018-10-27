@@ -22,21 +22,46 @@ namespace Coolape
 		{
 			ArrayList list = MapEx.getList (delegateInfro, key);
 			if (list == null) {
-				list = new ArrayList ();
-			}
-			ArrayList infor = new ArrayList ();
+				list = ObjPool.listPool.borrowObject();
+            }
+            NewList infor = ObjPool.listPool.borrowObject();
 			infor.Add (callback);
 			infor.Add (orgs);
 			list.Add (infor);
 			delegateInfro [key] = list;
 		}
 
+        public void remove(string key, object callback) {
+            ArrayList list = MapEx.getList(delegateInfro, key);
+            if (list == null)
+            {
+                return;
+            }
+
+            NewList cell = null;
+            while(list.Count > 0) {
+                cell = (list[list.Count - 1]) as NewList;
+                if(cell[0] == null || cell[0].Equals(callback)) {
+                    ObjPool.listPool.returnObject(cell);
+                    list.RemoveAt(list.Count - 1);
+                }
+            }
+        }
+
 		public void removeDelegates (string key)
 		{
 			if (delegateInfro [key] != null) {
-				ArrayList list = MapEx.getList (delegateInfro, key);
-				list.Clear ();
-				list = null;
+                NewList list = (delegateInfro[key]) as NewList;
+                if (list != null)
+                {
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        ObjPool.listPool.returnObject(list[i] as NewList);
+                    }
+                    list.Clear();
+                    ObjPool.listPool.returnObject(list);
+                    list = null;
+                }
 			}
 			delegateInfro.Remove (key);
 		}

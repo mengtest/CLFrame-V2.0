@@ -126,10 +126,10 @@ namespace Coolape
 		public  Hashtable getCoroutines (object callbakFunc)
 		{
 			object key = getKey4InvokeMap (callbakFunc, coroutineMap);
-			if (coroutineMap [key] == null) {
-				coroutineMap [key] = new Hashtable ();
-			}
-			return (Hashtable)(coroutineMap [key]);
+            Hashtable ret = MapEx.getMap(coroutineMap, key);
+            ret = ret == null ? new Hashtable() : ret;
+            coroutineMap[key] = ret;
+            return ret;
 		}
 
 		public  void setCoroutine (object callbakFunc, UnityEngine.Coroutine ct, int index)
@@ -406,9 +406,9 @@ namespace Coolape
 			if (callbakFunc == null)
 				return;
 			NewList list = ObjPool.listPool.borrowObject ();
-			list.add (callbakFunc);
-			list.add (orgs);
-			list.add (Time.unscaledTime + sec);
+			list.Add (callbakFunc);
+			list.Add (orgs);
+			list.Add (Time.unscaledTime + sec);
 			invokeByUpdateList.Add (list);
 			canUpdate = true;
 		}

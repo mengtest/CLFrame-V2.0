@@ -49,7 +49,7 @@ namespace Coolape
 
 		public IEnumerator gameInit ()
 		{
-			yield return null;
+            yield return new WaitForSeconds(2);
 			init ();
 		}
 

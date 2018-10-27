@@ -4,10 +4,11 @@ using UnityEngine;
 
 namespace Coolape
 {
-    public class CLSeeker : CLBehaviourWithUpdate4Lua
+    public class CLSeeker : MonoBehaviour
     {
         public CLAStarPathSearch mAStarPathSearch;
         public Transform target;
+        public Vector3 targetPos;
         //移动速度
         public float speed = 1;
         //转向速度（当为负=硬转向）
@@ -22,10 +23,14 @@ namespace Coolape
 
         public bool showPath = true;
         [System.NonSerialized]
-        public List<Vector3> pathList = null;
+        public List<Vector3> pathList = new List<Vector3>();
         public object onFinishSeekCallback;
         public object onMovingCallback;
         public object onArrivedCallback;
+        [HideInInspector]
+        public bool isSeekTargetLoop = false;
+        public float seekTargetLoopIntvalSec = 1;
+        public float nextSeekTargetTime = 0;
 
         Transform _mTransform;
         public Transform mTransform
@@ -41,9 +46,8 @@ namespace Coolape
         }
 
         // Use this for initialization
-        public override void Start()
+        public virtual void Start()
         {
-            base.Start();
             if (mAStarPathSearch == null)
             {
                 mAStarPathSearch = CLAStarPathSearch.current;
@@ -87,7 +91,10 @@ namespace Coolape
             if (target == null) return null;
             this.target = target;
             canSearchPath = true;
-            fixedInvoke((Callback)seekTargetLoop, searchIntvalSec, searchIntvalSec);
+            //fixedInvoke((Callback)seekTargetLoop, searchIntvalSec, searchIntvalSec);
+            seekTargetLoopIntvalSec = searchIntvalSec;
+            isSeekTargetLoop = true;
+            nextSeekTargetTime = Time.realtimeSinceStartup + seekTargetLoopIntvalSec;
             return seek(target.position);
         }
 
@@ -96,20 +103,27 @@ namespace Coolape
         /// </summary>
         public virtual void cancelSeekTarget()
         {
-            cancelFixedInvoke4Lua((Callback)seekTargetLoop);
+            isSeekTargetLoop = false;
+            //cancelFixedInvoke4Lua((Callback)seekTargetLoop);
         }
 
-        void seekTargetLoop(params object[] objs)
+        void seekTargetLoop()
         {
             if (!canSearchPath || target == null)
             {
                 return;
             }
-            float searchIntvalSec = (float)(objs[0]);
+            //float searchIntvalSec = (float)(objs[0]);
             seek(target.position);
-            fixedInvoke((Callback)seekTargetLoop, searchIntvalSec, searchIntvalSec);
+            nextSeekTargetTime = Time.realtimeSinceStartup + seekTargetLoopIntvalSec;
+            //fixedInvoke((Callback)seekTargetLoop, searchIntvalSec, searchIntvalSec);
         }
 
+        public virtual List<Vector3> seek(Vector3 toPos, float endReachDis)
+        {
+            endReachedDistance = endReachDis;
+            return seek(toPos);
+        }
         /// <summary>
         /// Seek the specified toPos.寻路
         /// </summary>
@@ -117,9 +131,10 @@ namespace Coolape
         /// <param name="toPos">To position.</param>
         public virtual List<Vector3> seek(Vector3 toPos)
         {
+            targetPos = toPos;
             canMove = false;
-            pathList = null;
-            bool canReach = mAStarPathSearch.searchPath(mTransform.position, toPos, out pathList);
+            pathList.Clear();
+            bool canReach = mAStarPathSearch.searchPath(mTransform.position, toPos, ref pathList);
 
             //回调的第一个参数是路径，第二个参数是能否到达目标点
             Utl.doCallback(onFinishSeekCallback, pathList, canReach);
@@ -133,9 +148,13 @@ namespace Coolape
         }
 
         // Update is called once per frame
-        public override void Update()
+        public virtual void Update()
         {
-            base.Update();
+            if(isSeekTargetLoop) {
+                if(Time.realtimeSinceStartup >= nextSeekTargetTime) {
+                    seekTargetLoop();
+                }
+            }
             if (canMove && movingBy == MovingBy.Update)
             {
                 if (unscaledTime)
@@ -149,9 +168,8 @@ namespace Coolape
             }
         }
 
-        public override void FixedUpdate()
+        public virtual void FixedUpdate()
         {
-            base.FixedUpdate();
             if (canMove && movingBy == MovingBy.FixedUpdate)
             {
                 if (unscaledTime)
@@ -239,6 +257,7 @@ namespace Coolape
         {
             if (pathList == null || nextPahtIndex >= pathList.Count)
             {
+                Debug.LogError("moving error");
                 return;
             }
 
@@ -262,7 +281,7 @@ namespace Coolape
                 if (finishOneSubPath ||
                     Vector3.Distance(mTransform.position, pathList[nextPahtIndex]) <= endReachedDistance)
                 {
-                    canMove = false;
+                    stopMove();
                     Utl.doCallback(onArrivedCallback);
                 }
             }

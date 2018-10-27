@@ -106,21 +106,26 @@ public class ECLGUIResList : ScriptableWizard
 	void  initData (string path, int tabs)
 	{
 		//跳过不同平台的资源
-		#if UNITY_ANDROID
-		if (Path.GetFileName (path).Equals ("IOS") || Path.GetFileName (path).Equals ("Standalone")) {
-			return;
-		}
-		#elif UNITY_IOS
-		if(Path.GetFileName(path).Equals("Android") || Path.GetFileName(path).Equals("Standalone")) {
-			return;
-		}
-		#else
-		if(Path.GetFileName(path).Equals("Android") || Path.GetFileName(path).Equals("IOS")) {
-		return;
-		}
-		#endif
+#if UNITY_ANDROID
+        if (Path.GetFileName(path).Equals("IOS") || Path.GetFileName(path).Equals("Standalone") || Path.GetFileName(path).Equals("StandaloneOSX"))
+        {
+            return;
+        }
+#elif UNITY_IOS
+            if(Path.GetFileName(path).Equals("Android") || Path.GetFileName(path).Equals("Standalone") || Path.GetFileName(path).Equals("StandaloneOSX")) {
+                return;
+            }
+#elif UNITY_STANDALONE_WIN
+            if(Path.GetFileName(path).Equals("Android") || Path.GetFileName(path).Equals("IOS") || Path.GetFileName(path).Equals("StandaloneOSX")) {
+                return;
+            }
+#elif UNITY_STANDALONE_OSX
+            if(Path.GetFileName(path).Equals("Android") || Path.GetFileName(path).Equals("IOS") || Path.GetFileName(path).Equals("Standalone")) {
+                return;
+            }
+#endif
 
-		ECLResInfor ri = new ECLResInfor ();
+        ECLResInfor ri = new ECLResInfor ();
 		path = path.Replace ("\\", "/");
 		ri.path = path;
 		ri.name = Path.GetFileName (path);

@@ -387,7 +387,7 @@ namespace Coolape
 			}
 		}
 
-		public void clean ()
+        public void clean ()
 		{
 			panelBuff.Clear ();
 			panelAssetBundle.Clear ();
@@ -479,7 +479,7 @@ namespace Coolape
 				}
 			} else {
 				string path = PStr.begin ().a (CLPathCfg.self.panelDataPath).a (CLPathCfg.self.platform).a ("/").a (pName).a (".unity3d").end ();
-				CLVerManager.self.getNewestRes (path, CLAssetType.assetBundle, (Callback)onGetPanelAssetBundle, callback, pName, paras);
+				CLVerManager.self.getNewestRes (path, CLAssetType.assetBundle, (Callback)onGetPanelAssetBundle, true, callback, pName, paras);
 			}
 		}
 

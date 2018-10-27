@@ -31,7 +31,15 @@ namespace Coolape
 			return base._borrowObj (name, true);
 		}
 
-		public static bool havePrefab (string path)
+        public override bool isAutoReleaseAssetBundle
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        public static bool havePrefab (string path)
 		{
 			return pool._havePrefab (path);
 		}

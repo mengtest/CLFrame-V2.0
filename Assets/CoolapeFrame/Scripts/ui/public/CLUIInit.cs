@@ -210,6 +210,9 @@ namespace Coolape
 
 		public UIAtlas getAtlasByName (string atlasName)
 		{
+            if(string.IsNullOrEmpty(atlasName)) {
+                return null;
+            }
 			if (atlasMap.ContainsKey (atlasName)) {
 				return atlasMap [atlasName];
 			}

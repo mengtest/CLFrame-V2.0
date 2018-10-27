@@ -151,6 +151,10 @@ namespace Coolape
 		{
 			this.finishShowingCallback = finishShowingCallback;
 			isMoveOut = false;
+            if (_mask4Hide != null)
+            {
+                NGUITools.SetActive(_mask4Hide, false);
+            }
 			if (!gameObject.activeInHierarchy || CLPanelManager.showingPanels [gameObject.name] == null) {
 				NGUITools.SetActive (gameObject, true);
 //				CLPanelManager.showingPanels [gameObject.name] = this;
@@ -196,8 +200,14 @@ namespace Coolape
 		
 			EffectForward = forward;
 			UITweener tw = null;
-		
-			if (effectType == EffectType.synchronized) {
+
+            //说明有动画可以播放先用mask档一下
+            if (!forward)
+            {
+                NGUITools.SetActive(mask4Hide, true);
+            }
+
+            if (effectType == EffectType.synchronized) {
 				for (int i = 0; i < EffectList.Count; i++) {
 					tw = EffectList [i];
 					if (forward && !isHideWithEffect) {
@@ -252,11 +262,32 @@ namespace Coolape
 			}
 		}
 
-		bool isMoveOut = true;
+        GameObject _mask4Hide = null;
+
+        public GameObject mask4Hide
+        {
+            get
+            {
+                if (_mask4Hide == null)
+                {
+                    _mask4Hide = new GameObject("_____mask4Hide");
+                    _mask4Hide.transform.parent = transform;
+                    NGUITools.SetLayer(_mask4Hide, LayerMask.NameToLayer("UI"));
+                    UIWidget w = _mask4Hide.AddComponent<UIWidget>();
+                    w.depth = 180;
+                    w.SetAnchor(CLUIInit.self.gameObject, -2, -2, 2, 2);
+                    NGUITools.AddWidgetCollider(_mask4Hide);
+                    _mask4Hide.SetActive(false);
+                }
+                return _mask4Hide;
+            }
+        }
+
+        bool isMoveOut = true;
 
 		public void hideWithEffect (bool moveOut = false)
-		{
-			isMoveOut = moveOut;
+        {
+            isMoveOut = moveOut;
 			if (isMoveOut) {
 				Vector3 newPos = transform.localPosition;
 				newPos.z = -250;
@@ -270,22 +301,20 @@ namespace Coolape
 		void onFinishHideWithEffect (UITweener tweener = null)
 		{
 			isActive = false;
-//			CLPanelManager.showingPanels.Remove (gameObject.name);
 			CLPanelManager.onHidePanel (this);
-			finishMoveOut ();
-//			if (destroyWhenHide) {
-//				CancelInvoke ("destroySelf");
-//				Invoke ("destroySelf", destoryDelaySec);
-//			}
+            finishMoveOut ();
 		}
 
-		void finishMoveOut ()
+        public virtual void finishMoveOut ()
 		{
 			Vector3 newPos = transform.localPosition;
 			newPos.z = -200;
 			transform.localPosition = newPos;
 			NGUITools.SetActive (gameObject, false);
-		}
+            if(_mask4Hide != null) {
+                NGUITools.SetActive(mask4Hide, false);
+            }
+        }
 
 		void finishMoveIn (UITweener tween)
 		{
@@ -311,71 +340,6 @@ namespace Coolape
 				CLPanelManager.destroyPanel (this, false);
 			}
 		}
-
-		//		OnNetWorkData tmpNetWorkData = null;
-		//		// Update is called once per frame
-		//		public override void Update()
-		//		{
-		//			base.Update();
-		//			if (isOnNetWork) {
-		//				isOnNetWork = false;
-		//				if (networkQueue.Count > 0) {
-		//					tmpNetWorkData = networkQueue.Dequeue();
-		//					if (tmpNetWorkData != null) {
-		//						procNetwork(tmpNetWorkData.interfaceName, tmpNetWorkData.succ, tmpNetWorkData.msg, tmpNetWorkData.objs);
-		//					}
-		//
-		//					if (tmpNetWorkData.succ != Net.SuccessCode) {
-		//						Debug.LogWarning("Net Failed:" + tmpNetWorkData.succ + ":" + tmpNetWorkData.interfaceName);
-		//					}
-		//
-		//					if (networkQueue.Count > 0) {
-		//						isOnNetWork = true;
-		//					}
-		//				}
-		//			}
-		//		}
-		//
-		//		bool isOnNetWork = false;
-		//		[HideInInspector]
-		//		public static Queue<OnNetWorkData>
-		//			networkQueue = new Queue<OnNetWorkData>();
-		//
-		//		public class OnNetWorkData
-		//		{
-		//			public string interfaceName;
-		//			//接口函数的名字
-		//			public int succ = 0;
-		//			//接口的返回结果
-		//			public string msg = "";
-		//			//接口的返回结果
-		//			public object objs = null;
-		//			//接口的返回内容
-		//		}
-		//
-		//		/// <summary>
-		//		/// Ons the network.
-		//		/// 网络接口返回时，需要调用NPanelManager.topPanel.onNetwork()
-		//		/// </summary>
-		//		/// <param name='fname'>
-		//		/// Fname.
-		//		/// </param>
-		//		/// <param name='succ'>
-		//		/// Succ.
-		//		/// </param>
-		//		/// <param name='obj'>
-		//		/// Object.
-		//		/// </param>
-		//		public void onNetwork(string fname, int succ, string msg, object pars)
-		//		{
-		//			OnNetWorkData data = new CLPanelBase.OnNetWorkData();
-		//			data.interfaceName = fname;
-		//			data.succ = succ;
-		//			data.msg = msg;
-		//			data.objs = pars;
-		//			networkQueue.Enqueue(data);
-		//			isOnNetWork = true;
-		//		}
 
 		public virtual void procNetwork (string fname, int succ, string msg, object pars)
 		{

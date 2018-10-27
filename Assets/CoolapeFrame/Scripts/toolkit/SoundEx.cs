@@ -23,6 +23,8 @@ namespace Coolape
 		//同时只能放一个音效
 		public AudioSource singletonAudio;
 
+        public CLDelegate OnSwitchChangeCallbacks = new CLDelegate();
+
 		public SoundEx ()
 		{
 			self = this;
@@ -66,6 +68,10 @@ namespace Coolape
 
 		static Hashtable playSoundCount = new Hashtable ();
 
+        public static void playSound(string name)
+        {
+            playSound(name, 1, 1);
+        }
 		/// <summary>
 		/// Plaies the sound.播放音效，可指定同时最大播放次数
 		/// </summary>
@@ -154,7 +160,7 @@ namespace Coolape
 			}
 		}
 
-		public static void onFinishSetAudio4Singleton (params object[] args)
+		static void onFinishSetAudio4Singleton (params object[] args)
 		{
 			try {
 				AudioClip ac = ((AudioClip)args [1]); 
@@ -184,14 +190,51 @@ namespace Coolape
 			}
 		}
 
-		public static bool soundEffectSwitch {
+        public static void addCallbackOnSoundEffectSwitch(object callback)
+        {
+            self.OnSwitchChangeCallbacks.add("soundEffectSwitch", callback, null);
+        }
+
+        public static void removeCallbackOnSoundEffectSwitch(object callback)
+        {
+            self.OnSwitchChangeCallbacks.remove("soundEffectSwitch", callback);
+        }
+        public static void addCallbackOnMusicBgSwitch(object callback)
+        {
+            self.OnSwitchChangeCallbacks.add("musicBgSwitch", callback, null);
+        }
+
+        public static void removeCallbackOnMusicBgSwitch(object callback)
+        {
+            self.OnSwitchChangeCallbacks.remove("musicBgSwitch", callback);
+        }
+
+        public static void clean()
+        {
+            self.OnSwitchChangeCallbacks.removeDelegates("soundEffectSwitch");
+            self.OnSwitchChangeCallbacks.removeDelegates("musicBgSwitch");
+        }
+
+        public static bool soundEffectSwitch {
 			get {
 				int f = PlayerPrefs.GetInt ("soundEffectSwitch", 0);
 				return f == 0 ? true : false;
 			}
 			set {
-				int f = value ? 0 : 1;
+                int oldVal = PlayerPrefs.GetInt("soundEffectSwitch", 0);
+                int f = value ? 0 : 1;
 				PlayerPrefs.SetInt ("soundEffectSwitch", f);
+                if(oldVal != f) {
+                    ArrayList list = self.OnSwitchChangeCallbacks.getDelegates("soundEffectSwitch");
+                    NewList cell = null;
+                    for (int i = 0; i < list.Count; i++) {
+                        cell = list[i] as NewList;
+                        if (cell != null && cell.Count > 0)
+                        {
+                            Utl.doCallback(cell[0], value);
+                        }
+                    }
+                }
 			}
 		}
 
@@ -201,8 +244,21 @@ namespace Coolape
 				return f == 0 ? true : false;
 			}
 			set {
-				int f = value ? 0 : 1;
+                int oldVal = PlayerPrefs.GetInt("musicBgSwitch", 0);
+                int f = value ? 0 : 1;
 				PlayerPrefs.SetInt ("musicBgSwitch", f);
+                if(oldVal != f) {
+                    ArrayList list = self.OnSwitchChangeCallbacks.getDelegates("musicBgSwitch");
+                    NewList cell= null;
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        cell = list[i] as NewList;
+                        if (cell != null && cell.Count > 0)
+                        {
+                            Utl.doCallback(cell[0], value);
+                        }
+                    }
+                }
 			}
 		}
 
@@ -261,7 +317,7 @@ namespace Coolape
 				return;
 			}
 			if (self.mainAudio.isPlaying) {
-				self.mainAudio.Stop ();
+                self.mainAudio.Pause ();
 			}
 			if (self.mainAudio.clip != null) {
 				CLSoundPool.returnObj (self.mainAudio.clip.name);
@@ -301,7 +357,7 @@ namespace Coolape
 						self.mainAudio.Play ();
 					}
 				} else {
-					self.mainAudio.Stop ();
+                    self.mainAudio.Pause ();
 				}
 				return;
 			}

@@ -54,16 +54,21 @@ namespace Coolape
 		}
 
 		public string platform {
-			get {
+            get
+            {
 #if UNITY_IOS
 				return "IOS";
 #elif UNITY_ANDROID
-				return "Android";
+                return "Android";
+#elif UNITY_STANDALONE_WIN
+                return "Standalone";
+#elif UNITY_STANDALONE_OSX
+                return "StandaloneOSX";
 #else
-				return "Standalone";
+                return "Standalone";
 #endif
-			}
-		}
+            }
+        }
 
 		public string runtimePlatform {
 			get {

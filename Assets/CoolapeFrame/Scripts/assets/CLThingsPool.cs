@@ -25,6 +25,14 @@ namespace Coolape
 			return wrapPath (path, name);
 		}
 
+        public override bool isAutoReleaseAssetBundle
+        {
+            get
+            {
+                return base.isAutoReleaseAssetBundle;
+            }
+        }
+
 		public static void clean ()
 		{
 			pool._clean ();

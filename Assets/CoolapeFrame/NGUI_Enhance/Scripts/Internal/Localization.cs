@@ -503,11 +503,11 @@ public static class Localization
 		string val;
 		string[] vals;
 
-#if !UNITY_IPHONE && !UNITY_ANDROID && !UNITY_WP8 && !UNITY_BLACKBERRY
+#if !UNITY_IPHONE && !UNITY_ANDROID && !UNITY_WP8 && !UNITY_BLACKBERRY && !UNITY_IOS
 		if (UICamera.currentScheme == UICamera.ControlScheme.Touch)
 #endif
-		{
-			string mobKey = key + " Mobile";
+        {
+            string mobKey = key + " Mobile";
 
 			if (mLanguageIndex != -1 && mDictionary.TryGetValue(mobKey, out vals))
 			{
@@ -556,8 +556,8 @@ public static class Localization
 		// Ensure we have a language to work with
 		if (!localizationHasBeenSet) language = PlayerPrefs.GetString("Language", "English");
 
-#if UNITY_IPHONE || UNITY_ANDROID
-		string mobKey = key + " Mobile";
+#if UNITY_IPHONE || UNITY_ANDROID || UNITY_IOS
+        string mobKey = key + " Mobile";
 		if (mDictionary.ContainsKey(mobKey)) return true;
 		else if (mOldDictionary.ContainsKey(mobKey)) return true;
 #endif

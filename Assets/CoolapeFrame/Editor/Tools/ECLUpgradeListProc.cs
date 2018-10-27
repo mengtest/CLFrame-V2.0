@@ -223,8 +223,9 @@ public class ECLUpgradeListProc : EditorWindow
 		if (!Utl.netIsActived ()) {
 			EditorUtility.DisplayDialog ("Alert", "The net work is not connected!", "Okay");
 			return;
-		}
-		string localDir = getUpgradePackagePath (name);
+        }
+        EditorUtility.ClearProgressBar();
+        string localDir = getUpgradePackagePath (name);
 		ThreadEx.exec (new System.Threading.ParameterizedThreadStart (doUploadUpgradePackage), localDir);
 //		doUploadUpgradePackage (localDir);
 	}
@@ -250,7 +251,7 @@ public class ECLUpgradeListProc : EditorWindow
 		}
 		isUploading = true;
 		if (selectedServer.useSFTP) {
-			SFTPHelper sftp = new SFTPHelper (selectedServer.host4UploadUpgradePackage,
+            /*SFTPHelper sftp = new SFTPHelper (selectedServer.host4UploadUpgradePackage,
 				                  selectedServer.port4UploadUpgradePackage,
 				                  selectedServer.ftpUser, 
 				                  selectedServer.ftpPassword);
@@ -265,8 +266,22 @@ public class ECLUpgradeListProc : EditorWindow
 				sftp = null;
 			} else {
 				Utl.doCallback ((Callback)onftpFinish, false);
-			}
-		} else {
+			}*/
+
+            RenciSFTPHelper sftp = new RenciSFTPHelper(selectedServer.host4UploadUpgradePackage,
+                                  selectedServer.ftpUser,
+                                  selectedServer.ftpPassword);
+            if (sftp.connect())
+            {
+                sftp.putDir(localDir.ToString(), selectedServer.RemoteBaseDir, (Callback)onSftpProgress, (Callback)onftpFinish);
+                sftp.disConnect();
+                sftp = null;
+            }
+            else
+            {
+                Utl.doCallback((Callback)onftpFinish, false);
+            }
+        } else {
 			bool ret = FTP.UploadDir (localDir.ToString (), 
 				           selectedServer.host4UploadUpgradePackage, 
 				           selectedServer.ftpUser, 

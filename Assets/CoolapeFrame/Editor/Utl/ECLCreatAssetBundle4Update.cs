@@ -76,18 +76,23 @@ public class ECLCreatAssetBundle4Update
 		bundlePath = file + "/Android/" + obj.name + ".unity3d";
 		Directory.CreateDirectory (Path.GetDirectoryName (bundlePath));
 		Debug.Log ("bundlePath==" + bundlePath);
-		BuildPipeline.BuildAssetBundle (obj, null, bundlePath, opt, BuildTarget.Android);
-#elif UNITY_IPHONE
+        BuildPipeline.BuildAssetBundle (obj, null, bundlePath, opt, BuildTarget.Android);
+#elif UNITY_IPHONE || UNITY_IOS
 		bundlePath  = file + "/IOS/" +obj.name +  ".unity3d";
 		Directory.CreateDirectory(Path.GetDirectoryName(bundlePath));
         BuildPipeline.BuildAssetBundle(obj, null, bundlePath, opt, BuildTarget.iOS);
-#else
+#elif UNITY_STANDALONE_WIN
 		bundlePath = file + "/Standalone/" + obj.name + ".unity3d";
 		Directory.CreateDirectory (Path.GetDirectoryName (bundlePath));
 		Debug.Log ("bundlePath==" + bundlePath);
-		BuildPipeline.BuildAssetBundle (obj, null, bundlePath, opt, BuildTarget.NoTarget);
+		BuildPipeline.BuildAssetBundle (obj, null, bundlePath, opt, BuildTarget.StandaloneWindows64);
+#elif UNITY_STANDALONE_OSX
+        bundlePath = file + "/StandaloneOSX/" + obj.name + ".unity3d";
+        Directory.CreateDirectory (Path.GetDirectoryName (bundlePath));
+        Debug.Log ("bundlePath==" + bundlePath);
+        BuildPipeline.BuildAssetBundle (obj, null, bundlePath, opt, BuildTarget.StandaloneOSX);
 #endif
-		FileInfo fileInfo = new FileInfo (bundlePath);
+        FileInfo fileInfo = new FileInfo (bundlePath);
 		long size = (fileInfo.Length / 1024);
 		if (size >= 900) {
 			Debug.LogError (" size== " + size + "KB," + fileInfo.FullName);
@@ -151,8 +156,12 @@ public class ECLCreatAssetBundle4Update
 
 			UIFont font = ((GameObject)obj).GetComponent<UIFont> ();
 			if (font != null) {
-				font.atlas = CLUIInit.self.getAtlasByName (font.atlasName);
-				font.material = font.atlas.spriteMaterial;
+                if(!string.IsNullOrEmpty(font.atlasName)) {
+    				font.atlas = CLUIInit.self.getAtlasByName (font.atlasName);
+                    if(font.atlas) {
+    				    font.material = font.atlas.spriteMaterial;
+                    }
+                }
 			}
 		} else if (obj != null && obj is Material) {
 			CLMaterialPool.resetTexRef (ECLEditorUtl.getAssetName4Upgrade (obj), (Material)obj, null, null);

@@ -90,8 +90,10 @@ namespace Coolape
 		// 异步模式//////////////////////////////////////////////////////////////////
 		public  bool IsConnectionSuccessful = false;
 		public  int timeoutMSec = 10000;
-		//毫秒
-		public ManualResetEvent TimeoutObject = null;
+        public int maxTimeoutTimes = 3;
+        //毫秒
+        //public ManualResetEvent TimeoutObject = null;
+        Timer connectTimeout = null;
 		NetCallback offLineCallback;
 
 		public void connectAsync (NetCallback callback, NetCallback offLineCallback)
@@ -103,24 +105,24 @@ namespace Coolape
 			this.offLineCallback = offLineCallback;
 			IsConnectionSuccessful = false;
 			connectCallbackFunc = callback;
+
 			mSocket.BeginConnect (ipe, (AsyncCallback)connectCallback, this);
+            if(connectTimeout != null) {
+                connectTimeout.Dispose();
+                connectTimeout = null;
+            }
+            connectTimeout = TimerEx.schedule((TimerCallback)connectTimeOut, null, timeoutMSec);
+        }
 
-			/*
-			if (TimeoutObject != null) {
-				TimeoutObject.Close ();
-				TimeoutObject = null;
-			}
-			TimeoutObject = new ManualResetEvent (false);
-			if (TimeoutObject.WaitOne (timeoutMSec, false)) {
-				if (IsConnectionSuccessful) {
-				} else {
-					callback (this, false);
-				}
-			}
-			*/
-		}
+        void connectTimeOut(object orgs)
+        {
+            if (IsConnectionSuccessful) {
+            } else {
+                connectCallbackFunc(this, false);
+            }
+        }
 
-		public void close ()
+        public void close ()
 		{
 			if (mSocket != null)
 				mSocket.Close ();
@@ -155,10 +157,10 @@ namespace Coolape
 				client.connectCallbackFunc (client, false);
 				client.close ();
 			} finally {
-				if (client.TimeoutObject != null) {
-					client.TimeoutObject.Close ();
-					client.TimeoutObject = null;
-				}
+                if(connectTimeout != null) {
+                    connectTimeout.Dispose();
+                    connectTimeout = null;
+                }
 			}
 		}
 
@@ -178,9 +180,11 @@ namespace Coolape
 					client.timeoutCheckTimer.Dispose ();
 					client.timeoutCheckTimer = null;
 				}
-				if (client.isActive) {
-					//从远程设备读取Number据
-					int bytesRead = client.mSocket.EndReceive (ar);
+				if (client.isActive)
+                {
+                    client.failTimes = 0;
+                    //从远程设备读取Number据
+                    int bytesRead = client.mSocket.EndReceive (ar);
 					if (bytesRead > 0) {
 //					Debug.Log ("receive len==" + bytesRead);
 						// 有Number据，存储.
@@ -247,10 +251,15 @@ namespace Coolape
 
 		public void sendTimeOut (object orgs)
 		{
-			if (offLineCallback != null) {
-				offLineCallback (this, null);
-			}
-			close ();
+            failTimes++;
+            if (failTimes > maxTimeoutTimes)
+            {
+                if (offLineCallback != null)
+                {
+                    offLineCallback(this, null);
+                }
+                close();
+            }
 		}
 
 		private void SendCallback (IAsyncResult ar)

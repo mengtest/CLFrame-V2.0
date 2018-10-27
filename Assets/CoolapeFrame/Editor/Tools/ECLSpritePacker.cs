@@ -494,16 +494,26 @@ public class ECLSpritePacker : EditorWindow
 	{
 		TextureImporter textureImporter = AssetImporter.GetAtPath (texPath) as TextureImporter; 
 		textureImporter.isReadable = val;
-		textureImporter.textureFormat = format;
+
+        //textureImporter.textureFormat = format;
 		textureImporter.textureCompression = compression;
-		#if UNITY_ANDROID
-		textureImporter.SetPlatformTextureSettings ("Android", 4096, format, 100, true);
-		#elif UNITY_IPHONE
-		textureImporter.SetPlatformTextureSettings("iPhone", 4096, format, 100, true);
-		#else
-		textureImporter.SetPlatformTextureSettings("Standalone", 4096, format, 100, true);
-		#endif
-		EditorUtility.SetDirty (textureImporter);
+        TextureImporterPlatformSettings texSettings = new TextureImporterPlatformSettings();
+        texSettings.format = format;
+        texSettings.maxTextureSize = 4096;
+        texSettings.allowsAlphaSplitting = true;
+        texSettings.compressionQuality = 100;
+#if UNITY_ANDROID
+        texSettings.name = "Android";
+        //textureImporter.SetPlatformTextureSettings ("Android", 4096, format, 100, true);
+#elif UNITY_IPHONE || UNITY_IOS
+        texSettings.name = "iPhone";
+		//textureImporter.SetPlatformTextureSettings("iPhone", 4096, format, 100, true);
+#else
+        texSettings.name = "Standalone";
+		//textureImporter.SetPlatformTextureSettings("Standalone", 4096, format, 100, true);
+#endif
+        textureImporter.SetPlatformTextureSettings(texSettings);
+        EditorUtility.SetDirty (textureImporter);
 		textureImporter.SaveAndReimport ();
 		if (importNow) {
 			AssetDatabase.ImportAsset (texPath); 

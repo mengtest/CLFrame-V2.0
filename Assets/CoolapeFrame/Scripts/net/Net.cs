@@ -117,7 +117,8 @@ namespace Coolape
 				netData = netGateDataQueue.Dequeue ();
 				if (netData != null) {
 					if (dispatchGate != null) {
-						dispatchGate.Call (netData);
+						//dispatchGate.Call (netData);
+                        Utl.doCallback(dispatchGate, netData);
 					}
 				}
 			}
@@ -125,8 +126,9 @@ namespace Coolape
 				netData = netGameDataQueue.Dequeue ();
 				if (netData != null) {
 					if (dispatchGame != null) {
-						dispatchGame.Call (netData);
-					}
+                        //dispatchGame.Call (netData);
+                        Utl.doCallback(dispatchGame, netData);
+                    }
 				}
 			}
 		}

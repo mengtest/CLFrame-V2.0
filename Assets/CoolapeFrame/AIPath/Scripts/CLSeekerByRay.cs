@@ -81,7 +81,7 @@ namespace Coolape
         public override void Start()
         {
             base.Start();
-            resetCache();
+            //resetCache();
         }
 
         public override float cellSize
@@ -136,7 +136,6 @@ namespace Coolape
             canMove = false;
             resetCache();
             begainTime = Time.time;
-
             bool isCanReach = false;
             List<Vector3> leftPath = trySearchPathLeft(toPos);
             List<Vector3> rightPath = trySearchPathRight(toPos);
@@ -209,7 +208,6 @@ namespace Coolape
                 //开始移动
                 startMove();
             }
-
             return pathList;
         }
 

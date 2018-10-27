@@ -44,7 +44,7 @@ public class ECLProjectManager : EditorWindow
 	public const string ver4UpgradeMd5 = FrameData + "/verControl/android/ver4UpgradeMd5.v";
 	// 每次更新的状态管理
 	public const string ver4UpgradeList = FrameData + "/verControl/android/ver4UpgradeList.v";
-	#elif UNITY_IOS
+#elif UNITY_IOS
 	// 开发中的版本文件
 	public const string ver4DevelopeMd5 = FrameData + "/verControl/IOS/ver4DevelopeMd5.v";				
 	//打包时的版本
@@ -55,9 +55,9 @@ public class ECLProjectManager : EditorWindow
 	public const string ver4UpgradeMd5 = FrameData + "/verControl/IOS/ver4UpgradeMd5.v";
 	// 每次更新的状态管理
 	public const string ver4UpgradeList = FrameData + "/verControl/IOS/ver4UpgradeList.v";
-	#endif
+#endif
 
-	#if UNITY_STANDALONE
+#if UNITY_STANDALONE_WIN
 	// 开发中的版本文件
 	public const string ver4DevelopeMd5 = FrameData + "/verControl/Standalone/ver4DevelopeMd5.v";
 	//打包时的版本
@@ -68,9 +68,22 @@ public class ECLProjectManager : EditorWindow
 	public const string ver4UpgradeMd5 = FrameData + "/verControl/Standalone/ver4UpgradeMd5.v";
 	// 每次更新的状态管理
 	public const string ver4UpgradeList = FrameData + "/verControl/Standalone/ver4UpgradeList.v";
-	#endif
+#endif
 
-	const int labWidth = 200;
+#if UNITY_STANDALONE_OSX
+    // 开发中的版本文件
+    public const string ver4DevelopeMd5 = FrameData + "/verControl/StandaloneOSX/ver4DevelopeMd5.v";
+    //打包时的版本
+    public const string ver4Publish = FrameData + "/verControl/StandaloneOSX/ver4Publish.v";
+    //每次更新时的版本
+    public const string ver4Upgrade = FrameData + "/verControl/StandaloneOSX/ver4Upgrade.v";
+    //每次更新时的版本
+    public const string ver4UpgradeMd5 = FrameData + "/verControl/StandaloneOSX/ver4UpgradeMd5.v";
+    // 每次更新的状态管理
+    public const string ver4UpgradeList = FrameData + "/verControl/StandaloneOSX/ver4UpgradeList.v";
+#endif
+
+    const int labWidth = 200;
 	static bool isFinishInit = false;
 	string u3dfrom = "";
 	string u3dto = "";
@@ -521,23 +534,26 @@ public class ECLProjectManager : EditorWindow
 		
 		string[] dirEntries = Directory.GetDirectories (path);
 		foreach (string dir in dirEntries) {
-			//跳过不同平台的资源
-			#if UNITY_ANDROID
-			if (Path.GetFileName (dir).Equals ("IOS") || Path.GetFileName (dir).Equals ("Standalone")) {
-				continue;
-			}
-			#elif UNITY_IOS
-			if (Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("Standalone")) {
-				Debug.Log(Path.GetFileName(dir));
-				continue;
-			}
-			#else
-			if (Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("IOS")) {
-				Debug.Log(Path.GetFileName(dir));
-				continue;
-			}
-			#endif
-			doCreateStreamingAssets (dir, ref map);
+            //跳过不同平台的资源
+#if UNITY_ANDROID
+            if (Path.GetFileName(dir).Equals("IOS") || Path.GetFileName(dir).Equals("Standalone") || Path.GetFileName(dir).Equals("StandaloneOSX"))
+            {
+                continue;
+            }
+#elif UNITY_IOS
+            if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("Standalone") || Path.GetFileName(dir).Equals("StandaloneOSX")) {
+                continue;
+            }
+#elif UNITY_STANDALONE_WIN
+            if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("IOS") || Path.GetFileName(dir).Equals("StandaloneOSX")) {
+                continue;
+            }
+#elif UNITY_STANDALONE_OSX
+            if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("IOS") || Path.GetFileName(dir).Equals("Standalone")) {
+                continue;
+            }
+#endif
+            doCreateStreamingAssets(dir, ref map);
 		}
 	}
 	
@@ -622,20 +638,25 @@ public class ECLProjectManager : EditorWindow
 		string[] dirEntries = Directory.GetDirectories (path);
 		foreach (string dir in dirEntries) {
 			//跳过不同平台的资源
-			#if UNITY_ANDROID
-			if (Path.GetFileName (dir).Equals ("IOS") || Path.GetFileName (dir).Equals ("Standalone")) {
-				continue;
-			}
-			#elif UNITY_IOS
-			if (Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("Standalone")) {
-				continue;
-			}
-			#else
-			if (Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("IOS")) {
-				continue;
-			}
-			#endif
-			cpyDir (dir, toPath + Path.GetFileName (dir) + "/");
+#if UNITY_ANDROID
+            if (Path.GetFileName(dir).Equals("IOS") || Path.GetFileName(dir).Equals("Standalone") || Path.GetFileName(dir).Equals("StandaloneOSX"))
+            {
+                continue;
+            }
+#elif UNITY_IOS
+            if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("Standalone") || Path.GetFileName(dir).Equals("StandaloneOSX")) {
+                continue;
+            }
+#elif UNITY_STANDALONE_WIN
+            if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("IOS") || Path.GetFileName(dir).Equals("StandaloneOSX")) {
+                continue;
+            }
+#elif UNITY_STANDALONE_OSX
+            if(Path.GetFileName(dir).Equals("Android") || Path.GetFileName(dir).Equals("IOS") || Path.GetFileName(dir).Equals("Standalone")) {
+                continue;
+            }
+#endif
+            cpyDir(dir, toPath + Path.GetFileName (dir) + "/");
 		}
 	}
 

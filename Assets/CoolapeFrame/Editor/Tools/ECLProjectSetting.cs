@@ -1074,9 +1074,10 @@ public static class ECLProjectSetting
 		go.AddComponent<CLVerManager> ();
 		go.AddComponent<CLAssetsManager> ();
 		go.AddComponent<SoundEx> ();
-		go.AddComponent<InvokeEx> ();
+        go.AddComponent<InvokeEx>();
+        go.AddComponent<WWWEx>();
 
-		go = new GameObject ("Net");
+        go = new GameObject ("Net");
 		go.AddComponent<Net> ();
 
 		go = new GameObject ("Main");

@@ -70,6 +70,14 @@ namespace Coolape
 			return prefabMap.Contains (name);
 		}
 
+
+        public virtual bool isAutoReleaseAssetBundle
+        {
+            get {
+                return true;
+            }
+        }
+
 		/// <summary>
 		/// Gets the asset path.需要在扩展类中，实在该方法，调用时会用到doSetPrefab
 		/// </summary>
@@ -77,7 +85,7 @@ namespace Coolape
 		/// <param name="name">Name.</param>
 		public abstract string getAssetPath (string name);
 
-		public virtual void _setPrefab (string name, object finishCallback, object  orgs, object progressCB)
+        public virtual void _setPrefab (string name, object finishCallback, object  orgs, object progressCB)
 		{
 			string path = getAssetPath (name);
 			OnSetPrefabCallbacks.add (name, finishCallback, orgs);
@@ -114,8 +122,7 @@ namespace Coolape
 		{
 			if (name == null)
 				return;
-
-			if (MapEx.getBool (isSettingPrefabMap, name)) {
+            if (MapEx.getBool (isSettingPrefabMap, name)) {
 				return;
 			}
 			if (_havePrefab (name)) {
@@ -127,7 +134,7 @@ namespace Coolape
 				Callback cb = onGetAssetsBundle;
 				CLVerManager.self.getNewestRes (path, 
 					CLAssetType.assetBundle, 
-					cb, finishCallback, name, args, progressCB);
+					cb, isAutoReleaseAssetBundle, finishCallback, name, args, progressCB);
 			}
 		}
 
@@ -179,7 +186,6 @@ namespace Coolape
 								unit.name = name;
 							}
 						}
-						asset.Unload (false);
 					}
 					CLAssetsManager.self.addAsset (getAssetPath (name), name, asset, realseAsset);
 					sepcProc4Assets (unit, cb, args, progressCB);
@@ -294,7 +300,7 @@ namespace Coolape
 							}
 							GameObject.DestroyImmediate ((unit as GameObject), true);
 						} else {
-							UnityEngine.Resources.UnloadAsset ((Object)unit);
+							//UnityEngine.Resources.UnloadAsset ((Object)unit);
 							GameObject.DestroyImmediate (unit, true);
 						}
 					}

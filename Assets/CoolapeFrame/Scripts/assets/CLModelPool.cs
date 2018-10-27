@@ -20,6 +20,14 @@ namespace Coolape
 			base._returnObj (name, unit, inActive, setParent);
 		}
 
+        public override bool isAutoReleaseAssetBundle
+        {
+            get
+            {
+                return false;
+            }
+        }
+
 		public static void clean ()
 		{
 			pool._clean ();

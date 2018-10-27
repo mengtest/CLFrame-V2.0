@@ -33,6 +33,14 @@ namespace Coolape
 			unit.clean ();
 		}
 
+        public override bool isAutoReleaseAssetBundle
+        {
+            get
+            {
+                return base.isAutoReleaseAssetBundle;
+            }
+        }
+
 		public static void clean ()
 		{
 			pool._clean ();

@@ -116,7 +116,10 @@ namespace Coolape
 			refreshContentOnly (list);
 		}
 
-		public void refreshContentOnly (object data)
+        public void refreshContentOnly(object data){
+            refreshContentOnly(data, false);
+        }
+        public void refreshContentOnly (object data, bool isRePositionTable)
 		{
 			ArrayList _list = null;
 			if (data == null) {
@@ -137,16 +140,45 @@ namespace Coolape
 			} else {
 				Transform t = null;
 				int tmpIndex = 0;
-				CLUILoopTableCell cell = null;
-				for (int i = 0; i < cachedTransform.childCount; ++i) {
-					t = cachedTransform.GetChild (i);
-					if (!t.gameObject.activeSelf)
+                CLUILoopTableCell cell = null;
+                CLUILoopTableCell preCell = null;
+                //for (int i = 0; i < cachedTransform.childCount; ++i) {
+                for (int i = 0; i < itemList.Count; i++){
+                    //t = cachedTransform.GetChild (i);
+                    cell = itemList[i];
+					if (!cell.gameObject.activeSelf)
 						continue;
-					tmpIndex = int.Parse (t.name);
-					cell = t.GetComponent<CLUILoopTableCell> ();
+					tmpIndex = int.Parse (cell.name);
+					//cell = t.GetComponent<CLUILoopTableCell> ();
 					if (cell != null) {
 						Utl.doCallback (this.initCellCallback, cell, list [tmpIndex]);
 					}
+
+                    if (cell.isSetWidgetSize)
+                    {
+                        BoxCollider box = cell.GetComponent<BoxCollider>();
+                        if (box != null)
+                        {
+                            box.size = Vector2.zero;
+                        }
+                        cell.widget.SetDimensions(0, 0);
+                    }
+                    NGUITools.updateAll(cell.transform);
+
+                    if (cell.isSetWidgetSize)
+                    {
+                        Bounds bound = NGUIMath.CalculateRelativeWidgetBounds(t, false);
+                        cell.widget.SetDimensions((int)(bound.size.x), (int)(bound.size.y));
+                    }
+
+                    if (isRePositionTable)
+                    {
+                        if (preCell != null)
+                        {
+                            setPosition(cell, preCell, table.direction);
+                        }
+                    }
+                    preCell = cell;
 				}
 			}
 		}

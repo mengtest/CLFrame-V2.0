@@ -38,8 +38,9 @@ namespace Coolape
 		LuaFunction lfonTopPanelChange;
 		LuaFunction lfOnDestroy;
 		LuaFunction lfPrepare;
+        LuaFunction lfOnApplicationPause;
 
-		public override void setLua ()
+        public override void setLua ()
 		{
 			base.setLua ();
 			lfhideSelfOnKeyBack = getLuaFunction ("hideSelfOnKeyBack");
@@ -51,11 +52,20 @@ namespace Coolape
 			lfrefresh = getLuaFunction ("refresh");
 			lfUIEventDelegate = getLuaFunction ("uiEventDelegate");
 			lfonTopPanelChange = getLuaFunction ("onTopPanelChange");
-			lfOnDestroy = getLuaFunction ("OnDestroy");
+            lfOnApplicationPause = getLuaFunction("OnApplicationPause");
+            lfOnDestroy = getLuaFunction ("OnDestroy");
 			lfPrepare = getLuaFunction ("prepare");
 		}
 
-		public override void OnDestroy ()
+        public void OnApplicationPause(bool isPause)
+        {
+            if (lfOnApplicationPause != null)
+            {
+                lfOnApplicationPause.Call(isPause);
+            }
+        }
+
+        public override void OnDestroy ()
 		{
 			if (lfOnDestroy != null) {
 				lfOnDestroy.Call ();

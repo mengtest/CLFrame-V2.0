@@ -194,8 +194,7 @@ namespace Coolape
 		public static ArrayList luaTableVals2List (LuaTable table)
 		{
 			ArrayList list = new ArrayList ();
-			ArrayList _list = new ArrayList ();
-			foreach (object key in table.GetKeys<object>()) {
+            foreach (object key in table.GetKeys<object>()) {
 				list.Add (table.Get<object> (key));
 			}
 			return list;

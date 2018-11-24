@@ -179,15 +179,24 @@ namespace Coolape
 		{
 			if (callbakFunc == null) {
 				Hashtable list = null;
-				foreach (DictionaryEntry item in coroutineMap) {
-					list = getCoroutines ((LuaFunction)(item.Key));
-					foreach (DictionaryEntry cell in list) {
-						StopCoroutine ((UnityEngine.Coroutine)(cell.Value));
-					}
-					list.Clear ();
+                NewList keys = ObjPool.listPool.borrowObject();
+                keys.AddRange(coroutineMap.Keys);
+                LuaFunction key = null;
+                for (int i = 0; i < keys.Count; i++) {
+                    key = keys[i] as LuaFunction;
+                    if (key != null)
+                    {
+                        list = getCoroutines(key);
+                        foreach (DictionaryEntry cell in list)
+                        {
+                            StopCoroutine((UnityEngine.Coroutine)(cell.Value));
+                        }
+                        list.Clear();
+                    }
 				}
 				coroutineMap.Clear ();
 				coroutineIndex.Clear ();
+                ObjPool.listPool.returnObject(keys);
 			} else {
 				cleanCoroutines (callbakFunc);
 			}

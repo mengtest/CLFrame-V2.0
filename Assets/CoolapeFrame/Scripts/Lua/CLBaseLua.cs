@@ -292,29 +292,57 @@ namespace Coolape
 
 		public void cancelInvoke4Lua (object callbakFunc)
 		{
-			if (callbakFunc == null) {
-				Hashtable list = null;
-				foreach (DictionaryEntry item in coroutineMap) {
-                    LuaFunction func = item.Key as LuaFunction;
-                    if(func == null) {
-                        Debug.LogError("item.Key to LuaFunction get null!");
-                        continue;
+			//if (callbakFunc == null) {
+			//	Hashtable list = null;
+			//	foreach (DictionaryEntry item in coroutineMap) {
+   //                 LuaFunction func = item.Key as LuaFunction;
+   //                 if(func == null) {
+   //                     Debug.LogError("item.Key to LuaFunction get null!");
+   //                     continue;
+   //                 }
+   //                 list = getCoroutines (func);
+			//		foreach (DictionaryEntry cell in list) {
+			//			StopCoroutine ((UnityEngine.Coroutine)(cell.Value));
+			//		}
+			//		list.Clear ();
+			//	}
+			//	if (_luaTable != null) {
+			//		StopCoroutine ("doInvoke4Lua");
+			//	}
+			//	coroutineMap.Clear ();
+			//	coroutineIndex.Clear ();
+			//} else {
+			//	cleanCoroutines (callbakFunc);
+			//}
+
+            if (callbakFunc == null)
+            {
+                Hashtable list = null;
+                NewList keys = ObjPool.listPool.borrowObject();
+                keys.AddRange(coroutineMap.Keys);
+                LuaFunction key = null;
+                for (int i = 0; i < keys.Count; i++)
+                {
+                    key = keys[i] as LuaFunction;
+                    if (key != null)
+                    {
+                        list = getCoroutines(key);
+                        foreach (DictionaryEntry cell in list)
+                        {
+                            StopCoroutine((UnityEngine.Coroutine)(cell.Value));
+                        }
+                        list.Clear();
                     }
-                    list = getCoroutines (func);
-					foreach (DictionaryEntry cell in list) {
-						StopCoroutine ((UnityEngine.Coroutine)(cell.Value));
-					}
-					list.Clear ();
-				}
-				if (_luaTable != null) {
-					StopCoroutine ("doInvoke4Lua");
-				}
-				coroutineMap.Clear ();
-				coroutineIndex.Clear ();
-			} else {
-				cleanCoroutines (callbakFunc);
-			}
-		}
+                }
+                coroutineMap.Clear();
+                coroutineIndex.Clear();
+                ObjPool.listPool.returnObject(keys);
+            }
+            else
+            {
+                cleanCoroutines(callbakFunc);
+            }
+        }
 
 		Queue invokeFuncs = new Queue ();
 

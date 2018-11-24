@@ -7,199 +7,122 @@ using XLua;
 
 namespace Coolape
 {
-	public class Net : CLBaseLua
-	{
-		public static Net self;
+    public class Net : Tcp
+    {
+        public static Net self;
 
-		public Net ()
-		{
-			self = this;
-		}
+        public Net()
+        {
+            self = this;
+        }
+        public CLBaseLua lua;
+        public enum NetWorkType
+        {
+            publish,
+            test1,
+            test2,
+        }
 
-		public enum NetWorkType
-		{
-			publish,
-			test1,
-			test2,
-		}
+        public int _SuccessCodeValue = 0;
 
-		public int _SuccessCodeValue = 0;
+        // 成功的返回值
+        public static int SuccessCode
+        {
+            get
+            {
+                return self._SuccessCodeValue;
+            }
+        }
 
-		// 成功的返回值
-		public static int SuccessCode {
-			get {
-				return self._SuccessCodeValue;
-			}
-		}
+        [HideInInspector]
+        public NetWorkType switchNetType = NetWorkType.publish;
+        [HideInInspector]
+        public string host4Publish = "";
+        [HideInInspector]
+        public string host4Test1 = "";
+        [HideInInspector]
+        public string host4Test2 = "";
 
-		public bool isReallyUseNet = true;
-		[HideInInspector]
-		public NetWorkType switchNetType = NetWorkType.publish;
-		[HideInInspector]
-		public string host4Publish = "";
-		[HideInInspector]
-		public string host4Test1 = "";
-		[HideInInspector]
-		public string host4Test2 = "";
+        // 默认地址
+        string _gateHost;
 
-		// 默认地址
-		string _gateHost;
+        public string gateHost
+        {     //网关
+            get
+            {
+                switch (switchNetType)
+                {
+                    case NetWorkType.publish:
+                        _gateHost = host4Publish;
+                        break;
+                    case NetWorkType.test1:
+                        _gateHost = host4Test1;
+                        break;
+                    case NetWorkType.test2:
+                        _gateHost = host4Test2;
+                        break;
+                }
+                return _gateHost;
+            }
+            set
+            {
+                _gateHost = value;
+            }
+        }
 
-		public string gateHost {     //网关
-			get {
-				switch (switchNetType) {
-				case NetWorkType.publish:
-					_gateHost = host4Publish;
-					break;
-				case NetWorkType.test1:
-					_gateHost = host4Test1;
-					break;
-				case NetWorkType.test2:
-					_gateHost = host4Test2;
-					break;
-				}
-				return _gateHost;
-			}
-			set {
-				_gateHost = value;
-			}
-		}
+        public int gatePort;
+        //网关
+        public int httpPort;
+        public string httpFunc = "";
 
-		public int gatePort;
-		//网关
-		public int httpPort;
-		public string httpFunc = "";
-		[HideInInspector]
-		public string
-			host;
-		[HideInInspector]
-		public int
-			port;
-		public Tcp gateTcp = null;
-		public Tcp gameTcp = null;
+        [XLua.CSharpCallLua]
+        public delegate void __DispatchGame(object data);
+        __DispatchGame dispatchGame;
+        [XLua.CSharpCallLua]
+        public delegate void TcpPackMessageAndSendFunc(object obj, Tcp tcp);
+        TcpPackMessageAndSendFunc packMsgFunc;
+        [XLua.CSharpCallLua]
+        public delegate object TcpUnpackMessageFunc(MemoryStream buffer, Tcp tcp);
+        TcpUnpackMessageFunc unPackMsgFunc;
+        //=====================begain===================
+        public void setLua()
+        {
+            lua.setLua();
+            dispatchGame = lua.luaTable.GetInPath<__DispatchGame>("dispatchGame");
+            packMsgFunc = lua.luaTable.GetInPath<TcpPackMessageAndSendFunc>("packMsg");
+            unPackMsgFunc = lua.luaTable.GetInPath<TcpUnpackMessageFunc>("unpackMsg");
+        }
 
+        //===================end=====================
+        public void connect(string host, int port)
+        {
+            StartCoroutine(doConnect(host, port));
+        }
 
-		//=====================begain===================
-		public override void setLua ()
-		{
-			base.setLua ();
-			dispatchGate = getLuaFunction ("dispatchGate");
-			dispatchGame = getLuaFunction ("dispatchGame");
-			dispatchSend = getLuaFunction ("dispatchSend");
-			packMsgFunc = getLuaFunction ("packMsg");
-			unPackMsgFunc = getLuaFunction ("unpackMsg");
-		}
+        IEnumerator doConnect(string host, int port)
+        {
+            yield return null;
+            init(host, port, (TcpDispatchDelegate)dispatchData);
+            base.connect();
+        }
 
-		LuaFunction dispatchGate;
-		LuaFunction dispatchGame;
-		LuaFunction dispatchSend;
-		LuaFunction packMsgFunc;
-		LuaFunction unPackMsgFunc;
-		//===================end=====================
-		public Queue netGateDataQueue = new Queue ();
-		public Queue netGameDataQueue = new Queue ();
+        public void dispatchData(object data, Tcp tcp)
+        {
+            if (dispatchGame != null)
+            {
+                dispatchGame(data);
+            }
+        }
 
-		public void dispatchGate4Lua (object obj, Tcp tcp)
-		{
-			netGateDataQueue.Enqueue (obj);
-		}
+        public override byte[] encodeData(object obj)
+        {
+            packMsgFunc(obj, this);
+            return null;
+        }
 
-		public void dispatchGame4Lua (object obj, Tcp tcp)
-		{
-			netGameDataQueue.Enqueue (obj);
-		}
-
-		object netData = null;
-
-		void LateUpdate ()
-		{
-			if (netGateDataQueue.Count > 0) {
-				netData = netGateDataQueue.Dequeue ();
-				if (netData != null) {
-					if (dispatchGate != null) {
-						//dispatchGate.Call (netData);
-                        Utl.doCallback(dispatchGate, netData);
-					}
-				}
-			}
-			if (netGameDataQueue.Count > 0) {
-				netData = netGameDataQueue.Dequeue ();
-				if (netData != null) {
-					if (dispatchGame != null) {
-                        //dispatchGame.Call (netData);
-                        Utl.doCallback(dispatchGame, netData);
-                    }
-				}
-			}
-		}
-
-		//连接网关
-		public void connectGate ()
-		{
-			StartCoroutine (doConnectGate ());
-		}
-
-		IEnumerator doConnectGate ()
-		{
-			yield return null;
-			if (gateTcp == null) {
-				gateTcp = new Tcp (dispatchGate4Lua, packMsgFunc, unPackMsgFunc);
-			}
-
-			if (!gateTcp.connected) {
-				gateTcp.init (gateHost, gatePort);
-				gateTcp.connect ();
-			} else {
-				gateTcp.connectCallback (gateTcp.socket, true);
-			}
-		}
-
-		public void connectGame (string host, int port)
-		{
-			try{
-				StartCoroutine (doConnectGame (host, port));
-			} catch(System.Exception e) {
-				Debug.LogError (e);
-			}
-		}
-
-		IEnumerator doConnectGame (string host, int port)
-		{
-			yield return null;
-			if (gameTcp == null) {
-				gameTcp = new Tcp (dispatchGame4Lua, packMsgFunc, unPackMsgFunc);
-			}
-			this.host = host;
-			this.port = port;
-			if (!gameTcp.connected) {
-				gameTcp.init (host, port);
-				gameTcp.connect ();
-			} else {
-				gameTcp.connectCallback (gameTcp.socket, true);
-			}
-		}
-
-		public void sendGate (object data)
-		{
-			if (gateTcp != null) {
-				gateTcp.send (data);
-			} else {
-				Debug.LogError ("The gate is not connected!");
-			}
-		}
-
-		public void send (object data)
-		{
-			if (isReallyUseNet) {
-				if (gameTcp != null) {
-					gameTcp.send (data);
-				} else {
-					Debug.LogError ("The server is not connected!");
-				}
-			} else {
-				dispatchSend.Call (data);
-			}
-		}
-
-	}
+        public override object parseRecivedData(MemoryStream buffer)
+        {
+            return unPackMsgFunc(buffer, this);
+        }
+    }
 }

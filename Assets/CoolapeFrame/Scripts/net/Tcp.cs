@@ -8,7 +8,7 @@
   *Others:  
   *History:
 *********************************************************************************
-*/ 
+*/
 
 using UnityEngine;
 using System.Collections;
@@ -17,339 +17,320 @@ using XLua;
 
 namespace Coolape
 {
-	public delegate void TcpDispatchCallback (object obj, Tcp tcp);
-	public delegate byte[] TcpPackMessageAndSendFunc (object obj, Tcp tcp);
-	public class Tcp
-	{
-		public string host;
-		public int port;
-		public bool connected = false;
-		//是否连接
-		public bool isStopping = false;
-		const int MaxReConnectTimes = 0;
-		public static int __maxLen = 1024 * 1024;
+    public delegate void TcpDispatchDelegate(object data, Tcp tcp);
+    public class Tcp : MonoBehaviour
+    {
+        public string host;
+        public int port;
+        public bool connected = false;
+        //是否连接
+        public bool isStopping = false;
+        const int MaxReConnectTimes = 0;
+        public static int __maxLen = 1024 * 1024;
 
-		System.Threading.Timer timer;
-		public USocket socket;
-		int reConnectTimes = 0;
-		public const string CONST_Connect = "connectCallback";
-		public const string CONST_OutofNetConnect = "outofNetConnect";
-		TcpDispatchCallback mDispatcher;
-		//消息组包函数，需要返回bytes
-		public object msgPackAndSendFunc;
-		//消息解包函数，第一个入参数是socket，第二个入参在是MemoryStream, 返回解包后得到的对象
-		public object msgUnpackFunc;
+        System.Threading.Timer timer;
+        public USocket socket;
+        int reConnectTimes = 0;
+        public const string CONST_Connect = "connectCallback";
+        public const string CONST_OutofNetConnect = "outofNetConnect";
+        TcpDispatchDelegate mDispatcher;
+        byte[] tmpBuffer = new byte[__maxLen];
 
-		public Tcp ()
-		{
-		}
+        public virtual void init(string host, int port)
+        {
+            this.host = host;
+            this.port = port;
+        }
 
-		public Tcp (TcpDispatchCallback dispatcher)
-		{
-			mDispatcher = dispatcher;
-		}
+        /// <summary>
+        /// Init the specified host, port and dispatcher.
+        /// </summary>
+        /// <param name="host">Host.</param>
+        /// <param name="port">Port.</param>
+        /// <param name="dispatcher">Dispatcher,当接收到数据并解析成功后将调用该方法.</param>
+        public virtual void init(string host, int port, TcpDispatchDelegate dispatcher)
+        {
+            mDispatcher = dispatcher;
+            this.host = host;
+            this.port = port;
+        }
 
-		public Tcp (TcpDispatchCallback dispatcher, object msgPackAndSendFunc, object msgUnpackFunc)
-		{
-			mDispatcher = dispatcher;
-			this.msgPackAndSendFunc = msgPackAndSendFunc;
-			this.msgUnpackFunc = msgUnpackFunc;
-		}
+        public void connect()
+        {
+            connect(null);
+        }
+        public void connect(object obj)
+        {
+            if (socket != null)
+            {
+                stop();
+            }
+            isStopping = false;
+            socket = new USocket(host, port);
 
-		public void init (string host, int port)
-		{
-			this.host = host;
-			this.port = port;
-		}
+#if UNITY_EDITOR
+            Debug.Log("connect ==" + host + ":" + port);
+#endif
+            //异步连接
+            socket.connectAsync(onConnectStateChg);
+        }
 
-		public void init (string host, int port, object msgPackAndSendFunc, object msgUnpackFunc)
-		{
-			this.host = host;
-			this.port = port;
-			this.msgPackAndSendFunc = msgPackAndSendFunc;
-			this.msgUnpackFunc = msgUnpackFunc;
-		}
+        /// <summary>
+        /// Ons the connect state chg. 当连接状态发生变化时
+        /// </summary>
+        /// <param name="s">S.</param>
+        /// <param name="result">Result. 其实是bool类型，
+        /// 当为true表示连接成功，false时表示没有连接成功或连接断开</param>
+        public virtual void onConnectStateChg(USocket s, object result)
+        {
+            if ((bool)result)
+            {
+#if UNITY_EDITOR
+                Debug.Log("connectCallback    success");
+#endif
+                connected = true;
+                reConnectTimes = 0;
+                socket.ReceiveAsync(onReceive);
+                enqueueData(CONST_Connect);
+            }
+            else
+            {
+                Debug.LogWarning("connectCallback    fail" + host + ":" + port + "," + isStopping);
+                connected = false;
+                if (!isStopping)
+                {
+                    outofNetConnect();
+                }
+            }
+        }
 
-		public void init (string host, int port, TcpDispatchCallback dispatcher, object msgPackAndSendFunc, object msgUnpackFunc)
-		{
-			mDispatcher = dispatcher;
-			this.msgPackAndSendFunc = msgPackAndSendFunc;
-			this.msgUnpackFunc = msgUnpackFunc;
-			this.host = host;
-			this.port = port;
-		}
+        public void outofNetConnect()
+        {
+            if (isStopping)
+                return;
+            if (reConnectTimes < MaxReConnectTimes)
+            {
+                reConnectTimes++;
+                if (timer != null)
+                {
+                    timer.Dispose();
+                }
+                timer = TimerEx.schedule(connect, null, 5000);
+            }
+            else
+            {
+                if (timer != null)
+                {
+                    timer.Dispose();
+                }
+                timer = null;
+                outofLine(socket, null);
+            }
+        }
 
-		public void connect (object obj = null)
-		{
-			isStopping = false;
-			socket = new USocket (host, port);
-			#if UNITY_EDITOR
-			Debug.Log ("connect ==" + host + ":" + port);
-			#endif
-			socket.connectAsync (connectCallback, outofLine);
-		}
+        public void outofLine(USocket s, object obj)
+        {
+            if (!isStopping)
+            {
+                stop();
+                CLMainBase.self.onOffline();
+                enqueueData(CONST_OutofNetConnect);
+            }
+        }
 
-		public void connectCallback (USocket s, object result)
-		{
-			if (this.socket == null || (this.socket != null && !this.socket.Equals (s))) {
-				return;
-			}
-			if ((bool)result) {
-				//connectCallback
-				#if UNITY_EDITOR
-				Debug.Log ("connectCallback    success");
-				#endif
-				connected = true;
-				reConnectTimes = 0;
-				if (mDispatcher != null) {
-					mDispatcher (CONST_Connect, this);
-				}
-				socket.ReceiveAsync (onReceive);
-			} else {
-				Debug.LogWarning ("connectCallback    fail" + host + ":" + port + "," + isStopping);
-				connected = false;
-				if (!isStopping) {
-					outofNetConnect ();
-				}
-			}
-		}
+        public virtual void stop()
+        {
+            isStopping = true;
+            connected = false;
+            if (socket != null)
+            {
+                socket.close();
+            }
+            socket = null;
+        }
 
-		void outofNetConnect ()
-		{
-			if (isStopping)
-				return;
-			if (reConnectTimes < MaxReConnectTimes) {
-				reConnectTimes++;
-				if (timer != null) {
-					timer.Dispose ();
-				}
-				timer = TimerEx.schedule (connect, null, 5000);
-			} else {
-				if (timer != null) {
-					timer.Dispose ();
-				}
-				timer = null;
-				outofLine (socket, null);
-			}
-		}
+        //==========================================
+        public void send(object obj)
+        {
+            if (socket == null)
+            {
+                Debug.LogWarning("Socket is null");
+                return;
+            }
+            object ret = packMessage(obj);
 
-		public void stop ()
-		{
-			isStopping = true;
-			connected = false;
-			if (socket != null) {
-				socket.close ();
-			}
-			socket = null;
-		}
+            if (ret == null || isStopping || !connected)
+            {
+                return;
+            }
+            socket.SendAsync(ret as byte[]);
+        }
 
-		void outofLine (USocket s, object obj)
-		{
-			if (this.socket == null || (this.socket != null && !this.socket.Equals (s))) {
-				return;
-			}
-			if (!isStopping) {
-				CLMainBase.self.onOffline ();
-				try {
-					if (mDispatcher != null)
-						mDispatcher (CONST_OutofNetConnect, this);
-				} catch (System.Exception e1) {
-					Debug.Log (e1);
-				}
-			}
-		}
-
-		//==========================================
-		public void send (object obj)
-		{
-			if (socket == null) {
-				Debug.LogWarning ("Socket is null");
-				return;
-			}
-			object ret = packMessage (obj);
-
-			if (ret == null || isStopping || !connected) {
-				return;
-			}
-			socket.SendAsync (ret as byte[]);
-		}
-
-		public object packMessage (object obj)
-		{
-			try {
-				if (msgPackAndSendFunc != null) {
-					if (msgPackAndSendFunc is TcpPackMessageAndSendFunc) {
-						((TcpPackMessageAndSendFunc)msgPackAndSendFunc) (obj, this);
-					} else {
-						Utl.doCallback (msgPackAndSendFunc, obj, this);
-					}
-					return null;
-				} else {
-					return defaultPackMessage (obj);
-				}
-			} catch (System.Exception e) {
-				Debug.LogError (e);
-				return null;
-			}
-		}
-
-		MemoryStream os = new MemoryStream ();
-		MemoryStream os2 = new MemoryStream ();
-
-		public byte[] defaultPackMessage (object obj)
-		{
-			os.Position = 0;
-			os2.Position = 0;
-
-			B2OutputStream.writeObject (os, obj);
-			int len = (int)os.Position;
-			B2OutputStream.writeInt (os2, len);
-			os2.Write (os.ToArray (), 0, len);
-			int pos = (int)os2.Position;
-			byte[] result = new byte[pos];
-			os2.Position = 0;
-			os2.Read (result, 0, pos);
-			return result;
-		}
-
-		//==========================================
-		void onReceive (USocket s, object obj)
-		{
-			if (this.socket == null || (this.socket != null && !this.socket.Equals (s))) {
-				return;
-			}
-			try {
-				unpackMsg (s, s.mBuffer, mDispatcher);
-			} catch (System.Exception e) {
-				Debug.Log (e);
-			}
-		}
-
-		public void unpackMsg (USocket s, MemoryStream buffer, TcpDispatchCallback dispatcher)
-		{
+        public object packMessage(object obj)
+        {
             try
             {
-                bool isLoop = true;
-                while (isLoop)
+                return encodeData(obj);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(e);
+                return null;
+            }
+        }
+
+        MemoryStream os = new MemoryStream();
+        MemoryStream os2 = new MemoryStream();
+
+        /// <summary>
+        /// Encodes the data.数据组包准备发送
+        /// </summary>
+        /// <returns>The data.</returns>
+        /// <param name="obj">Object.</param>
+        public virtual byte[] encodeData(object obj)
+        {
+            os.Position = 0;
+            os2.Position = 0;
+
+            B2OutputStream.writeObject(os, obj);
+            int len = (int)os.Position;
+            B2OutputStream.writeInt(os2, len);
+            os2.Write(os.ToArray(), 0, len);
+            int pos = (int)os2.Position;
+            byte[] result = new byte[pos];
+            os2.Position = 0;
+            os2.Read(result, 0, pos);
+            return result;
+        }
+
+        //==========================================
+        MemoryStreamPool memorystreamPool = new MemoryStreamPool();
+        public void onReceive(USocket s, byte[] bytes, int len)
+        {
+            MemoryStream buffer = memorystreamPool.borrowObject();
+            buffer.Write(bytes, 0, len);
+            buffer.SetLength(len);
+            enqueueData(buffer);
+        }
+
+        public void unpackMsg(MemoryStream buffer)
+        {
+            bool isLoop = true;
+            object o = null;
+            long usedLen = 0;
+            while (isLoop)
+            {
+                long totalLen = buffer.Length;
+                if (totalLen > 2)
                 {
-                    long totalLen = buffer.Position;
-                    if (totalLen > 2)
+                    usedLen = 0;
+                    o = parseRecivedData(buffer);
+                    usedLen = buffer.Position;
+                    if (usedLen > 0)
                     {
-                        buffer.SetLength(totalLen);
-                        object o = null;
-                        buffer.Position = 0;
-                        if (msgUnpackFunc != null)
+                        int leftLen = (int)(totalLen - usedLen);
+                        if (leftLen > 0)
                         {
-                            object[] objs = Utl.doCallback(msgUnpackFunc, s, buffer);
-                            if (objs != null && objs.Length > 0)
-                            {
-                                o = objs[0];
-                            }
+                            buffer.Read(tmpBuffer, 0, leftLen);
+                            buffer.Position = 0;
+                            buffer.Write(tmpBuffer, 0, leftLen);
+                            buffer.SetLength(leftLen);
                         }
                         else
                         {
-                            o = defaultUnpackMsg(s, buffer);
-                        }
-                        if (o != null && dispatcher != null)
-                        {
-                            dispatcher(o, this);
-                        }
-                        long usedLen = buffer.Position;
-                        if (usedLen > 0)
-                        {
-                            long leftLen = totalLen - usedLen;
-                            if (leftLen > 0)
-                            {
-                                byte[] lessBuff = new byte[leftLen];
-                                buffer.Read(lessBuff, 0, (int)leftLen);
-                                buffer.Position = 0;
-                                buffer.Write(lessBuff, 0, (int)leftLen);
-                                buffer.SetLength((int)leftLen);
-                            }
-                            else
-                            {
-                                buffer.Position = 0;
-                                buffer.SetLength(0);
-                                isLoop = false;
-                            }
-                        }
-                        else
-                        {
-                            buffer.Position = totalLen;
+                            buffer.Position = 0;
+                            buffer.SetLength(0);
                             isLoop = false;
                         }
                     }
                     else
                     {
+                        //buffer.Position = totalLen;
                         isLoop = false;
                     }
-                }
-            } catch(System.Exception e) {
-                Debug.LogError(e);
-            }
-		}
 
-		private object defaultUnpackMsg (USocket s, MemoryStream buffer)
-		{
-			object ret = null;
-			long oldPos = buffer.Position;
-			long tatalLen = buffer.Length;
-			long needLen = B2InputStream.readInt (buffer);
-			if (needLen <= 0 || needLen > __maxLen) {
-				// 网络Number据错误。断isOpen网络
-				outofLine (s, false);
-				s.close ();
-				return null;
-			}
-			long usedLen = buffer.Position;
-			if (usedLen + needLen <= tatalLen) {
-				ret = B2InputStream.readObject (buffer);
-			} else {
-				//说明长度不够
-				buffer.Position = oldPos;
-			}
-			return ret;
-		}
-		//		private void defaultUnpackMsg (USocket s, MemoryStream buffer, TcpDispatchCallback dispatcher)
-		//		{
-		//			bool isLoop = true;
-		//			while (isLoop) {
-		//				long currentPostion = buffer.Position;
-		//				if (currentPostion > 4) {
-		//					buffer.Position = 0;
-		//					long len = B2InputStream.readInt (buffer);
-		//					if (len <= 0 || len > __maxLen) {
-		//						// 网络Number据错误。断isOpen网络
-		//						outofLine (s, false);
-		//						s.close ();
-		//						isLoop = false;
-		//					} else {
-		//						long cp2 = buffer.Position;
-		//						if (cp2 + len <= currentPostion) {
-		//							object o = B2InputStream.readObject (buffer);
-		//							if (dispatcher != null) {
-		//								dispatcher (o, this);
-		//							}
-		//							long cp3 = buffer.Position;
-		//							long less = currentPostion - cp3;
-		//							if (less > 0) {
-		//								byte[] lessBuff = new byte[less];
-		//								buffer.Read (lessBuff, 0, (int)less);
-		//								buffer.Position = 0;
-		//								buffer.Write (lessBuff, 0, (int)less);
-		//							} else {
-		//								buffer.Position = 0;
-		//								isLoop = false;
-		//							}
-		//						} else {
-		//							buffer.Position = currentPostion;
-		//							isLoop = false;
-		//						}
-		//					}
-		//				} else {
-		//					isLoop = false;
-		//				}
-		//			}
-		//		}
-	}
+                    if (o != null && mDispatcher != null)
+                    {
+                        mDispatcher(o, this);
+                    }
+                }
+                else
+                {
+                    isLoop = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Parses the recived data.解析接收的数据，解析成功后发送给dispatcher
+        /// </summary>
+        /// <returns>The recived data.</returns>
+        /// <param name="buffer">Buffer.</param>
+        public virtual object parseRecivedData(MemoryStream buffer)
+        {
+            object ret = null;
+            long oldPos = buffer.Position;
+            buffer.Position = 0;
+            long tatolLen = buffer.Length;
+            long needLen = B2InputStream.readInt(buffer);
+            if (needLen <= 0 || needLen > __maxLen)
+            {
+                // 网络Number据错误。断isOpen网络
+                outofLine(this.socket, false);
+                //this.stop();
+                return null;
+            }
+            long usedLen = buffer.Position;
+            if (usedLen + needLen <= tatolLen)
+            {
+                ret = B2InputStream.readObject(buffer);
+            }
+            else
+            {
+                //说明长度不够
+                buffer.Position = oldPos;
+            }
+            return ret;
+        }
+
+        //======================================================================
+        //======================================================================
+        //======================================================================
+        public Queue receivedDataQueue = new Queue();
+
+        public void enqueueData(object obj)
+        {
+            receivedDataQueue.Enqueue(obj);
+        }
+
+        object netData = null;
+        MemoryStream memoryBuff = null;
+        MemoryStream receivedBuffer = new MemoryStream();
+        public void Update()
+        {
+            if (receivedDataQueue.Count > 0)
+            {
+                while (receivedDataQueue.Count > 0)
+                {
+                    netData = receivedDataQueue.Dequeue();
+                    if (netData != null)
+                    {
+                        if (netData is string)
+                        {
+                            mDispatcher(netData, this);
+                            continue;
+                        }
+                        memoryBuff = netData as MemoryStream;
+                        receivedBuffer.Write(memoryBuff.ToArray(), 0, (int)(memoryBuff.Length));
+                        memorystreamPool.returnObject(memoryBuff);
+                    }
+                }
+                if (receivedBuffer.Length > 0)
+                {
+                    receivedBuffer.SetLength(receivedBuffer.Position);
+                    unpackMsg(receivedBuffer);
+                }
+            }
+        }
+    }
 }

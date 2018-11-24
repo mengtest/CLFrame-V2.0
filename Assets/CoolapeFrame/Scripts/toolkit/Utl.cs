@@ -1048,7 +1048,9 @@ namespace Coolape
 			return v3;
 		}
 
-		public static byte[] read4MemoryStream (MemoryStream ms, int offset, int len)
+        [LuaCallCSharp]
+        [ReflectionUse]
+        public static byte[] read4MemoryStream (MemoryStream ms, int offset, int len)
 		{
 			if (ms == null || len <= 0) {
 				return null;

@@ -1184,7 +1184,9 @@ public static class ECLProjectSetting
 		sound.singletonAudio = mainGo.GetComponent<AudioSource> ();
 
 		Net net = GameObject.Find ("Net").GetComponent<Net> ();
-		net.luaPath = data.name + "/upgradeRes/priority/lua/net/CLLNet.lua";
+        CLBaseLua netLua = net.gameObject.AddComponent<CLBaseLua>();
+		netLua.luaPath = data.name + "/upgradeRes/priority/lua/net/CLLNet.lua";
+        net.lua = netLua;
 
 		CLMainBase main = mainGo.GetComponent<CLMainBase> ();
 		main.firstPanel = data.companyPanelName;

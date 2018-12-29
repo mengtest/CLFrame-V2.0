@@ -133,7 +133,7 @@ namespace Coolape
             if (!isStopping)
             {
                 stop();
-                CLMainBase.self.onOffline();
+                //CLMainBase.self.onOffline();
                 enqueueData(CONST_OutofNetConnect);
             }
         }

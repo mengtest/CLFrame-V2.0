@@ -736,6 +736,13 @@ public class ECLPublisher : EditorWindow
         }
         GUILayout.EndHorizontal();
 
+        GUILayout.BeginHorizontal();
+        {
+            GUILayout.Label("Other Scripting Define Symbols", GUILayout.Width(width));
+            currChlData.mOtherScriptingDefineSymbols = GUILayout.TextField(currChlData.mOtherScriptingDefineSymbols);
+        }
+        GUILayout.EndHorizontal();
+
         // SubChannel
         GUILayout.BeginHorizontal();
         {
@@ -1104,6 +1111,10 @@ public class ECLPublisher : EditorWindow
         if (currChlData.isUseUnityIAP)
         {
             symbols += (";USE_UNITYIAP");
+        }
+        if(!string.IsNullOrEmpty(currChlData.mOtherScriptingDefineSymbols))
+        {
+            symbols += (";" + currChlData.mOtherScriptingDefineSymbols);
         }
         PlayerSettings.SetScriptingDefineSymbolsForGroup(currChlData.buildTargetGroup, symbols);
 
@@ -1651,6 +1662,7 @@ public class ChlData
             return "CHL_" + mChlName.ToUpper();
         }
     }
+    public string mOtherScriptingDefineSymbols = "";
 
     public string mSubChannel = "";
     public string mCtccChannel = "";
@@ -1717,6 +1729,7 @@ public class ChlData
         r["mBundleVersionCode"] = mBundleVersionCode;
         r["mCreateEclipseProject"] = mCreateEclipseProject;
         r["mBuildLocation"] = mBuildLocation;
+        r["mOtherScriptingDefineSymbols"] = mOtherScriptingDefineSymbols;
         r["mAlertDesc"] = mAlertDesc;
         r["mCopyDirPaths"] = mCopyDirPaths;
         //		r ["mSpecialCopyDir"] = mSpecialCopyDirPath;
@@ -1807,6 +1820,7 @@ public class ChlData
 #endif
         r.mCreateEclipseProject = MapEx.getBool(map, "mCreateEclipseProject");
         r.mBuildLocation = MapEx.getString(map, "mBuildLocation");
+        r.mOtherScriptingDefineSymbols = MapEx.getString(map, "mOtherScriptingDefineSymbols");
         r.mAlertDesc = MapEx.getString(map, "mAlertDesc");
         r.mAlertDesc = r.mAlertDesc == null ? "" : r.mAlertDesc;
         r.mCopyDirPaths = MapEx.getList(map, "mCopyDirPaths");

@@ -348,6 +348,7 @@ namespace Coolape
         void Move(Vector3 worldDelta, bool isDoLimitView = false)
         {
             Vector3 before = target.position;
+            Vector3 orgDelta = worldDelta;
             target.position = before + worldDelta;
             scaleTarget.LateUpdate();       //执行一次跟随
             bool inGround = true;
@@ -363,7 +364,8 @@ namespace Coolape
             {
                 if (!isDoLimitView)
                 {
-                    target.position = before + worldDelta;
+                    //target.position = before + worldDelta;
+                    target.position = before + orgDelta;
                     CancelMovement();
                 }
             }
@@ -464,14 +466,24 @@ namespace Coolape
 
             float disLeft = Vector3.Distance(viewCenter, viewLeft);
             float disRight = Vector3.Distance(viewCenter, viewRight);
+            float disTop = Vector3.Distance(viewCenter, viewTop);
+            float disBottom = Vector3.Distance(viewCenter, viewBottom);
+
+            if ((disLeft > viewRadius || disRight > viewRadius)
+            && (disTop > viewRadius || disBottom > viewRadius))
+            {
+                offset.x = 0;
+                offset.y = 0;
+                offset.z = 0;
+                return false;
+            }
+
             if (disLeft > viewRadius || disRight > viewRadius)
             {
                 offset.x = 0;
                 return false;
             }
 
-            float disTop = Vector3.Distance(viewCenter, viewTop);
-            float disBottom = Vector3.Distance(viewCenter, viewBottom);
             if (disTop > viewRadius || disBottom > viewRadius)
             {
                 offset.z = 0;
@@ -881,8 +893,10 @@ namespace Coolape
 		}
 
 		public void procScaler (float delta)
-		{
-			if (!canScale) {
+        {
+            CancelMovement();
+            unDoInertance();
+            if (!canScale) {
 				return;
 			}
 
@@ -1013,48 +1027,97 @@ namespace Coolape
 			float disRight = Vector3.Distance (viewCenter, viewRight);
 			float disTop = Vector3.Distance (viewCenter, viewTop);
 			float disBottom = Vector3.Distance (viewCenter, viewBottom);
-			if (disLeft > viewRadius && disRight > viewRadius &&
-			    disTop > viewRadius && disBottom > viewRadius) {
-				offset = Vector3.zero;
-//				target.position = viewCenter;
-				return false;
-			}
-			if (disLeft > viewRadius && disRight > viewRadius) {
-				offset.x = 0;
-				newPos.x = viewCenter.x;
-				target.position = newPos;
-			} else {
-				if (disLeft > viewRadius) {
-					offset.x = 0;
-					limitOffset.x = -1;
-					isLimitDisplayView = true;
-					ret = false;
-				} else if (disRight > viewRadius) {
-					offset.x = 0;
-					limitOffset.x = 1;
-					isLimitDisplayView = true;
-					ret = false;
-				}
-			}
+            float screenWidth = Vector3.Distance(viewLeft, viewRight);
+            float screenHeigh = Vector3.Distance(viewBottom, viewTop);
 
-			if (disTop > viewRadius && disBottom > viewRadius) {
-				offset.z = 0;
-				newPos.z = viewCenter.z;
-				target.position = newPos;
-			} else {
-				if (disTop > viewRadius) {
-					offset.z = 0;
-					limitOffset.y = 1;
-					isLimitDisplayView = true;
-					ret = false;
-				} else if (disBottom > viewRadius) {
-					offset.z = 0;
-					limitOffset.y = -1;
-					isLimitDisplayView = true;
-					ret = false;
-				}
-			}
-			if (!isLimitDisplayView) {
+            if (disLeft > viewRadius && disRight > viewRadius 
+            && (disLeft + disRight) < screenWidth + viewRadius/2)
+            {
+                //说明中心点还在屏内，那说是表示x轴已经不在在拖动
+                offset.x = 0;
+                newPos.x = viewCenter.x;
+                target.position = newPos;
+                limitOffset.x = 0;
+            }
+            else
+            {
+                if (disLeft > viewRadius && disRight > viewRadius
+                    && (disLeft + disRight) > screenWidth + viewRadius
+                    && disLeft > disRight)
+                {
+                    offset.x = 0;
+                    limitOffset.x = -1;
+                    isLimitDisplayView = true;
+                    ret = false;
+                } else if (disLeft > viewRadius && disRight > viewRadius
+                    && (disLeft + disRight) > screenWidth + viewRadius
+                    && disLeft <= disRight)
+                {
+                    offset.x = 0;
+                    limitOffset.x = 1;
+                    isLimitDisplayView = true;
+                    ret = false;
+                } else if(disLeft > viewRadius)
+                {
+                    offset.x = 0;
+                    limitOffset.x = -1;
+                    isLimitDisplayView = true;
+                    ret = false;
+                } else if (disRight > viewRadius)
+                {
+                    offset.x = 0;
+                    limitOffset.x = 1;
+                    isLimitDisplayView = true;
+                    ret = false;
+                }
+            }
+
+            if (disTop > viewRadius && disBottom > viewRadius
+            && (disTop + disBottom) < screenHeigh+ viewRadius / 2)
+            {
+                //说明中心点还在屏内，那说是表示x轴已经不在在拖动
+                offset.z = 0;
+                newPos.z = viewCenter.z;
+                target.position = newPos;
+                limitOffset.y = 0;
+            }
+            else
+            {
+                if (disTop > viewRadius && disBottom > viewRadius
+                    && (disTop + disBottom) > screenHeigh + viewRadius
+                    && disTop > disBottom)
+                {
+                    offset.z = 0;
+                    limitOffset.y = 1;
+                    isLimitDisplayView = true;
+                    ret = false;
+                }
+                else if (disTop > viewRadius && disBottom > viewRadius
+                  && (disTop + disBottom) > screenHeigh + viewRadius
+                  && disTop <= disBottom)
+                {
+                    offset.z = 0;
+                    limitOffset.y = -1;
+                    isLimitDisplayView = true;
+                    ret = false;
+                }
+                else if (disTop > viewRadius)
+                {
+                    offset.z = 0;
+                    limitOffset.y = 1;
+                    isLimitDisplayView = true;
+                    ret = false;
+                }
+                else if (disBottom > viewRadius)
+                {
+                    offset.z = 0;
+                    limitOffset.y = -1;
+                    isLimitDisplayView = true;
+                    ret = false;
+                }
+            }
+
+            if (!isLimitDisplayView) {
 				LateUpdate ();
 			}
 			return ret;

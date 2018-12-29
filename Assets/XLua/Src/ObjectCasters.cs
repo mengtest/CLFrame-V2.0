@@ -132,18 +132,18 @@ namespace XLua
                 return false;
             };
 
-            if (!type.IsAbstract && typeof(Delegate).IsAssignableFrom(type))
+            if (!type.IsAbstract() && typeof(Delegate).IsAssignableFrom(type))
             {
                 return (RealStatePtr L, int idx) =>
                 {
                     return LuaAPI.lua_isnil(L, idx) || LuaAPI.lua_isfunction(L, idx) || fixTypeCheck(L, idx);
                 };
             }
-            else if (type.IsEnum)
+            else if (type.IsEnum())
             {
                 return fixTypeCheck;
             }
-            else if (type.IsInterface)
+            else if (type.IsInterface())
             {
                 return (RealStatePtr L, int idx) =>
                 {
@@ -152,14 +152,14 @@ namespace XLua
             }
             else
             {
-                if ((type.IsClass && type.GetConstructor(System.Type.EmptyTypes) != null)) //class has default construtor
+                if ((type.IsClass() && type.GetConstructor(System.Type.EmptyTypes) != null)) //class has default construtor
                 {
                     return (RealStatePtr L, int idx) =>
                     {
                         return LuaAPI.lua_isnil(L, idx) || LuaAPI.lua_istable(L, idx) || fixTypeCheck(L, idx);
                     };
                 }
-                else if (type.IsValueType)
+                else if (type.IsValueType())
                 {
                     return (RealStatePtr L, int idx) =>
                     {
@@ -183,6 +183,14 @@ namespace XLua
             }
         }
 
+        public ObjectCheck genNullableChecker(ObjectCheck oc)
+        {
+            return (RealStatePtr L, int idx) =>
+            {
+                return LuaAPI.lua_isnil(L, idx) || oc(L, idx);
+            };
+        }
+
         public ObjectCheck GetChecker(Type type)
         {
             if (type.IsByRef) type = type.GetElementType();
@@ -190,7 +198,7 @@ namespace XLua
             Type underlyingType = Nullable.GetUnderlyingType(type);
             if (underlyingType != null)
             {
-                type = underlyingType;     // Silently convert nullable types to their non null requics
+                return genNullableChecker(GetChecker(underlyingType));
             }
             ObjectCheck oc;
             if (!checkersMap.TryGetValue(type, out oc))
@@ -234,57 +242,57 @@ namespace XLua
 
         private static object charCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(char)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (char)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object sbyteCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(sbyte)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (sbyte)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object byteCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(byte)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (byte)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object shortCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(short)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (short)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object ushortCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(ushort)LuaAPI.xlua_tointeger(L, idx) : null;
+            return (ushort)LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object intCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)LuaAPI.xlua_tointeger(L, idx) : null;
+            return LuaAPI.xlua_tointeger(L, idx);
         }
 
         private static object uintCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)LuaAPI.xlua_touint(L, idx) : null;
+            return LuaAPI.xlua_touint(L, idx);
         }
 
         private static object longCaster(RealStatePtr L, int idx, object target)
         {
-            return (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER || LuaAPI.lua_isint64(L, idx)) ? (object)LuaAPI.lua_toint64(L, idx) : null;
+            return LuaAPI.lua_toint64(L, idx);
         }
 
         private static object ulongCaster(RealStatePtr L, int idx, object target)
         {
-            return (LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER || LuaAPI.lua_isuint64(L, idx)) ? (object)LuaAPI.lua_touint64(L, idx) : null;
+            return LuaAPI.lua_touint64(L, idx);
         }
 
         private static object getDouble(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)LuaAPI.lua_tonumber(L, idx) : null;
+            return LuaAPI.lua_tonumber(L, idx);
         }
 
         private static object floatCaster(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TNUMBER ? (object)(float)LuaAPI.lua_tonumber(L, idx) : null;
+            return (float)LuaAPI.lua_tonumber(L, idx);
         }
 
         private object decimalCaster(RealStatePtr L, int idx, object target)
@@ -296,12 +304,12 @@ namespace XLua
 
         private static object getBoolean(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TBOOLEAN ? (object)LuaAPI.lua_toboolean(L, idx) : null;
+            return LuaAPI.lua_toboolean(L, idx);
         }
 
         private static object getString(RealStatePtr L, int idx, object target)
         {
-            return LuaAPI.lua_type(L, idx) == LuaTypes.LUA_TSTRING ? LuaAPI.lua_tostring(L, idx) : null;
+            return LuaAPI.lua_tostring(L, idx);
         }
 
         private object getBytes(RealStatePtr L, int idx, object target)
@@ -363,7 +371,8 @@ namespace XLua
                         }
                         else
                         {
-                            return translator.SafeGetCSObj(L, idx);
+                            object obj = translator.SafeGetCSObj(L, idx);
+                            return (obj is RawObject) ? (obj as RawObject).Target : obj;
                         }
                     }
                 default:
@@ -433,7 +442,22 @@ namespace XLua
                     return translator.CreateDelegateBridge(L, type, idx);
                 };
             }
-            else if (type.IsInterface)
+            else if (typeof(DelegateBridgeBase).IsAssignableFrom(type))
+            {
+                return (RealStatePtr L, int idx, object target) =>
+                {
+                    object obj = fixTypeGetter(L, idx, target);
+                    if (obj != null) return obj;
+
+                    if (!LuaAPI.lua_isfunction(L, idx))
+                    {
+                        return null;
+                    }
+
+                    return translator.CreateDelegateBridge(L, null, idx);
+                };
+            }
+            else if (type.IsInterface())
             {
                 return (RealStatePtr L, int idx, object target) =>
                 {
@@ -447,7 +471,7 @@ namespace XLua
                     return translator.CreateInterfaceBridge(L, type, idx);
                 };
             }
-            else if (type.IsEnum)
+            else if (type.IsEnum())
             {
                 return (RealStatePtr L, int idx, object target) =>
                 {
@@ -483,7 +507,7 @@ namespace XLua
                     idx = idx > 0 ? idx : LuaAPI.lua_gettop(L) + idx + 1;// abs of index
                     Type et = type.GetElementType();
                     ObjectCast elementCaster = GetCaster(et);
-                    Array ary = target == null ? Array.CreateInstance(et, len) : target as Array;
+                    Array ary = target == null ? Array.CreateInstance(et, (int)len) : target as Array;
                     if (!LuaAPI.lua_checkstack(L, 1))
                     {
                         throw new Exception("stack overflow while cast to Array");
@@ -492,7 +516,7 @@ namespace XLua
                     {
                         LuaAPI.lua_pushnumber(L, i + 1);
                         LuaAPI.lua_rawget(L, idx);
-                        if (et.IsPrimitive)
+                        if (et.IsPrimitive())
                         {
                             if (!StaticLuaCallbacks.TryPrimitiveArraySet(type, L, ary, i, n + 1))
                             {
@@ -501,8 +525,8 @@ namespace XLua
                         }
                         else
                         {
-                            if (StaticLuaCallbacks.GenTryArraySetPtr == null
-                                || !StaticLuaCallbacks.GenTryArraySetPtr(type, L, translator, ary, i, n + 1))
+                            if (InternalGlobals.genTryArraySetPtr == null
+                                || !InternalGlobals.genTryArraySetPtr(type, L, translator, ary, i, n + 1))
                             {
                                 ary.SetValue(elementCaster(L, n + 1, null), i);
                             }
@@ -512,9 +536,10 @@ namespace XLua
                     return ary;
                 };
             }
-            else if (typeof(IList).IsAssignableFrom(type) && type.IsGenericType)
+            else if (typeof(IList).IsAssignableFrom(type) && type.IsGenericType())
             {
-                ObjectCast elementCaster = GetCaster(type.GetGenericArguments()[0]);
+                Type elementType = type.GetGenericArguments()[0];
+                ObjectCast elementCaster = GetCaster(elementType);
 
                 return (RealStatePtr L, int idx, object target) =>
                 {
@@ -532,7 +557,7 @@ namespace XLua
                     IList list = obj as IList;
 
 
-                    uint len = LuaAPI.xlua_objlen(L, n);
+                    uint len = LuaAPI.xlua_objlen(L, idx);
                     if (!LuaAPI.lua_checkstack(L, 1))
                     {
                         throw new Exception("stack overflow while cast to IList");
@@ -543,18 +568,16 @@ namespace XLua
                         LuaAPI.lua_rawget(L, idx);
                         if (i < list.Count && target != null)
                         {
-                            var item = elementCaster(L, n + 1, list[i]);
-                            if (item != null)
+                            if (translator.Assignable(L, n + 1, elementType))
                             {
-                                list[i] = item;
+                                list[i] = elementCaster(L, n + 1, list[i]); ;
                             }
                         }
                         else
                         {
-                            var item = elementCaster(L, n + 1, null);
-                            if (item != null)
+                            if (translator.Assignable(L, n + 1, elementType))
                             {
-                                list.Add(item);
+                                list.Add(elementCaster(L, n + 1, null));
                             }
                         }
                         LuaAPI.lua_pop(L, 1);
@@ -562,10 +585,12 @@ namespace XLua
                     return obj;
                 };
             }
-            else if (typeof(IDictionary).IsAssignableFrom(type) && type.IsGenericType)
+            else if (typeof(IDictionary).IsAssignableFrom(type) && type.IsGenericType())
             {
-                ObjectCast keyCaster = GetCaster(type.GetGenericArguments()[0]);
-                ObjectCast valueCaster = GetCaster(type.GetGenericArguments()[1]);
+                Type keyType = type.GetGenericArguments()[0];
+                ObjectCast keyCaster = GetCaster(keyType);
+                Type valueType = type.GetGenericArguments()[1];
+                ObjectCast valueCaster = GetCaster(valueType);
 
                 return (RealStatePtr L, int idx, object target) =>
                 {
@@ -588,21 +613,17 @@ namespace XLua
                     }
                     while (LuaAPI.lua_next(L, idx) != 0)
                     {
-                        object k = keyCaster(L, n + 1, null); // -2:key
-                        if (k != null)
+                        if (translator.Assignable(L, n + 1, keyType) && translator.Assignable(L, n + 2, valueType))
                         {
-                            object v = valueCaster(L, n + 2, !dic.Contains(k) ? null : dic[k]);
-                            if (v != null)
-                            {
-                                dic[k] = v; // -1:value
-                            }
+                            object k = keyCaster(L, n + 1, null);
+                            dic[k] = valueCaster(L, n + 2, !dic.Contains(k) ? null : dic[k]);
                         }
                         LuaAPI.lua_pop(L, 1); // removes value, keeps key for next iteration
                     }
                     return dic;
                 };
             }
-            else if ((type.IsClass && type.GetConstructor(System.Type.EmptyTypes) != null) || (type.IsValueType && !type.IsEnum)) //class has default construtor
+            else if ((type.IsClass() && type.GetConstructor(System.Type.EmptyTypes) != null) || (type.IsValueType() && !type.IsEnum())) //class has default construtor
             {
                 return (RealStatePtr L, int idx, object target) =>
                 {
@@ -624,6 +645,14 @@ namespace XLua
                     }
                     /*foreach (PropertyInfo prop in type.GetProperties())
                     {
+                        var _setMethod = prop.GetSetMethod();
+
+                        if (_setMethod == null ||
+                            _setMethod.IsPrivate)
+                        {
+                            continue;
+                        }
+
                         LuaAPI.xlua_pushasciistring(L, prop.Name);
                         LuaAPI.lua_rawget(L, idx);
                         if (!LuaAPI.lua_isnil(L, -1))
@@ -631,7 +660,7 @@ namespace XLua
                             try
                             {
                                 prop.SetValue(obj, GetCaster(prop.PropertyType)(L, n + 1,
-                                    target == null || prop.PropertyType.IsPrimitive || prop.PropertyType == typeof(string) ? null : prop.GetValue(obj, null)), null);
+                                    target == null || prop.PropertyType.IsPrimitive() || prop.PropertyType == typeof(string) ? null : prop.GetValue(obj, null)), null);
                             }
                             catch (Exception e)
                             {
@@ -649,7 +678,7 @@ namespace XLua
                             try
                             {
                                 field.SetValue(obj, GetCaster(field.FieldType)(L, n + 1,
-                                        target == null || field.FieldType.IsPrimitive || field.FieldType == typeof(string) ? null : field.GetValue(obj)));
+                                        target == null || field.FieldType.IsPrimitive() || field.FieldType == typeof(string) ? null : field.GetValue(obj)));
                             }
                             catch (Exception e)
                             {
@@ -668,6 +697,21 @@ namespace XLua
             }
         }
 
+        ObjectCast genNullableCaster(ObjectCast oc)
+        {
+            return (RealStatePtr L, int idx, object target) =>
+            {
+                if (LuaAPI.lua_isnil(L, -1))
+                {
+                    return null;
+                }
+                else
+                {
+                    return oc(L, idx, target);
+                }
+            };
+        }
+
         public ObjectCast GetCaster(Type type)
         {
             if (type.IsByRef) type = type.GetElementType();
@@ -675,7 +719,7 @@ namespace XLua
             Type underlyingType = Nullable.GetUnderlyingType(type);
             if (underlyingType != null)
             {
-                type = underlyingType; 
+                return genNullableCaster(GetCaster(underlyingType)); 
             }
             ObjectCast oc;
             if (!castersMap.TryGetValue(type, out oc))

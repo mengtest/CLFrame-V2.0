@@ -70,7 +70,7 @@ namespace Coolape
 			get {
 				if (luaClassname == null) {
 					if (luaTable != null) {
-						luaClassname = luaTable ["__cname"] as string;
+                        luaClassname = luaTable.GetInPath<string>("__cname");
 					}
 					luaClassname = luaClassname == null ? "" : luaClassname;
 				}
@@ -114,7 +114,7 @@ namespace Coolape
 			}
 		}
 
-		public void onNotifyLua (GameObject go, string funcName, object paras)
+		public void onNotifyLua (GameObject gameObj, string funcName, object paras)
 		{
 			LuaFunction lfunc = null;
 			if (!string.IsNullOrEmpty (funcName)) {
@@ -124,9 +124,9 @@ namespace Coolape
 			}
 			if (lfunc != null) {
 				if (isClassLua) {
-					lfunc.Call (luaTable, go, paras);
+					lfunc.Call (luaTable, gameObj, paras);
 				} else {
-					lfunc.Call (go, paras);
+					lfunc.Call (gameObj, paras);
 				}
 			}
 		}
@@ -142,7 +142,8 @@ namespace Coolape
 				ret = luaFuncMap [funcName]; 
 			}
 			if (ret == null && luaTable != null) {
-				ret = (LuaFunction)(luaTable [funcName]);
+                ret = luaTable.GetInPath<LuaFunction>(funcName);
+				//ret = (LuaFunction)(luaTable [funcName]);
 				if (ret != null) {
 					luaFuncMap [funcName] = ret;
 				}
@@ -154,7 +155,7 @@ namespace Coolape
 		{
 			if (luaTable == null)
 				return null;
-			return  luaTable [name];
+            return  luaTable.GetInPath<object>(name);
 		}
 
 		/// <summary>
@@ -233,11 +234,11 @@ namespace Coolape
 			if (callbakFunc == null || map == null)
 				return callbakFunc;
 			object key = callbakFunc;
-			if (callbakFunc is LuaFunction) {
+			if (callbakFunc != null) {
 				NewList keys = ObjPool.listPool.borrowObject ();
 				keys.AddRange (map.Keys);
 				for (int i = 0; i < keys.Count; i++) {
-					if (((LuaFunction)callbakFunc).Equals ((keys [i]))) {
+					if ((callbakFunc).Equals ((keys [i]))) {
 						key = keys [i];
 						break;
 					}
@@ -292,38 +293,15 @@ namespace Coolape
 
 		public void cancelInvoke4Lua (object callbakFunc)
 		{
-			//if (callbakFunc == null) {
-			//	Hashtable list = null;
-			//	foreach (DictionaryEntry item in coroutineMap) {
-   //                 LuaFunction func = item.Key as LuaFunction;
-   //                 if(func == null) {
-   //                     Debug.LogError("item.Key to LuaFunction get null!");
-   //                     continue;
-   //                 }
-   //                 list = getCoroutines (func);
-			//		foreach (DictionaryEntry cell in list) {
-			//			StopCoroutine ((UnityEngine.Coroutine)(cell.Value));
-			//		}
-			//		list.Clear ();
-			//	}
-			//	if (_luaTable != null) {
-			//		StopCoroutine ("doInvoke4Lua");
-			//	}
-			//	coroutineMap.Clear ();
-			//	coroutineIndex.Clear ();
-			//} else {
-			//	cleanCoroutines (callbakFunc);
-			//}
-
             if (callbakFunc == null)
             {
                 Hashtable list = null;
                 NewList keys = ObjPool.listPool.borrowObject();
                 keys.AddRange(coroutineMap.Keys);
-                LuaFunction key = null;
+                object key = null;
                 for (int i = 0; i < keys.Count; i++)
                 {
-                    key = keys[i] as LuaFunction;
+                    key = keys[i];
                     if (key != null)
                     {
                         list = getCoroutines(key);
@@ -351,19 +329,21 @@ namespace Coolape
 			yield return new WaitForSeconds (sec);
 			try {
 				rmCoroutine (callbakFunc, index);
-				LuaFunction func = null;
+                object func = null;
 				if (callbakFunc is string) {
 					func = getLuaFunction (callbakFunc.ToString ());
-				} else {
-					func = (LuaFunction)callbakFunc;
-				}
+                } else {
+                    func = callbakFunc;
+                }
 				if (func != null) {
 					if (!isPause) {
-						if(isClassLua) {
-							func.Call (luaTable, orgs);
+                        if(isClassLua && func is LuaFunction) {
+							//func.Call (luaTable, orgs);
+                            Utl.doCallback(func, luaTable, orgs);
 						} else {
-							func.Call (orgs);
-						}
+							//func.Call (orgs);
+                            Utl.doCallback(func, orgs);
+                        }
 					} else {
 						//ArrayList list = new ArrayList ();
                         NewList list = ObjPool.listPool.borrowObject();
@@ -389,19 +369,13 @@ namespace Coolape
 		public virtual void regain ()
 		{
 			isPause = false;
-			LuaFunction f = null;
+            object f = null;
             NewList invokeList = null;
 			try {
 				while (invokeFuncs.Count > 0) {
                     invokeList = (NewList)(invokeFuncs.Dequeue ());
-					f = (LuaFunction)(invokeList [0]);
-					if (f != null) {
-						if(isClassLua) {
-							f.Call (luaTable, invokeList [1]);
-						} else {
-							f.Call (invokeList [1]);
-						}
-					}
+					f = invokeList [0];
+                    Utl.doCallback(f, invokeList[1]);
                     ObjPool.listPool.returnObject(invokeList);
                     invokeList = null;
                 }

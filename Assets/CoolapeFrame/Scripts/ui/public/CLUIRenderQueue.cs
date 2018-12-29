@@ -24,6 +24,7 @@ namespace Coolape
 		public int depth = 0;
 		public int currRenderQueue = 0;
 		public bool isSharedMaterial = true;
+        public bool isForceUpdateSetRenderQueue = false;
 		Renderer[] _renders;
 
 		Renderer[] renders {
@@ -56,7 +57,18 @@ namespace Coolape
 
 		}
 
-		public int mDepth {
+        public void reset()
+        {
+            reset(false);
+        }
+        public void reset(bool forceUpdate)
+        {
+            Start();
+            isForceUpdateSetRenderQueue = forceUpdate;
+            _renders = null;
+        }
+
+        public int mDepth {
 			get {
 				return depth;
 			}
@@ -95,7 +107,7 @@ namespace Coolape
 				mWidget.depth = depth;
 			}
 			#endif
-			setRenderQueue ();
+			setRenderQueue (isForceUpdateSetRenderQueue);
 		}
 		void OnEnable(){
 			#if UNITY_EDITOR

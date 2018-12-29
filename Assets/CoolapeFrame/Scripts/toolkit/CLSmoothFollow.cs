@@ -102,7 +102,8 @@ namespace Coolape
 		float speed4Tween = 1;
 		bool isDoTween = false;
 		object finishTweenCallback = null;
-		float totalDeltaVal = 0;
+        object progressCallback = null;
+        float totalDeltaVal = 0;
 
 		void FixedUpdate ()
 		{
@@ -115,20 +116,29 @@ namespace Coolape
 			tmpTo = from4Tween + diff4Tween * totalDeltaVal;
 			distance = tmpTo.x;
 			height = tmpTo.y;
-			if (totalDeltaVal >= 1) {
+            Utl.doCallback(progressCallback, tmpTo);
+            if (totalDeltaVal >= 1) {
 				isDoTween = false;
 				Utl.doCallback (finishTweenCallback, this);
 			}
 		}
 
-		public void tween (Vector2 from, Vector2 to, float speed, object callback)
+        /// <summary>
+        /// Tween the specified from, to, speed and callback.
+        /// </summary>
+        /// <param name="from">from.x 是distance的开始值；from.y是heigh的开始值 </param>
+        /// <param name="to">to.x 是distance的结束值；to.y是heigh的结束值.</param>
+        /// <param name="speed">Speed.</param>
+        /// <param name="callback">Callback.</param>
+		public void tween (Vector2 from, Vector2 to, float speed, object callback, object progressCallback)
 		{
 			from4Tween = from;
 			to4Tween = to;
 			speed4Tween = speed; 
 			diff4Tween = to - from;
 			finishTweenCallback = callback;
-			distance = from.x;
+            this.progressCallback = progressCallback;
+            distance = from.x;
 			height = from.y;
 			totalDeltaVal = 0;
 			isDoTween = true;

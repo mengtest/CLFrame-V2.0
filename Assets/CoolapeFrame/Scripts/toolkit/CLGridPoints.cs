@@ -15,7 +15,7 @@ using System.Collections.Generic;
 
 namespace Coolape
 {
-	public class CLMyGrid : MonoBehaviour
+	public class CLGridPoints : MonoBehaviour
 	{
 		public int width = 3;
 		public int length = 3;

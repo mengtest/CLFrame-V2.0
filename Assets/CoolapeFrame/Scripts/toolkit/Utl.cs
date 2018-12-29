@@ -822,10 +822,10 @@ namespace Coolape
 			return ret;
 		}
 
-		public static RaycastHit getRaycastHitInfor (Camera camera, Vector3 inPos, LayerMask layer)
+        static RaycastHit hitInfor = new RaycastHit();
+        public static RaycastHit getRaycastHitInfor (Camera camera, Vector3 inPos, LayerMask layer)
 		{
-			RaycastHit hitInfor = new RaycastHit ();
-			if (camera == null)
+            if (camera == null)
 				return hitInfor;
 			Ray ray = camera.ScreenPointToRay (inPos);
 			if (Physics.Raycast (ray, out hitInfor, 1000, layer.value)) {
@@ -835,17 +835,17 @@ namespace Coolape
 			}
 		}
 
-		public static object[] doCallback (object callback)
+        static object[] _doCallback (object callback, params object[] args)
 		{
 			try {
 				if (callback == null)
 					return null;
 				object[] ret = null;
 				if (callback is LuaFunction) {
-					ret = ((LuaFunction)callback).Call ();
+					ret = ((LuaFunction)callback).Call (args);
 				} else if (callback is Callback) {
-					((Callback)callback) ();
-				}
+					((Callback)callback) (args);
+                }
 				return ret;
 			} catch (System.Exception e) {
 				Debug.LogError (e);
@@ -853,107 +853,187 @@ namespace Coolape
 			}
 		}
 
-		public static object[] doCallback (object callback, object paras)
-		{
-			try {
-				if (callback == null)
-					return null;
-				object[] ret = null;
-				if (callback is LuaFunction) {
-					ret = ((LuaFunction)callback).Call (paras);
-				} else if (callback is Callback) {
-					((Callback)callback) (paras);
-				}
-				return ret;
-			} catch (System.Exception e) {
-				Debug.LogError (e);
-				return null;
-			}
-		}
+        static void parseLuafunc(LuaTable luatable, out LuaFunction func, out LuaTable instance) {
+            if (luatable != null)
+            {
+                func = luatable.GetInPath<LuaFunction>("func");
+                instance = luatable.GetInPath<LuaTable>("instance");
+            } else {
+                func = null;
+                instance = null;
+            }
+        }
+        public static object[] doCallback(object callback)
+        {
+            try
+            {
+                if (callback == null)
+                    return null;
+                object[] ret = null;
+                if (callback is LuaTable)
+                {
+                    LuaFunction func = null;
+                    LuaTable instance = null;
+                    parseLuafunc(callback as LuaTable, out func, out instance);
+                    ret = _doCallback(func, instance);
+                }
+                else
+                {
+                    ret = _doCallback(callback);
+                }
+                return ret;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(e);
+                return null;
+            }
+        }
+        public static object[] doCallback(object callback, object paras1)
+        {
+            try
+            {
+                if (callback == null)
+                    return null;
+                object[] ret = null;
+                if (callback is LuaTable)
+                {
+                    LuaFunction func = null;
+                    LuaTable instance = null;
+                    parseLuafunc(callback as LuaTable, out func, out instance);
+                    ret = _doCallback(func, instance, paras1);
+                }
+                else
+                {
+                    ret = _doCallback(callback, paras1);
+                }
+                return ret;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(e);
+                return null;
+            }
+        }
 
-		public static object[] doCallback (object callback, object paras1, object paras2)
-		{
-			try {
-				if (callback == null)
-					return null;
-				object[] ret = null;
-				if (callback is LuaFunction) {
-					ret = ((LuaFunction)callback).Call (paras1, paras2);
-				} else if (callback is Callback) {
-					((Callback)callback) (paras1, paras2);
-				}
-				return ret;
-			} catch (System.Exception e) {
-				Debug.LogError (e);
-				return null;
-			}
-		}
+        public static object[] doCallback(object callback, object paras1, object paras2)
+        {
+            try
+            {
+                if (callback == null)
+                    return null;
+                object[] ret = null;
+                if (callback is LuaTable)
+                {
+                    LuaFunction func = null;
+                    LuaTable instance = null;
+                    parseLuafunc(callback as LuaTable, out func, out instance);
+                    ret = _doCallback(func, instance, paras1, paras2);
+                }
+                else
+                {
+                    ret = _doCallback(callback, paras1, paras2);
+                }
+                return ret;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(e);
+                return null;
+            }
+        }
 
-		public static object[] doCallback (object callback, object paras1, object paras2, object paras3)
-		{
-			try {
-				if (callback == null)
-					return null;
-				object[] ret = null;
-				if (callback is LuaFunction) {
-					ret = ((LuaFunction)callback).Call (paras1, paras2, paras3);
-				} else if (callback is Callback) {
-					((Callback)callback) (paras1, paras2, paras3);
-				}
-				return ret;
-			} catch (System.Exception e) {
-				Debug.LogError (e);
-				return null;
-			}
-		}
+        public static object[] doCallback(object callback, object paras1, object paras2, object paras3)
+        {
+            try
+            {
+                if (callback == null)
+                    return null;
+                object[] ret = null;
+                if (callback is LuaTable)
+                {
+                    LuaFunction func = null;
+                    LuaTable instance = null;
+                    parseLuafunc(callback as LuaTable, out func, out instance);
+                    ret = _doCallback(func, instance, paras1, paras2, paras3);
+                }
+                else
+                {
+                    ret = _doCallback(callback, paras1, paras2, paras3);
+                }
+                return ret;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(e);
+                return null;
+            }
+        }
 
-		public static object[] doCallback (object callback, object paras1, object paras2, object paras3, object paras4)
-		{
-			try {
-				if (callback == null)
-					return null;
+        public static object[] doCallback(object callback, object paras1, object paras2, object paras3, object paras4)
+        {
+            try
+            {
+                if (callback == null)
+                    return null;
+                object[] ret = null;
+                if (callback is LuaTable)
+                {
+                    LuaFunction func = null;
+                    LuaTable instance = null;
+                    parseLuafunc(callback as LuaTable, out func, out instance);
+                    ret = _doCallback(func, instance, paras1, paras2, paras3, paras4);
+                }
+                else
+                {
+                    ret = _doCallback(callback, paras1, paras2, paras3, paras4);
+                }
+                return ret;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(e);
+                return null;
+            }
+        }
 
-				object[] ret = null;
-				if (callback is LuaFunction) {
-					ret = ((LuaFunction)callback).Call (paras1, paras2, paras3, paras4);
-				} else if (callback is Callback) {
-					((Callback)callback) (paras1, paras2, paras3, paras4);
-				}
-				return ret;
-			} catch (System.Exception e) {
-				Debug.LogError (e);
-				return null;
-			}
-		}
+        public static object[] doCallback(object callback, object paras1, object paras2, object paras3, object paras4, object paras5)
+        {
+            try
+            {
+                if (callback == null)
+                    return null;
+                object[] ret = null;
+                if (callback is LuaTable)
+                {
+                    LuaFunction func = null;
+                    LuaTable instance = null;
+                    parseLuafunc(callback as LuaTable, out func, out instance);
+                    ret = _doCallback(func, instance, paras1, paras2, paras3, paras4, paras5);
+                }
+                else
+                {
+                    ret = _doCallback(callback, paras1, paras2, paras3, paras4, paras5);
+                }
+                return ret;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(e);
+                return null;
+            }
+        }
 
-		public static object[] doCallback (object callback, object paras1, object paras2, object paras3, object paras4, object paras5)
-		{
-			try {
-				if (callback == null)
-					return null;
-				object[] ret = null;
-				if (callback is LuaFunction) {
-					ret = ((LuaFunction)callback).Call (paras1, paras2, paras3, paras4, paras5);
-				} else if (callback is Callback) {
-					((Callback)callback) (paras1, paras2, paras3, paras4, paras5);
-				}
-				return ret;
-			} catch (System.Exception e) {
-				Debug.LogError (e);
-				return null;
-			}
-		}
-
-		/// <summary>
-		/// Files to map.取得文件转成map
-		/// </summary>
-		/// <returns>
-		/// The to map.
-		/// </returns>
-		/// <param name='path'>
-		/// Path.
-		/// </param>
-		public static Hashtable fileToMap (string path)
+        /// <summary>
+        /// Files to map.取得文件转成map
+        /// </summary>
+        /// <returns>
+        /// The to map.
+        /// </returns>
+        /// <param name='path'>
+        /// Path.
+        /// </param>
+        public static Hashtable fileToMap (string path)
 		{
 			if (!File.Exists (path)) {
 				return null;

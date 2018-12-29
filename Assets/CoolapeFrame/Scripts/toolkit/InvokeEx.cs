@@ -105,14 +105,14 @@ namespace Coolape
 		/// <param name="map">Map.</param>
 		public  object getKey4InvokeMap (object callbakFunc, Hashtable map)
 		{
-			if (callbakFunc == null || map == null)
+            if (callbakFunc == null || map == null)
 				return callbakFunc;
 			object key = callbakFunc;
-			if (callbakFunc is LuaFunction) {
+			if (callbakFunc != null) {
 				NewList keys = ObjPool.listPool.borrowObject ();
 				keys.AddRange (map.Keys);
 				for (int i = 0; i < keys.Count; i++) {
-					if (((LuaFunction)callbakFunc).Equals ((keys [i]))) {
+					if ((callbakFunc).Equals ((keys [i]))) {
 						key = keys [i];
 						break;
 					}
@@ -181,9 +181,9 @@ namespace Coolape
 				Hashtable list = null;
                 NewList keys = ObjPool.listPool.borrowObject();
                 keys.AddRange(coroutineMap.Keys);
-                LuaFunction key = null;
+                object key = null;
                 for (int i = 0; i < keys.Count; i++) {
-                    key = keys[i] as LuaFunction;
+                    key = keys[i];
                     if (key != null)
                     {
                         list = getCoroutines(key);
@@ -468,7 +468,6 @@ namespace Coolape
 			object orgs;
 			float sec;
 			int index = 0;
-			LuaFunction func = null;
 			while (index < invokeByUpdateList.Count) {
 				list = (NewList)(invokeByUpdateList [index]);
 				callbakFunc = list [0];

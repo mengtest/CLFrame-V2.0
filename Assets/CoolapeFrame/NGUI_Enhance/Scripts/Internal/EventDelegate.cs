@@ -31,6 +31,7 @@ public class EventDelegate
 	{
 		public Object obj;
 		public string field;
+        public string name; // add by chenbin
 
 		public Parameter () { }
 		public Parameter (Object obj, string field) { this.obj = obj; this.field = field; }
@@ -438,9 +439,12 @@ public class EventDelegate
 						mParameters[i] = new Parameter();
 				}
 
-				// Save the parameter type
-				for (int i = 0, imax = mParameters.Length; i < imax; ++i)
-					mParameters[i].expectedType = mParameterInfos[i].ParameterType;
+                // Save the parameter type
+                for (int i = 0, imax = mParameters.Length; i < imax; ++i)
+                {
+                    mParameters[i].name = mParameterInfos[i].Name; // add by chenbin
+                    mParameters[i].expectedType = mParameterInfos[i].ParameterType;
+                }
 			}
 		}
 #endif // REFLECTION_SUPPORT

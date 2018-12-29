@@ -147,9 +147,10 @@ public static class EventDelegateEditor
 				for (int i = 0; i < ps.Length; ++i)
 				{
 					EventDelegate.Parameter param = ps[i];
-					Object obj = EditorGUILayout.ObjectField("   Arg " + i, param.obj, typeof(Object), true);
+                    GUIContent lc = new GUIContent("   Arg" + i + "(" + param.name + ")", param.name + " : " + param.expectedType); // add by chenbin
+                    Object obj = EditorGUILayout.ObjectField(lc, param.obj, typeof(Object), true);//modify by chenbin
 
-					if (GUI.changed)
+                    if (GUI.changed)
 					{
 						GUI.changed = false;
 						param.obj = obj;

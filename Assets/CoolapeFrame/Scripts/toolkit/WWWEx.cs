@@ -13,6 +13,7 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
+using System.Collections.Generic;
 
 namespace Coolape
 {
@@ -70,7 +71,6 @@ namespace Coolape
             using (www)
             {
                 yield return www.SendWebRequest();
-
                 try
                 {
                     uncheckWWWTimeout(www, url);
@@ -346,6 +346,46 @@ namespace Coolape
                 Coroutine cor = self.StartCoroutine(self.exeWWW(www, url, type, successCallback, failedCallback, orgs, isCheckTimeout, (url2) =>
                 {
                     put(url2, data, type, successCallback, failedCallback, orgs, isCheckTimeout);
+                }));
+                wwwMap4Get[url] = cor;
+                return www;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(e);
+                Utl.doCallback(failedCallback, null, orgs);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Uploads the file.上传文件
+        /// </summary>
+        /// <returns>The file.</returns>
+        /// <param name="url">URL.</param>
+        /// <param name="sectionName">Section name. 对应java里的new FilePart("sectionName", f) </param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="fileContent">File content.</param>
+        /// <param name="type">Type.</param>
+        /// <param name="successCallback">Success callback.</param>
+        /// <param name="failedCallback">Failed callback.</param>
+        /// <param name="orgs">Orgs.</param>
+        /// <param name="isCheckTimeout">If set to <c>true</c> is check timeout.</param>
+        public static UnityWebRequest uploadFile(string url, string sectionName, string fileName, byte[] fileContent, CLAssetType type,
+                               object successCallback, object failedCallback, object orgs, bool isCheckTimeout)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url))
+                    return null;
+                self.enabled = true;
+                MultipartFormFileSection fileSection = new MultipartFormFileSection(sectionName, fileContent, fileName,  "Content-Type: multipart/form-data;");
+                List <IMultipartFormSection> multForom = new List<IMultipartFormSection>();
+                multForom.Add(fileSection);
+                UnityWebRequest www = UnityWebRequest.Post(url, multForom);
+                Coroutine cor = self.StartCoroutine(self.exeWWW(www, url, type, successCallback, failedCallback, orgs, isCheckTimeout, (url2) =>
+                {
+                    uploadFile(url2, sectionName, fileName, fileContent, type, successCallback, failedCallback, orgs, isCheckTimeout);
                 }));
                 wwwMap4Get[url] = cor;
                 return www;

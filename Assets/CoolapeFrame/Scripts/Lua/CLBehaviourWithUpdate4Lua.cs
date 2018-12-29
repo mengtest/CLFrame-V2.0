@@ -127,18 +127,14 @@ namespace Coolape
 			object[] content = null;
 			List<object[]> funcList = (List<object[]>)(fixedInvokeMap [key]);
 			object callback = null;
-			if (funcList != null) {
+            if (funcList != null) {
 				for (int i = 0; i < funcList.Count; i++) {
 					content = funcList [i];
 					callback = content [0];
-					if (callback is LuaFunction) {
-						((LuaFunction)callback).Call (content [1]);
-					} else if (callback is string) {
-						LuaFunction func = getLuaFunction (callback.ToString ());
-						func.Call (content [1]);
-					} else if (callback is Callback) {
-						((Callback)callback) (content [1]);
+					if (callback is string) {
+                        callback = getLuaFunction (callback.ToString ());
 					}
+                    Utl.doCallback(callback, content[1]);
 				}
 				funcList.Clear ();
 				funcList = null;
@@ -239,7 +235,7 @@ namespace Coolape
 			object orgs;
 			float sec;
 			int index = 0;
-			LuaFunction func = null;
+            object func = null;
 			while (index < invokeByUpdateList.Count) {
 				list = (invokeByUpdateList [index]) as NewList;
 				if (list == null)
@@ -250,13 +246,11 @@ namespace Coolape
 				if (sec <= Time.unscaledTime) {
 					if (callbakFunc is string) {
 						func = getLuaFunction (callbakFunc.ToString ());
-						Utl.doCallback (func, orgs);
-					} else if (callbakFunc is LuaFunction) {
-						func = (LuaFunction)callbakFunc;
-						Utl.doCallback (func, orgs);
-					} else if (callbakFunc is Callback) {
-						((Callback)callbakFunc) (orgs);
-					}
+                    } else {
+                        func = callbakFunc;
+                    }
+
+                    Utl.doCallback(callbakFunc, orgs);
 					invokeByUpdateList.RemoveAt (index);
 					ObjPool.listPool.returnObject (list);
 				} else {

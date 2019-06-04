@@ -82,29 +82,33 @@ namespace Coolape
 		public void clean ()
 		{
 			try {
-				foreach (var item in fontMap) {
-					if (item.Key != emptFont.name) {
-						#if UNITY_EDITOR
-						if (Application.isPlaying) {
-							DestroyObject (item.Value);
-						}
-						#else
-						DestroyObject (item.Value);
-						#endif
-					}
+                if(emptFont != null) { 
+                    foreach (var item in fontMap) {
+    					if (item.Key != emptFont.name) {
+    						#if UNITY_EDITOR
+    						if (Application.isPlaying) {
+    							DestroyObject (item.Value);
+    						}
+    						#else
+    						DestroyObject (item.Value);
+    						#endif
+    					}
+                    }
 				}
 				fontMap.Clear ();
-				foreach (var item in atlasMap) {
-					if (item.Key != emptAtlas.name) {
-						#if UNITY_EDITOR
-						if (Application.isPlaying) {
-							DestroyObject (item.Value);
-						}
-						#else
-						DestroyObject (item.Value);
-						#endif
-					}
-				}
+                if(emptAtlas != null) { 
+                    foreach (var item in atlasMap) {
+    					if (item.Key != emptAtlas.name) {
+    						#if UNITY_EDITOR
+    						if (Application.isPlaying) {
+    							DestroyObject (item.Value);
+    						}
+    						#else
+    						DestroyObject (item.Value);
+    						#endif
+    					}
+    				}
+                }
 				atlasMap.Clear ();
 				emptAtlas.replacement = null;
 			} catch (System.Exception e) {
@@ -142,8 +146,16 @@ namespace Coolape
 		/// </returns>
 		public  bool initAtlas ()
 		{
-			atlasMap [emptAtlas.name] = emptAtlas;
-			fontMap [emptFont.name] = emptFont;
+            if (emptAtlas != null)
+            {
+                atlasMap[emptAtlas.name] = emptAtlas;
+            }
+
+            if (emptFont != null)
+            {
+                fontMap[emptFont.name] = emptFont;
+            }
+
 			UIAtlas atlas = getAtlasByName (atlasAllRealName);
 			if (atlas != null) {
 				emptAtlas.replacement = atlas;
@@ -189,7 +201,7 @@ namespace Coolape
 				#endif
 				AssetBundle atlasBundel = AssetBundle.LoadFromMemory (FileEx.readNewAllBytes (tmpPath));
 				if (atlasBundel != null) {
-					GameObject go = atlasBundel.mainAsset as GameObject;
+					GameObject go = atlasBundel.LoadAsset<GameObject>(atlasBundel.name);
 					atlasBundel.Unload (false);
 					atlasBundel = null;
 					if (go != null) {
@@ -210,7 +222,8 @@ namespace Coolape
 
 		public UIAtlas getAtlasByName (string atlasName)
 		{
-            if(string.IsNullOrEmpty(atlasName)) {
+            try { 
+            if (string.IsNullOrEmpty(atlasName)) {
                 return null;
             }
 			if (atlasMap.ContainsKey (atlasName)) {
@@ -234,7 +247,12 @@ namespace Coolape
 			#else
 		return _getAtlasByName (atlasName);
 			#endif
-		}
+            }catch(System.Exception e)
+            {
+                Debug.LogError(atlasName +"==" +e);
+                return null;
+            }
+        }
 
 		UIAtlas _getAtlasByName (string atlasName)
 		{
@@ -259,7 +277,7 @@ namespace Coolape
 				}
 				return null;
 			} catch (System.Exception e) {
-				Debug.LogError (e);
+				Debug.LogError (e + "===" + atlasName);
 				return null;
 			}
 		}

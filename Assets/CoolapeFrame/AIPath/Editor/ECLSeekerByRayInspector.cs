@@ -118,5 +118,6 @@ public class ECLSeekerByRayInspector : Editor
             }
         }
         ECLEditorUtl.EndContents();
+        EditorUtility.SetDirty(target);
     }
 }

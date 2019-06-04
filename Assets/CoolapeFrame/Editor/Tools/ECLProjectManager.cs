@@ -846,6 +846,7 @@ public class ECLProjectManager : EditorWindow
 		bool ret = false;
 		if (obj != null) {
 			if (obj is GameObject) {
+                obj = PrefabUtility.LoadPrefabContents(AssetDatabase.GetAssetPath(obj));
 				CLSharedAssets sharedAsset = ((GameObject)obj).GetComponent<CLSharedAssets> ();
 				if (sharedAsset == null && CLSharedAssetsInspector.isCanAddSharedAssetProc ((GameObject)obj)) {
 					sharedAsset = ((GameObject)obj).AddComponent<CLSharedAssets> ();
@@ -1018,8 +1019,8 @@ public class ECLProjectManager : EditorWindow
 			           path.Contains ("/priority/ui/other/")) {
 				// refresh ui cell
 				if (lastPriorityVer == null || lastPriorityVer [path] == null || lastPriorityVer [path].ToString () != md5str) {
-					GameObject t = (GameObject)(AssetDatabase.LoadAssetAtPath ("Assets/" + path, typeof(GameObject)));
-					CLCellLua uicell = t.GetComponent<CLCellLua> ();
+                    GameObject t = AssetDatabase.LoadAssetAtPath("Assets/" + path, typeof(GameObject)) as GameObject;
+                    CLCellLua uicell = t.GetComponent<CLCellLua> ();
 					resultPstr.a (path).a ("\n");
 
 					if (callCustomPublish (path)) {
@@ -1029,7 +1030,7 @@ public class ECLProjectManager : EditorWindow
 			} else if (path.Contains ("/priority/ui/panel/")) {
 				// refresh panel
 				if (lastPriorityVer == null || lastPriorityVer [path] == null || lastPriorityVer [path].ToString () != md5str) {
-					GameObject t = (GameObject)(AssetDatabase.LoadAssetAtPath ("Assets/" + path, typeof(GameObject)));
+					GameObject t = AssetDatabase.LoadAssetAtPath("Assets/" + path, typeof(GameObject)) as GameObject;
 					CLPanelBase panel = t.GetComponent<CLPanelBase> ();
 					if (panel != null) {
 						resultPstr.a (path).a ("\n");

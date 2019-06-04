@@ -278,6 +278,7 @@ namespace Coolape
                 {
                     this.timeoutCheckTimer = TimerEx.schedule((TimerCallback)sendTimeOut, null, timeoutMSec);
                 }
+
                 mSocket.BeginSend(data, 0, data.Length, 0,
                     (AsyncCallback)SendCallback, this);
             }

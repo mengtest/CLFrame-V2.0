@@ -119,6 +119,29 @@ namespace Coolape
             //fixedInvoke((Callback)seekTargetLoop, searchIntvalSec, searchIntvalSec);
         }
 
+        public virtual void seekAsyn(Vector3 toPos)
+        {
+            targetPos = toPos;
+            canMove = false;
+            pathList.Clear();
+            mAStarPathSearch.searchPathAsyn(mTransform.position, toPos, (Callback)onSeekAsynCallback);
+        }
+
+        void onSeekAsynCallback(params object[] objs)
+        {
+            bool canReach = (bool)(objs[0]);
+            pathList = objs[1] as List<Vector3>;
+
+            //回调的第一个参数是路径，第二个参数是能否到达目标点
+            Utl.doCallback(onFinishSeekCallback, pathList, canReach);
+
+            if (autoMoveOnFinishSeek)
+            {
+                //开始移动
+                startMove();
+            }
+        }
+
         public virtual List<Vector3> seek(Vector3 toPos, float endReachDis)
         {
             endReachedDistance = endReachDis;

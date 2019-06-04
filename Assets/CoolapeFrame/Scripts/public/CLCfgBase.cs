@@ -56,5 +56,16 @@ namespace Coolape
 				#endif
 			}
 		}
-	}
+
+        public bool isUnityEditor
+        {
+            get
+            {
+#if UNITY_EDITOR
+                return true;
+#endif 
+                return false;
+            }
+        }
+    }
 }

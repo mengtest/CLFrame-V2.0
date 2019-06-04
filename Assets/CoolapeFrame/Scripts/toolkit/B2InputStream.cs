@@ -774,6 +774,9 @@ namespace Coolape
 			case B2Type.LONG_16B:
 				{
 					int v = (((ReadByte (s) & 0xff) << 8) + ((ReadByte (s) & 0xff) << 0));
+					if (v > 32767) {
+						v = v - 65536;
+					}
 					return (long)(v);
 				}
 			case B2Type.LONG_32B:
@@ -782,8 +785,11 @@ namespace Coolape
 					int v2 = ReadByte (s);
 					int v3 = ReadByte (s);
 					int v4 = ReadByte (s);
-					int v = ((v1 & 0xff) << 24) + ((v2 & 0xff) << 16)
+					long v = ((v1 & 0xff) << 24) + ((v2 & 0xff) << 16)
 					        + ((v3 & 0xff) << 8) + ((v4 & 0xff) << 0);
+					if (v > 2147483647) {
+						v = v - 4294967296;
+					}
 					return (long)(v);
 				}
 			case B2Type.LONG_64B:

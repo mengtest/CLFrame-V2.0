@@ -16,6 +16,7 @@ namespace Coolape
             self = this;
         }
         public CLBaseLua lua;
+        public LuaTable luaTable = null;
         public enum NetWorkType
         {
             publish,
@@ -42,6 +43,8 @@ namespace Coolape
         public string host4Test1 = "";
         [HideInInspector]
         public string host4Test2 = "";
+
+        public string serializeluaPath = "";
 
         // 默认地址
         string _gateHost;
@@ -89,8 +92,26 @@ namespace Coolape
         {
             lua.setLua();
             dispatchGame = lua.luaTable.GetInPath<__DispatchGame>("dispatchGame");
-            packMsgFunc = lua.luaTable.GetInPath<TcpPackMessageAndSendFunc>("packMsg");
-            unPackMsgFunc = lua.luaTable.GetInPath<TcpUnpackMessageFunc>("unpackMsg");
+            initSerializeFunc();
+        }
+
+        public void initSerializeFunc()
+        {
+            LuaEnv serializelua = null;
+            if (serializeInMainThread) {
+                serializelua = lua.lua;
+            } else {
+                serializelua = new LuaEnv();
+            }
+            CLUtlLua.addLuaLoader(serializelua);
+            object[] ret = CLUtlLua.doLua (serializelua, serializeluaPath);
+            if (ret != null && ret.Length > 0) {
+                luaTable = (LuaTable)(ret [0]);
+                packMsgFunc = luaTable.GetInPath<TcpPackMessageAndSendFunc>("packMsg");
+                unPackMsgFunc = luaTable.GetInPath<TcpUnpackMessageFunc>("unpackMsg");
+            } else {
+                Debug.LogError("SetLua no luatable returned !! ==" + serializeluaPath);
+            }
         }
 
         //===================end=====================
@@ -108,9 +129,16 @@ namespace Coolape
 
         public void dispatchData(object data, Tcp tcp)
         {
-            if (dispatchGame != null)
+            if (serializeInMainThread)
             {
-                dispatchGame(data);
+                if (dispatchGame != null)
+                {
+                    dispatchGame(data);
+                }
+            }
+            else
+            {
+                msgQueue.Enqueue(data);
             }
         }
 
@@ -123,6 +151,16 @@ namespace Coolape
         public override object parseRecivedData(MemoryStream buffer)
         {
             return unPackMsgFunc(buffer, this);
+        }
+
+        Queue msgQueue = new Queue();
+        public override void Update()
+        {
+            base.Update();
+            if(msgQueue.Count > 0)
+            {
+                dispatchGame(msgQueue.Dequeue());
+            }
         }
     }
 }

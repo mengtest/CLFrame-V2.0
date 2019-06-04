@@ -375,15 +375,21 @@ namespace Coolape
 				return;
 			}
 			if (_havePrefab (name)) {
-				T unit = _borrowObj (name);
-				Utl.doCallback (onGetCallbak, name, unit, orgs);
+                CLMainBase.self.StartCoroutine(_doBorrowObj(name, onGetCallbak, orgs));
 			} else {
 				OnSetPrefabCallbacks4Borrow.add (name, onGetCallbak, orgs);
 				_setPrefab (name, (Callback)onFinishSetPrefab4Borrow, name, progressCB);
 			}
 		}
 
-		public virtual void onFinishSetPrefab4Borrow (object[] paras)
+        IEnumerator _doBorrowObj(string name, object onGetCallbak, object orgs)
+        {
+            yield return null;
+            T unit = _borrowObj(name);
+            Utl.doCallback(onGetCallbak, name, unit, orgs);
+        }
+
+        public virtual void onFinishSetPrefab4Borrow (object[] paras)
 		{
 			if (paras != null && paras.Length > 1) {
 				T unit = paras [0] as T; 

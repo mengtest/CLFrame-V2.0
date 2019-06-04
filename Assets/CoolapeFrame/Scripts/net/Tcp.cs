@@ -23,6 +23,7 @@ namespace Coolape
         public string host;
         public int port;
         public bool connected = false;
+        public bool serializeInMainThread = true;
         //是否连接
         public bool isStopping = false;
         const int MaxReConnectTimes = 0;
@@ -213,6 +214,37 @@ namespace Coolape
             enqueueData(buffer);
         }
 
+        object netData = null;
+        MemoryStream memoryBuff = null;
+        MemoryStream receivedBuffer = new MemoryStream();
+        public IEnumerator wrapBuffer2Unpack()
+        {
+            yield return null;
+            while (receivedDataQueue.Count > 0)
+            {
+                netData = receivedDataQueue.Dequeue();
+                if (netData != null)
+                {
+                    if (netData is string)
+                    {
+                        if (mDispatcher != null)
+                        {
+                            mDispatcher(netData, this);
+                        }
+                        continue;
+                    }
+                    memoryBuff = netData as MemoryStream;
+                    receivedBuffer.Write(memoryBuff.ToArray(), 0, (int)(memoryBuff.Length));
+                    memorystreamPool.returnObject(memoryBuff);
+                }
+            }
+            if (receivedBuffer.Length > 0)
+            {
+                receivedBuffer.SetLength(receivedBuffer.Position);
+                unpackMsg(receivedBuffer);
+            }
+        }
+
         public void unpackMsg(MemoryStream buffer)
         {
             bool isLoop = true;
@@ -301,35 +333,17 @@ namespace Coolape
         public void enqueueData(object obj)
         {
             receivedDataQueue.Enqueue(obj);
+            if (!serializeInMainThread)
+            {
+                StartCoroutine(wrapBuffer2Unpack());
+            }
         }
 
-        object netData = null;
-        MemoryStream memoryBuff = null;
-        MemoryStream receivedBuffer = new MemoryStream();
-        public void Update()
+        public virtual void Update()
         {
-            if (receivedDataQueue.Count > 0)
+            if (serializeInMainThread && receivedDataQueue.Count > 0)
             {
-                while (receivedDataQueue.Count > 0)
-                {
-                    netData = receivedDataQueue.Dequeue();
-                    if (netData != null)
-                    {
-                        if (netData is string)
-                        {
-                            mDispatcher(netData, this);
-                            continue;
-                        }
-                        memoryBuff = netData as MemoryStream;
-                        receivedBuffer.Write(memoryBuff.ToArray(), 0, (int)(memoryBuff.Length));
-                        memorystreamPool.returnObject(memoryBuff);
-                    }
-                }
-                if (receivedBuffer.Length > 0)
-                {
-                    receivedBuffer.SetLength(receivedBuffer.Position);
-                    unpackMsg(receivedBuffer);
-                }
+                StartCoroutine(wrapBuffer2Unpack());
             }
         }
     }

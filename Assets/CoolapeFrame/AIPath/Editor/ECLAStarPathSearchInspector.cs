@@ -108,5 +108,6 @@ public class ECLAStarPathSearchInspector : Editor
             }
         }
         ECLEditorUtl.EndContents();
+        EditorUtility.SetDirty(target);
     }
 }

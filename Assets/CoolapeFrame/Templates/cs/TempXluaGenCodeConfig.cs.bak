@@ -168,13 +168,12 @@ public static class XluaGenCodeConfig
 		typeof(CLUIRenderQueue),
 		typeof(CLUIUtl),
 		typeof(EffectNum),
-		typeof(EffectProgress),
+		typeof(TweenProgress),
 		typeof(B2Int),
 		typeof(AngleEx),
-		typeof(CLMyGrid),
+		typeof(CLGridPoints),
 
 		//==========================
-		typeof(MirrorReflection),
 		typeof(MyMain),
 		typeof(MyCfg),
 	};

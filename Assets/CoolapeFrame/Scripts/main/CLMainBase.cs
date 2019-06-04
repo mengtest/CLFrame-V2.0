@@ -120,7 +120,7 @@ namespace Coolape
 			CLPanelManager.destoryAllPanel ();
 			FileEx.cleanCache ();
 			CLUtlLua.cleanFileBytesCacheMap ();
-			CLUtlLua.isFinishAddLoader = false;
+			//CLUtlLua.isFinishAddLoader = false;
 			CLUIInit.self.clean ();
 			//重新把配置清空
 			CLMaterialPool.materialTexRefCfg = null;

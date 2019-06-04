@@ -330,12 +330,22 @@ namespace Coolape
                     {
                         url = System.IO.Path.Combine(Application.streamingAssetsPath, path);
 #if !UNITY_ANDROID || UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
-                        url = PStr.begin().a("file://").a(url).end();
+//                        url = PStr.begin().a("file:///").a(url).end();
+						#if UNITY_STANDALONE
+						url = PStr.begin ().a ("file:///").a (url).end ();
+						#else
+						url = PStr.begin ().a ("file://").a (url).end ();
+						#endif
 #endif
                     }
                     else
                     {
-                        url = PStr.begin().a("file://").a(url).end();
+//                        url = PStr.begin().a("file:///").a(url).end();
+						#if UNITY_STANDALONE
+						url = PStr.begin ().a ("file:///").a (url).end ();
+						#else
+						url = PStr.begin ().a ("file://").a (url).end ();
+						#endif
                     }
                 }
                 doGetContent(path, url, needSave, type, onGetAsset, autoRealseAB, originals);

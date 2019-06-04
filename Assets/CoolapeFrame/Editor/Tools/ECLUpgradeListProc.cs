@@ -311,9 +311,8 @@ public class ECLUpgradeListProc : EditorWindow
 		string shell = Path.Combine(Application.dataPath,  ECLEditorUtl.getPathByObject( selectedServer.ossShell));
 		string arg1 = Path.GetDirectoryName(shell);
 		string arg2 = localDir.ToString ();
-		string argss = shell + " " + arg1 + " " + arg2;
 //		Debug.LogError (argss);
-		System.Diagnostics.Process process = System.Diagnostics.Process.Start ("/bin/bash", argss);
+//		System.Diagnostics.Process process = System.Diagnostics.Process.Start ("/bin/bash", argss);
 		//重新定向标准输入，输入，错误输出
 //		process.StartInfo.RedirectStandardInput = true;
 //		process.StartInfo.RedirectStandardOutput = true;
@@ -321,6 +320,16 @@ public class ECLUpgradeListProc : EditorWindow
 //
 //		string ret = process.StandardOutput.ReadToEnd ();
 //		Debug.Log (ret);
+
+//		Debug.LogError (shell + " " + arg1 + " " + arg2);
+		if ("MacOSX".Equals (SystemInfo.operatingSystemFamily.ToString())) {
+			string argss = Path.Combine(Path.GetDirectoryName(shell), Path.GetFileNameWithoutExtension(shell)) +".sh" + " " + arg1 + " " + arg2;
+//			Debug.LogError (argss);
+			System.Diagnostics.Process process = System.Diagnostics.Process.Start ("/bin/bash", argss);
+		} else {
+			string batFile = Path.Combine (Path.GetDirectoryName (shell), Path.GetFileNameWithoutExtension (shell)) + ".bat";
+			System.Diagnostics.Process.Start (batFile, arg1 + " " + arg2);
+		}
 		Debug.LogWarning("Finished===" + name);
 	}
 

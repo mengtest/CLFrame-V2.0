@@ -13,13 +13,12 @@ using UnityEngine;
 using System.Collections;
 using XLua;
 using System.IO;
-using System.Collections.Generic;
 
 namespace Coolape
 {
-	public class CLUtlLua : MonoBehaviour
+	public class CLUtlLua
 	{
-		public static bool isFinishAddLoader = false;
+		//public static bool isFinishAddLoader = false;
 		public static Hashtable FileBytesCacheMap = new Hashtable ();
 
 		/// <summary>
@@ -28,10 +27,12 @@ namespace Coolape
 		/// <param name="lua">Lua.</param>
 		public static void addLuaLoader (LuaEnv lua)
 		{
-			if (isFinishAddLoader)
-				return;
-			lua.AddLoader ((LuaEnv.CustomLoader)myLuaLoader);
-			isFinishAddLoader = true;
+            LuaEnv.CustomLoader loader = (LuaEnv.CustomLoader)(myLuaLoader);
+            if (!lua.customLoaders.Contains(loader))
+            {
+                lua.AddLoader(loader);
+            }
+			//isFinishAddLoader = true;
 		}
 
 		public static void cleanFileBytesCacheMap ()

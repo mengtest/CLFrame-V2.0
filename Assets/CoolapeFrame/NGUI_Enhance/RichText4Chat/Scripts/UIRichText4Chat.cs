@@ -147,11 +147,13 @@ public class UIRichText4Chat : MonoBehaviour
 		Vector3 pos = Vector3.zero;
 		for (int i = 0; i < count; i++) {
 			index = (int)(keyList [i]);
-			faceName = facesMap [index].ToString ();
-			//			Debug.Log ("index==" + index);
-			//			Debug.Log("faceName==" + faceName);
-			pos = calculatePos (mTempVerts [index * 2], mTempVerts [index * 2 + 1]);
-			showFace (faceName, pos);
+			if (index * 2+1 < mTempVerts.size) {
+				faceName = facesMap [index].ToString ();
+				//			Debug.Log ("index==" + index);
+				//			Debug.Log("faceName==" + faceName);
+				pos = calculatePos (mTempVerts [index * 2], mTempVerts [index * 2 + 1]);
+				showFace (faceName, pos);
+			}
 		}
 		keyList.Clear ();
 		mTempVerts.Clear ();
@@ -249,6 +251,10 @@ public class UIRichText4Chat : MonoBehaviour
 				offset += 1;
 			} else if (value [i] == '\\' && (i + 1 < len) && value [i + 1] == 'n') {
 				offset += 2;
+			} else if(value [i] == '[' && i+7 < len && value[i+7] == ']') {
+				offset += 8;
+			} else if(value[i] == '[' && i+2 < len && value[i+1] == '-' && value[i+2] == ']') {
+				offset += 3;
 			}
 			//			Debug.Log ("val==[" + value [i] + "]==" + offset);
 			if (value [i] == '#') {
@@ -258,6 +264,10 @@ public class UIRichText4Chat : MonoBehaviour
 						offset += 1;
 					} else if (value [j] == '\\' && (j + 1 < len) && value [j + 1] == 'n') {
 						offset += 2;
+					} else if(value [i] == '[' && i+7 < len && value[i+7] == ']') {
+						offset += 8;
+					} else if(value[i] == '[' && i+2 < len && value[i+1] == '-' && value[i+2] == ']') {
+						offset += 3;
 					}
 					//					Debug.Log ("val==[" + value [j] + "]==" + offset);
 					if (value [j] == '#') {

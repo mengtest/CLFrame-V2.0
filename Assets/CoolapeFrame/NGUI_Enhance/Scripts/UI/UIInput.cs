@@ -3,7 +3,7 @@
 // Copyright © 2011-2015 Tasharen Entertainment
 //----------------------------------------------
 
-#if !UNITY_EDITOR && (UNITY_IPHONE || UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_WP_8_1 || UNITY_BLACKBERRY)
+#if !UNITY_EDITOR && (UNITY_IPHONE || UNITY_ANDROID || UNITY_WP8 || UNITY_WP_8_1 || UNITY_BLACKBERRY)
 #define MOBILE
 #endif
 
@@ -471,6 +471,7 @@ public class UIInput : MonoBehaviour
 			mPivot = label.pivot;
 			mPosition = label.cachedTransform.localPosition.x;
 			UpdateLabel();
+			init4GUI ();//add by chenbin
 		}
 	}
 
@@ -581,11 +582,11 @@ public class UIInput : MonoBehaviour
 		{
 			if (mDoInit) Init();
 			
-			#if UNITY_EDITOR
+			#if UNITY_EDITOR || UNITY_STANDALONE_OSX
 			// add by chenbin
-			isShowGUI = true;
+//			isShowGUI = true;
 			isSetGuiFoucs = true;
-			return;
+//			return;
 			#endif
 
 
@@ -712,38 +713,42 @@ public class UIInput : MonoBehaviour
 			else
 #endif // MOBILE
 			{
-				string ime = Input.compositionString;
+				if (!isShowGUI) { // add by chenbin
+					string ime = Input.compositionString;
 
-				// There seems to be an inconsistency between IME on Windows, and IME on OSX.
-				// On Windows, Input.inputString is always empty while IME is active. On the OSX it is not.
-				if (string.IsNullOrEmpty(ime) && !string.IsNullOrEmpty(Input.inputString))
-				{
-					// Process input ignoring non-printable characters as they are not consistent.
-					// Windows has them, OSX may not. They get handled inside OnGUI() instead.
-					string s = Input.inputString;
+					// There seems to be an inconsistency between IME on Windows, and IME on OSX.
+					// On Windows, Input.inputString is always empty while IME is active. On the OSX it is not.
+					if (string.IsNullOrEmpty (ime) && !string.IsNullOrEmpty (Input.inputString)) {
+						// Process input ignoring non-printable characters as they are not consistent.
+						// Windows has them, OSX may not. They get handled inside OnGUI() instead.
+						string s = Input.inputString;
 
-					for (int i = 0; i < s.Length; ++i)
-					{
-						char ch = s[i];
-						if (ch < ' ') continue;
+						for (int i = 0; i < s.Length; ++i) {
+							char ch = s [i];
+							if (ch < ' ')
+								continue;
 
-						// OSX inserts these characters for arrow keys
-						if (ch == '\uF700') continue;
-						if (ch == '\uF701') continue;
-						if (ch == '\uF702') continue;
-						if (ch == '\uF703') continue;
+							// OSX inserts these characters for arrow keys
+							if (ch == '\uF700')
+								continue;
+							if (ch == '\uF701')
+								continue;
+							if (ch == '\uF702')
+								continue;
+							if (ch == '\uF703')
+								continue;
 
-						Insert(ch.ToString());
+							Insert (ch.ToString ());
+						}
 					}
-				}
 
-				// Append IME composition
-				if (mLastIME != ime)
-				{
-					mSelectionEnd = string.IsNullOrEmpty(ime) ? mSelectionStart : mValue.Length + ime.Length;
-					mLastIME = ime;
-					UpdateLabel();
-					ExecuteOnChange();
+					// Append IME composition
+					if (mLastIME != ime) {
+						mSelectionEnd = string.IsNullOrEmpty (ime) ? mSelectionStart : mValue.Length + ime.Length;
+						mLastIME = ime;
+						UpdateLabel ();
+						ExecuteOnChange ();
+					}
 				}
 			}
 
@@ -782,18 +787,13 @@ public class UIInput : MonoBehaviour
 			}
 		}
 
-#if UNITY_EDITOR
-		// add by chenbin
-		else {
-			isShowGUI = false;
-		}
-#endif
 	}
 
 	#region add by chenbin
 	bool isShowGUI = false;
 	bool isSetGuiFoucs = true;
 	Rect rect = new Rect(0,0,0,0);
+	GUIStyle gs = new GUIStyle ();
 	BoxCollider _collider;
 	BoxCollider collider {
 		get {
@@ -804,52 +804,62 @@ public class UIInput : MonoBehaviour
 		}
 	}
 
-	#if UNITY_EDITOR
+	void init4GUI()
+	{
+		#if !UNITY_EDITOR && !UNITY_STANDALONE_OSX
+		isShowGUI = false;
+		return;
+		#endif
+		isShowGUI = true;
+		Vector3 pos = Vector3.zero;
+		if (label != null && UICamera.currentCamera != null) {
+			pos = UICamera.currentCamera.WorldToScreenPoint (label.transform.position);
+		}
+		float offset = UIRoot.GetPixelSizeAdjustment (label.gameObject);
+		float _width = label.width / offset;
+
+		float _width_ = collider.size.x > _width ? collider.size.x : _width;
+		float _height = label.height / offset;
+
+		gs.fontSize = Mathf.FloorToInt (label.fontSize/offset);
+		gs.font = label.bitmapFont.dynamicFont;
+
+		if (label.pivot == UIWidget.Pivot.Left) {
+			gs.alignment = TextAnchor.MiddleLeft;
+			rect = new Rect( pos.x, Screen.height - pos.y-_height/2, _width_, _height);
+		} else if(label.pivot == UIWidget.Pivot.Center) {
+			gs.alignment = TextAnchor.MiddleCenter;
+			rect = new Rect( pos.x -_width/2.0f, Screen.height - pos.y-_height/2, _width, _height);
+		} else if(label.pivot == UIWidget.Pivot.Right) {
+			gs.alignment = TextAnchor.MiddleRight;
+			rect = new Rect( pos.x - _width, Screen.height - pos.y-_height/2, _width, _height);
+		} else if(label.pivot == UIWidget.Pivot.Top) {
+			gs.alignment = TextAnchor.UpperCenter;
+			rect = new Rect( pos.x - _width/2.0f, Screen.height - pos.y, _width, _height);
+		} else if(label.pivot == UIWidget.Pivot.TopLeft) {
+			gs.alignment = TextAnchor.UpperLeft;
+			rect = new Rect( pos.x, Screen.height - pos.y, _width, _height);
+		} else if(label.pivot == UIWidget.Pivot.TopRight) {
+			gs.alignment = TextAnchor.UpperRight;
+			rect = new Rect( pos.x - _width, Screen.height - pos.y, _width, _height);
+		} else if(label.pivot == UIWidget.Pivot.Bottom) {
+			gs.alignment = TextAnchor.LowerCenter;
+			rect = new Rect( pos.x -_width/2.0f, Screen.height - pos.y-_height, _width, _height);
+		} else if(label.pivot == UIWidget.Pivot.BottomLeft) {
+			gs.alignment = TextAnchor.LowerLeft;
+			rect = new Rect( pos.x, Screen.height - pos.y-_height, _width, _height);
+		} else if(label.pivot == UIWidget.Pivot.BottomRight) {
+			gs.alignment = TextAnchor.LowerRight;
+			rect = new Rect( pos.x - _width, Screen.height - pos.y-_height, _width, _height);
+		}
+	}
+
+	#if UNITY_EDITOR || UNITY_STANDALONE_OSX
 	void OnGUI() {
 		if(isShowGUI) {
-			Vector3 pos = Vector3.zero;
-			if (label != null && UICamera.currentCamera != null) {
-				pos = UICamera.currentCamera.WorldToScreenPoint (label.transform.position);
-			}
-			float offset = UIRoot.GetPixelSizeAdjustment (label.gameObject);
-			float _width = label.width / offset;
-
-			float _width_ = collider.size.x > _width ? collider.size.x : _width;
-			float _height = label.height / offset;
-
+			if (mDoInit)
+				Init ();
 			GUI.SetNextControlName("__MyTextField");
-			GUIStyle gs = new GUIStyle ();
-			gs.fontSize = Mathf.FloorToInt (label.fontSize/offset);
-			gs.font = label.bitmapFont.dynamicFont;
-
-			if (label.pivot == UIWidget.Pivot.Left) {
-				gs.alignment = TextAnchor.MiddleLeft;
-				rect = new Rect( pos.x, Screen.height - pos.y-_height/2, _width_, _height);
-			} else if(label.pivot == UIWidget.Pivot.Center) {
-				gs.alignment = TextAnchor.MiddleCenter;
-				rect = new Rect( pos.x -_width/2.0f, Screen.height - pos.y-_height/2, _width, _height);
-			} else if(label.pivot == UIWidget.Pivot.Right) {
-				gs.alignment = TextAnchor.MiddleRight;
-				rect = new Rect( pos.x - _width, Screen.height - pos.y-_height/2, _width, _height);
-			} else if(label.pivot == UIWidget.Pivot.Top) {
-				gs.alignment = TextAnchor.UpperCenter;
-				rect = new Rect( pos.x - _width/2.0f, Screen.height - pos.y, _width, _height);
-			} else if(label.pivot == UIWidget.Pivot.TopLeft) {
-				gs.alignment = TextAnchor.UpperLeft;
-				rect = new Rect( pos.x, Screen.height - pos.y, _width, _height);
-			} else if(label.pivot == UIWidget.Pivot.TopRight) {
-				gs.alignment = TextAnchor.UpperRight;
-				rect = new Rect( pos.x - _width, Screen.height - pos.y, _width, _height);
-			} else if(label.pivot == UIWidget.Pivot.Bottom) {
-				gs.alignment = TextAnchor.LowerCenter;
-				rect = new Rect( pos.x -_width/2.0f, Screen.height - pos.y-_height, _width, _height);
-			} else if(label.pivot == UIWidget.Pivot.BottomLeft) {
-				gs.alignment = TextAnchor.LowerLeft;
-				rect = new Rect( pos.x, Screen.height - pos.y-_height, _width, _height);
-			} else if(label.pivot == UIWidget.Pivot.BottomRight) {
-				gs.alignment = TextAnchor.LowerRight;
-				rect = new Rect( pos.x - _width, Screen.height - pos.y-_height, _width, _height);
-			}
 			GUI.color = Coolape.ColorEx.getColor(0,0,0,0);
 			value = GUI.TextArea(rect, value, gs);
 			GUI.color = Color.white;

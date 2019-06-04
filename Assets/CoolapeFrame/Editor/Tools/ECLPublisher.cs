@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using CSObjectWrapEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.Purchasing;
+using UnityEditor.SceneManagement;
 
 
 /// <summary>
@@ -1216,7 +1217,7 @@ public class ECLPublisher : EditorWindow
             }
         }
 
-        if (currChlData.isBuildWithLogView)
+        if (currChlData.isBuildWithLogView && ReporterMessageReceiver.self == null)
         {
             ReporterEditor.CreateReporter();
             ReporterModificationProcessor.BuildInfo.addUpdateDelegate();
@@ -1322,18 +1323,18 @@ public class ECLPublisher : EditorWindow
         AssetDatabase.Refresh();
 
         string[] levels = null;
-        if (EditorBuildSettings.scenes.Length > 0)
+        if (EditorSceneManager.sceneCount > 0)
         {
-            levels = new string[EditorBuildSettings.scenes.Length];
-            for (int i = 0; i < EditorBuildSettings.scenes.Length; i++)
+            levels = new string[EditorSceneManager.sceneCount];
+            for (int i = 0; i < EditorSceneManager.sceneCount; i++)
             {
-                levels[i] = EditorBuildSettings.scenes[i].path;
+                levels[i] = EditorSceneManager.GetSceneAt(i).path;
             }
         }
         else
         {
             levels = new string[1];
-            levels[0] = EditorApplication.currentScene;
+            levels[0] = EditorSceneManager.GetActiveScene().path;
         }
 
         string locationName = currChlData.mPlatform.ToString() + "_" + currChlData.mChlName + "_" + currChlData.mBundleIndentifier + "_v" + currChlData.mBundleVersion + "_" + DateEx.format(DateEx.fmt_yyyy_MM_dd_HH_mm_ss_fname);

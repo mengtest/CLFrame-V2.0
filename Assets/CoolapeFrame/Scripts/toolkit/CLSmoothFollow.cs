@@ -83,7 +83,7 @@ namespace Coolape
 	
 			// Always look at the target
 			if (isCanRotate) {
-				if (distance > -0.00001 && distance < 0.00001f) {
+				if (distance > -0.00001f && distance < 0.00001f) {
 					transform.LookAt (target);
 					localAngle = transform.localEulerAngles;
 					localAngle.y = target.localEulerAngles.y;

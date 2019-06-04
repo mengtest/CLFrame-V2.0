@@ -83,5 +83,6 @@ public class ECLSeekerInspector : Editor
             }
         }
         ECLEditorUtl.EndContents();
+        EditorUtility.SetDirty(target);
     }
 }

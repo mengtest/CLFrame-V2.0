@@ -46,9 +46,16 @@ namespace Coolape
         public bool showGrid = true;
         public bool showObstruct = true;
         public bool isIninted = false;
+        [HideInInspector]
+        public Vector3 originPos = Vector3.zero;
         public ArrayList OnGridStateChgCallbacks = new ArrayList();
         //当ray检测后，再检测一次Sphere以保当节点在障碍内部时也可能检测成功
         float radius4CheckSphere = 1;
+
+        //异步的
+        static ListPool listPool = new ListPool();
+        Queue<ArrayList> searchQueue = new Queue<ArrayList>();
+        Queue<ArrayList> finishSearchQueue = new Queue<ArrayList>();
 
         public CLAStarPathSearch()
         {
@@ -63,15 +70,20 @@ namespace Coolape
                 init();
             }
         }
-
+        public void init()
+        {
+            init(transform.position);
+        }
         /// <summary>
         /// Init this instance.初始化网格
         /// </summary>
-        public void init()
+        public void init(Vector3 origin)
         {
+            originPos = origin;
             radius4CheckSphere = cellSize / 4;
-            grid.Awake(transform.position, numRows, numCols, cellSize, false);
+            grid.init(origin, numRows, numCols, cellSize);
 
+            nodesMap.Clear();
             for (int i = 0; i < grid.NumberOfCells; i++)
             {
                 nodesMap[i] = new CLAStarNode(i, grid.GetCellCenter(i));
@@ -126,6 +138,10 @@ namespace Coolape
 
         void scanOne(int index)
         {
+            if(!nodesMap.ContainsKey(index))
+            {
+                return;
+            }
             Vector3 position = nodesMap[index].position;
             if (scanType == ScanType.ObstructNode)
             {
@@ -139,11 +155,12 @@ namespace Coolape
             }
         }
 
-        bool raycastCheckCell(Vector3 cellPos, LayerMask mask) {
+        bool raycastCheckCell(Vector3 cellPos, LayerMask mask)
+        {
             bool ishit = false;
-            if(rayDirection == RayDirection.Both)
+            if (rayDirection == RayDirection.Both)
             {
-                ishit = Physics.Raycast(cellPos, Vector3.up, rayDis4Scan, mask) 
+                ishit = Physics.Raycast(cellPos, Vector3.up, rayDis4Scan, mask)
                               || Physics.Raycast(cellPos, -Vector3.up, rayDis4Scan, mask);
             }
             else if (rayDirection == RayDirection.Up)
@@ -242,13 +259,51 @@ namespace Coolape
         }
 
         /// <summary>
+        /// Searchs the path. 异步的寻路
+        /// </summary>
+        /// <returns><c>true</c>, if path was searched,可以到达 <c>false</c> otherwise.不可到过</returns>
+        /// <param name="from">From.出发点坐标</param>
+        /// <param name="to">To.目标点坐标</param>
+        /// <param name="finishSearchCallback">finish Search Callback</param>
+        public void searchPathAsyn(Vector3 from, Vector3 to, object finishSearchCallback)
+        {
+            ArrayList list = listPool.borrow();
+            list.Add(from);
+            list.Add(to);
+            list.Add(finishSearchCallback);
+            searchQueue.Enqueue(list);
+            if(searchQueue.Count == 1)
+            {
+                ThreadEx.exec2(new System.Threading.WaitCallback(doSearchPathAsyn));
+            }
+        }
+
+        void doSearchPathAsyn(object obj)
+        {
+            if (searchQueue.Count == 0) return;
+            ArrayList list = searchQueue.Dequeue();
+            Vector3 from = (Vector3)(list[0]);
+            Vector3 to = (Vector3)(list[1]);
+            object callback = list[2];
+            List<Vector3> outPath = new List<Vector3>();
+            bool canReach = searchPath(from, to, ref outPath, true);
+            list.Clear();
+            list.Add(callback);
+            list.Add(canReach);
+            list.Add(outPath);
+            finishSearchQueue.Enqueue(list);
+
+            doSearchPathAsyn(null);
+        }
+
+        /// <summary>
         /// Searchs the path.寻路
         /// </summary>
         /// <returns><c>true</c>, if path was searched,可以到达 <c>false</c> otherwise.不可到过</returns>
         /// <param name="from">From.出发点坐标</param>
         /// <param name="to">To.目标点坐标</param>
         /// <param name="vectorList">Vector list.路径点坐标列表</param>
-        public bool searchPath(Vector3 from, Vector3 to, ref List<Vector3> vectorList)
+        public bool searchPath(Vector3 from, Vector3 to, ref List<Vector3> vectorList, bool notPocSoftenPath = false)
         {
             if (!isIninted)
             {
@@ -258,7 +313,9 @@ namespace Coolape
             if (vectorList == null)
             {
                 vectorList = new List<Vector3>();
-            } else {
+            }
+            else
+            {
                 vectorList.Clear();
             }
             int fromIndex = grid.GetCellIndex(from);
@@ -351,6 +408,16 @@ namespace Coolape
                 parentNode = parentNode.getParentNode(key);
             }
             vectorList.Insert(0, from);
+            if (!notPocSoftenPath)
+            {
+                softenPath(ref vectorList);
+            }
+
+            return canReach;
+        }
+
+        public void softenPath(ref List<Vector3> vectorList)
+        {
             if (isFilterPathByRay)
             {
                 filterPath(ref vectorList);
@@ -359,8 +426,6 @@ namespace Coolape
             {
                 CLAIPathUtl.softenPath(ref vectorList, softenPathType, softenFactor, cellSize);
             }
-
-            return canReach;
         }
 
         /// <summary>
@@ -503,6 +568,19 @@ namespace Coolape
             return Vector3.Distance(node1.position, node2.position);
         }
 
+        public virtual void Update()
+        {
+            if(finishSearchQueue.Count > 0)
+            {
+                ArrayList list = finishSearchQueue.Dequeue();
+                object callback = list[0];
+                bool canReach = (bool)(list[1]);
+                List<Vector3> outPath = list[2] as List<Vector3>;
+                softenPath(ref outPath);
+                Utl.doCallback(callback, canReach, outPath);
+                listPool.release(list);
+            }
+        }
         //=============================================================
         //=============================================================
         //=============================================================
@@ -517,7 +595,7 @@ namespace Coolape
         {
             if (showGrid)
             {
-                GridBase.DebugDraw(transform.position, numRows, numCols, cellSize, Color.white);
+                GridBase.DebugDraw(originPos, numRows, numCols, cellSize, Color.white);
             }
             if (showObstruct)
             {
@@ -584,6 +662,30 @@ namespace Coolape
         {
             ObstructNode,
             PassableNode
+        }
+
+        public class ListPool
+        {
+            Queue queue = new Queue();
+            public ArrayList borrow()
+            {
+                if (queue.Count == 0)
+                {
+                    newList();
+                }
+                return queue.Dequeue() as ArrayList;
+            }
+
+            public void release(ArrayList list)
+            {
+                list.Clear();
+                queue.Enqueue(list);
+            }
+
+            void newList()
+            {
+                queue.Enqueue(new ArrayList());
+            }
         }
     }
 }

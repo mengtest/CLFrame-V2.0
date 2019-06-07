@@ -15,3 +15,5 @@ minilua
 libluajit.so
 lj_vm.S
 build/*
+Logs
+obj

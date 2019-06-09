@@ -381,6 +381,10 @@ namespace Coolape
                     return;
                 }
                 frameObj = frame.GetComponent<CLCellLua>();
+                if (frameObj == null)
+                {
+                    frameObj = frame.AddComponent<CLCellLua>();
+                }
                 frameObj.transform.parent = transform;
                 frameObj.transform.localScale = Vector3.one;
                 frameObj.transform.localPosition = Vector3.zero;

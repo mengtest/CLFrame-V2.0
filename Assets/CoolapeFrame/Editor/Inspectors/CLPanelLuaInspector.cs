@@ -23,6 +23,7 @@ public class CLPanelLuaInspector : CLBehaviour4LuaInspector
 		}
 
 		base.OnInspectorGUI();
+        init();
 
         GUILayout.BeginHorizontal();
         {

@@ -842,30 +842,41 @@ public static class ECLProjectSetting
         ZipEx.UnZip(from, to, 4096);
         AssetDatabase.Refresh();
 
-        /*
-		from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Textures/_empty.png";
-		to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/other/uiAtlas/public/_empty.png";
-		File.Copy (from, to);
+        //UIAtlas atlasAllReal = ECLEditorUtl.getObjectByPath(data.name + "/upgradeRes4Dev/priority/atlas/atlasAllReal.prefab") as UIAtlas;
+        UIAtlas atlasAllReal = PrefabUtility.LoadPrefabContents("Assets/" + data.name + "/upgradeRes4Dev/priority/atlas/atlasAllReal.prefab").GetComponent<UIAtlas>();
+        for (int i=0; i < atlasAllReal.spriteList.Count;i++)
+        {
+            atlasAllReal.spriteList[i].path = atlasAllReal.spriteList[i].path.Replace("MonsterWorld/", data.name+"/");
+            Debug.LogError(atlasAllReal.spriteList[i].path);
+        }
+        PrefabUtility.SaveAsPrefabAsset(atlasAllReal.gameObject, "Assets/" + data.name + "/upgradeRes4Dev/priority/atlas/atlasAllReal.prefab");
+        PrefabUtility.UnloadPrefabContents(atlasAllReal.gameObject);
 
-		AssetDatabase.Refresh ();
-		//Prefab
-		GameObject atlasAllRealGo = new GameObject ("atlasAllReal");
-		UIAtlas atlasAllReal = atlasAllRealGo.AddComponent<UIAtlas> ();
-		atlasAllReal.isBorrowSpriteMode = true;
-		List<Texture> textureList = new List<Texture> ();
-		Texture tex = ECLEditorUtl.getObjectByPath (data.name + "/upgradeRes4Dev/other/uiAtlas/public/_empty.png") as Texture;
-		textureList.Add (tex);
-		UIAtlasMaker.UpdateAtlas_BorrowMode (atlasAllReal, textureList);
-		textureList.Clear ();
-		textureList = null;
-		atlasAllRealGo = PrefabUtility.CreatePrefab ("Assets/" + data.name + "/upgradeRes4Dev/priority/atlas/atlasAllReal.prefab", atlasAllRealGo) as GameObject;
-		atlasAllReal = atlasAllRealGo.GetComponent<UIAtlas> ();
-        */
+        setPrefabLuaPath(Application.dataPath + "/" + data.name + "/upgradeRes4Dev/priority/ui");
+       /*
+       from = Application.dataPath + "/" + ECLProjectManager.FrameName + "/Templates/Textures/_empty.png";
+       to = Application.dataPath + "/" + data.name + "/upgradeRes4Dev/other/uiAtlas/public/_empty.png";
+       File.Copy (from, to);
 
-        GameObject atlasGo = new GameObject ();
+       AssetDatabase.Refresh ();
+       //Prefab
+       GameObject atlasAllRealGo = new GameObject ("atlasAllReal");
+       UIAtlas c = atlasAllRealGo.AddComponent<UIAtlas> ();
+       atlasAllReal.isBorrowSpriteMode = true;
+       List<Texture> textureList = new List<Texture> ();
+       Texture tex = ECLEditorUtl.getObjectByPath (data.name + "/upgradeRes4Dev/other/uiAtlas/public/_empty.png") as Texture;
+       textureList.Add (tex);
+       UIAtlasMaker.UpdateAtlas_BorrowMode (atlasAllReal, textureList);
+       textureList.Clear ();
+       textureList = null;
+       atlasAllRealGo = PrefabUtility.CreatePrefab ("Assets/" + data.name + "/upgradeRes4Dev/priority/atlas/atlasAllReal.prefab", atlasAllRealGo) as GameObject;
+       atlasAllReal = atlasAllRealGo.GetComponent<UIAtlas> ();
+       */
+
+       GameObject atlasGo = new GameObject ();
 		UIAtlas atlas = atlasGo.AddComponent<UIAtlas> ();
 		atlas.isBorrowSpriteMode = true;
-        atlas.replacement = null;
+        atlas.replacement = atlasAllReal;
 		atlasGo = PrefabUtility.CreatePrefab ("Assets/" + data.name + "/Resources/Atlas/EmptyAtlas.prefab", atlasGo);
 		atlas = atlasGo.GetComponent<UIAtlas> ();
 
@@ -970,7 +981,44 @@ public static class ECLProjectSetting
 		return true;
 	}
 
-	public static GameObject createPanelPrefab (string name, string luaPath,
+    public static void setPrefabLuaPath(string path)
+    {
+        string[] files = Directory.GetFiles(path);
+        for (int i = 0; i < files.Length; i++)
+        {
+            string prefabPath = "Assets/" + files[i].Replace(Application.dataPath + "/", "");
+            string extension = Path.GetExtension(prefabPath).ToLower();
+            if (extension != ".prefab") continue;
+            GameObject go = PrefabUtility.LoadPrefabContents(prefabPath);
+            if (go != null)
+            {
+                CLBaseLua panelLua = go.GetComponent<CLBaseLua>();
+                if(panelLua != null)
+                {
+                    panelLua.luaPath = panelLua.luaPath.Replace("MonsterWorld/", data.name + "/");
+                }
+                CLBaseLua[] cells = go.GetComponentsInChildren<CLBaseLua>();
+                if(cells != null)
+                {
+                    for(int j =0; j < cells.Length; j++)
+                    {
+                        cells[j].luaPath = cells[j].luaPath.Replace("MonsterWorld/", data.name + "/");
+                    }
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
+                PrefabUtility.UnloadPrefabContents(go);
+            }
+        }
+
+        string[] dirs = Directory.GetDirectories(path);
+        for(int i=0; i < dirs.Length; i++)
+        {
+            setPrefabLuaPath(dirs[i]);
+        }
+    }
+
+    public static GameObject createPanelPrefab (string name, string luaPath,
 	                                            bool isNeedBackplate, bool destroyWhenHide, 
 	                                            bool isNeedResetAtlase, bool isNeedMask4Init)
 	{
